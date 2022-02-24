@@ -1,6 +1,6 @@
 {
   "name": "@apparts/model-api",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Generate CRUDish API-endpoints for a model defined with the @apparts/model package",
   "main": "index.js",
   "scripts": {
