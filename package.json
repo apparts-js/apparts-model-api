@@ -6,7 +6,14 @@
   "scripts": {
     "testOne": "jest",
     "test": "jest --watch --detectOpenHandles",
-    "testCoverage": "jest --coverage"
+    "testCoverage": "jest --coverage",
+    "prepublishOnly": "npm run clean && npm ci  && npm run ci && npm run build",
+    "build": "",
+    "clean": "rimraf coverage build tmp",
+    "ci": "npm ci && npm run ci:prettier && npm run ci:eslint && npm run ci:test",
+    "ci:prettier": "CI=true prettier --check .",
+    "ci:test": "CI=true jest test",
+    "ci:eslint": "eslint . --ext .js,.jsx,.ts,.tsx -c .eslintrc.js"
   },
   "repository": {
     "type": "git",
@@ -27,14 +34,20 @@
     "@apparts/types": "^6.1.1"
   },
   "devDependencies": {
-    "@apparts/backend-test": "^1.0.2",
-    "@apparts/config": "^1.0.5",
+    "@apparts/backend-test": "^1.2.0",
+    "@apparts/config": "^1.0.6",
     "@apparts/db": "^2.1.1",
     "@apparts/error": "^1.0.3",
     "@apparts/model": "^4.0.2",
     "@apparts/types": "^6.1.1",
-    "eslint": "^7.19.0",
-    "jsonwebtoken": "^8.5.1"
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-plugin-jest": "^26.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2"
   },
   "homepage": "https://github.com/phuhl/apparts-model-api#readme"
 }
