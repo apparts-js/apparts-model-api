@@ -52,10 +52,7 @@ const {
   AdvancedModel,
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
-const {
-  ModelWithDefault,
-  useModelWithDefault,
-} = require("../tests/modelWithDefault.js");
+const { useModelWithDefault } = require("../tests/modelWithDefault.js");
 
 describe("Post", () => {
   const path = "/v/1/model";

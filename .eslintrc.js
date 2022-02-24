@@ -10,7 +10,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["*.test.js"],
+      files: ["*.test.js", "**/tests/**"],
       env: {
         jest: true,
       },
