@@ -11,19 +11,13 @@ const path = "/v/1/model",
   auth = { post: anybody };
 
 const methods = generateMethods(path, useModel, auth, "");
-const {
-  app,
-  url,
-  error,
-  getPool,
-  checkType,
-  allChecked,
-} = require("@apparts/backend-test")({
-  testName: "post",
-  apiContainer: methods.post,
-  apiVersion: 1,
-  schemas: [
-    `
+const { app, url, error, getPool, checkType, allChecked } =
+  require("@apparts/backend-test")({
+    testName: "post",
+    apiContainer: methods.post,
+    apiVersion: 1,
+    schemas: [
+      `
 CREATE TABLE model (
   id SERIAL PRIMARY KEY,
   "optionalVal" TEXT,
@@ -48,8 +42,8 @@ CREATE TABLE advancedmodel (
   textarray text[],
   object json
 );`,
-  ],
-});
+    ],
+  });
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
 const { SubModel, useSubModel } = require("../tests/submodel.js");
