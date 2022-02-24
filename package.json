@@ -31,7 +31,7 @@
   },
   "peerDependencies": {
     "@apparts/model": "^4.2.0",
-    "@apparts/types": "^6.1.1"
+    "@apparts/types": "^6.11.2"
   },
   "devDependencies": {
     "@apparts/backend-test": "^1.2.0",
@@ -39,7 +39,7 @@
     "@apparts/db": "^2.1.1",
     "@apparts/error": "^1.0.3",
     "@apparts/model": "^4.0.2",
-    "@apparts/types": "^6.1.1",
+    "@apparts/types": "^6.11.2",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
     "eslint": "^7.32.0",

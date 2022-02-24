@@ -2,6 +2,7 @@ const generateGet = require("./generateGet");
 const generateGetByIds = require("./generateGetByIds");
 const generatePost = require("./generatePost");
 const generatePut = require("./generatePut");
+const generatePatch = require("./generatePatch");
 const generateDelete = require("./generateDelete");
 
 const addCrud = ({ prefix, app, model, routes, webtokenkey }) => {
@@ -15,7 +16,7 @@ const addCrud = ({ prefix, app, model, routes, webtokenkey }) => {
 };
 
 const generateMethods = (prefix, useModel, routes, webtokenkey) => {
-  const res = { get: {}, post: {}, put: {}, delete: {} };
+  const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
     res.get[""] = generateGet(prefix, useModel, routes.get, webtokenkey);
   }
@@ -32,6 +33,14 @@ const generateMethods = (prefix, useModel, routes, webtokenkey) => {
   }
   if (routes.put) {
     res.put["/:id"] = generatePut(prefix, useModel, routes.put, webtokenkey);
+  }
+  if (routes.patch) {
+    res.patch["/:id"] = generatePatch(
+      prefix,
+      useModel,
+      routes.patch,
+      webtokenkey
+    );
   }
   if (routes.delete) {
     res.delete["/:ids"] = generateDelete(

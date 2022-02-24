@@ -30,6 +30,7 @@ function.
     - =getByIds= :: The get by ids route
     - =post= :: The create item route
     - =put= :: The update item route
+    - =patch= :: The patch item route
     - =delete= :: The delete items route
     The values for each of these keys are objects, that can contain:
     - =access : (request, me) => boolean= :: A functions that defines
@@ -51,7 +52,7 @@ const addRoutes = (app) => {
   // ...add your routes
 
   addCrud("/v/1/user", app, useUser, {
-    get: anybody, getByIds: anybody, post: anybody, put: anybody, delete: anybody,
+    get: anybody, getByIds: anybody, post: anybody, put: anybody, patch: anybody, delete: anybody,
   });
 };
 #+END_SRC
@@ -61,6 +62,7 @@ Adds these routes:
 - =GET /v/1/user/:ids= :: The get by ids route (=getByIds=)
 - =POST /v/1/user= :: The create item route (=post=)
 - =PUT /v/1/user/:id= :: The update item route (=put=)
+- =PATCH /v/1/user/:id= :: The patch item route (=patch=)
 - =DELETE /v/1/user/:ids= :: The delete items route (=delete=)
 
 All these routes are secured by =prepauth.prepauthTokenJWT= from the
@@ -92,7 +94,7 @@ and provide it as the authentication on not-logged in users.
 
   // add routes
   addCrud("/v/1/user/:userid/comment", app, useComments, {
-    get: anybody, getByIds: anybody, post: anybody, put: anybody, delete: anybody,
+    get: anybody, getByIds: anybody, post: anybody, put: anybody, patch: anybody, delete: anybody,
   });
 #+END_SRC
 
@@ -101,6 +103,7 @@ Adds these routes:
 - =GET /v/1/user/:userid/comment/:ids=
 - =POST /v/1/user/:userid/comment=
 - =PUT /v/1/user/:userid/comment/:id=
+- =PATCH /v/1/user/:userid/comment/:id=
 - =DELETE /v/1/user/:userid/comment/:ids=
 
 Note, that the parameter =userid= from the route is /automatically/
@@ -130,6 +133,7 @@ too.
     post: ({ params: { userid } }, me) => userid === me.userid,
     // I can only edit my own comments
     put: ({ params: { userid } }, me) => userid === me.userid,
+    patch: ({ params: { userid } }, me) => userid === me.userid,
     // I can only delete my own comments
     delete: ({ params: { userid } }, me) => userid === me.userid,
   });
@@ -153,6 +157,7 @@ multiple access decider functions:
     getByIds: anybody,
     post: isUser,
     put: or(isAdmin, isUser),
+    patch: or(isAdmin, isUser),
     delete: or(isAdmin, isUser),
   });
 #+END_SRC
