@@ -57,7 +57,12 @@ const generatePut = (
 
       const optionalsToBeRemoved = {};
       Object.keys(types)
-        .filter((key) => !body[key] && types[key].public && types[key].optional)
+        .filter(
+          (key) =>
+            !(key in body) &&
+            types[key].public &&
+            (types[key].optional || types[key].default !== undefined)
+        )
         .forEach((key) => {
           optionalsToBeRemoved[key] = null;
         });
@@ -79,6 +84,18 @@ const generatePut = (
         () => HttpError.notFound(nameFromPrefix(prefix))
       );
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
+
+      Object.keys(types)
+        .filter(
+          (key) =>
+            !(key in body) &&
+            types[key].public &&
+            types[key].default !== undefined
+        )
+        .forEach((key) => {
+          model.content = model.getDefaults([model.content], key)[0];
+        });
+
       await model.update();
       return model.content.id;
     },

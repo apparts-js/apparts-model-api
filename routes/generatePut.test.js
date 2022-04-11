@@ -55,6 +55,10 @@ const {
   AdvancedModel,
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
+const {
+  useModelWithDefault,
+  ModelWithDefault,
+} = require("../tests/modelWithDefault.js");
 const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
 
 describe("Put", () => {
@@ -279,6 +283,40 @@ describe("Put", () => {
         '"id" does not exist'
       )
     );
+    checkType(response, fName);
+  });
+});
+
+describe("Check removal of default value", () => {
+  const path = "/v/1/modelWithDefault";
+  addCrud({
+    prefix: path,
+    app,
+    model: useModelWithDefault,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+
+  test("Put, remove optional value with default", async () => {
+    const dbs = getPool();
+    const model = await new ModelWithDefault(dbs, {
+      mapped: 10,
+      hasDefault: 33,
+    }).store();
+    const response = await request(app)
+      .put(url("modelWithDefault/" + model.content.id))
+      .send({
+        someNumber: 10,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    const modelNew = await new ModelWithDefault(dbs).loadById(model.content.id);
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(model.content.id);
+    expect(modelNew.content).toMatchObject({
+      mapped: 10,
+      hasDefault: 7,
+    });
+    expect(modelNew.content.optionalVal).toBeFalsy();
     checkType(response, fName);
   });
 });
