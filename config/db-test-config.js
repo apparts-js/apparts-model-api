@@ -10,5 +10,7 @@ module.exports = {
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 10000,
     bigIntAsNumber: true,
+    logs: "errors",
+    logParams: true,
   },
 };

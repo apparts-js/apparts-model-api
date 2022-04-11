@@ -27,6 +27,7 @@ CREATE TABLE model (
 CREATE TABLE submodel (
   id SERIAL PRIMARY KEY,
   "modelId" INT NOT NULL,
+  "opt" TEXT,
   FOREIGN KEY ("modelId") REFERENCES model(id)
 );
 
