@@ -22,6 +22,14 @@ CREATE TABLE model (
   mapped INT NOT NULL
 );
 
+CREATE TABLE "modelWithDefault" (
+  id SERIAL PRIMARY KEY,
+  "optionalVal" TEXT,
+  "hasDefault" INT NOT NULL,
+  "hasReadOnlyWithDefault" INT,
+  mapped INT NOT NULL
+);
+
 CREATE TABLE multikey (
   id INT NOT NULL,
   "key" TEXT NOT NULL,
@@ -44,7 +52,7 @@ CREATE TABLE strangeids (
   id VARCHAR(8) PRIMARY KEY,
   val INT NOT NULL
 );
-    `,
+      `,
     ],
     apiVersion: 1,
   });
@@ -295,6 +303,30 @@ describe("Check removal of default value", () => {
     model: useModelWithDefault,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+
+  test("Put with non-public value with default", async () => {
+    const dbs = getPool();
+    const model = await new ModelWithDefault(dbs, {
+      mapped: 10,
+      optionalVal: null,
+      hasReadOnlyWithDefault: 99,
+    }).store();
+    const response = await request(app)
+      .put(url("modelWithDefault/" + model.content.id))
+      .send({
+        someNumber: 100,
+        hasDefault: 10,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    checkType(response, fName);
+    const modelNew = await new ModelWithDefault(dbs).loadById(model.content.id);
+    expect(modelNew.content).toStrictEqual({
+      ...model.content,
+      mapped: 100,
+      hasDefault: 10,
+    });
   });
 
   test("Put, remove optional value with default", async () => {

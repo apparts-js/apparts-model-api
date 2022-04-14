@@ -25,6 +25,14 @@ CREATE TABLE model (
   mapped INT NOT NULL
 );
 
+CREATE TABLE "modelWithDefault" (
+  id SERIAL PRIMARY KEY,
+  "optionalVal" TEXT,
+  "hasDefault" INT NOT NULL,
+  "hasReadOnlyWithDefault" INT,
+  mapped INT NOT NULL
+);
+
 CREATE TABLE multikey (
   id INT NOT NULL,
   "key" TEXT NOT NULL,
@@ -53,7 +61,10 @@ const {
   AdvancedModel,
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
-const { useModelWithDefault } = require("../tests/modelWithDefault.js");
+const {
+  useModelWithDefault,
+  ModelWithDefault,
+} = require("../tests/modelWithDefault.js");
 
 describe("Post", () => {
   const path = "/v/1/model";
@@ -235,7 +246,7 @@ describe("Post", () => {
         hasDefault: 9,
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new Model(dbs).load({ mapped: 100 });
+    const model = await new ModelWithDefault(dbs).load({ mapped: 100 });
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(model.content).toMatchObject({
@@ -253,7 +264,7 @@ describe("Post", () => {
         someNumber: 101,
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new Model(dbs).load({ mapped: 101 });
+    const model = await new ModelWithDefault(dbs).load({ mapped: 101 });
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(model.content).toMatchObject({

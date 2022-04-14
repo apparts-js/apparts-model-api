@@ -17,6 +17,12 @@ const types = {
     default: 7,
     public: true,
   },
+  hasReadOnlyWithDefault: {
+    type: "int",
+    default: 8,
+    readOnly: true,
+    public: true,
+  },
   mapped: {
     type: "int",
     mapped: "someNumber",
@@ -24,6 +30,6 @@ const types = {
   },
 };
 
-const [Models, Model, NoModel] = useModel(types, "model");
+const [Models, Model, NoModel] = useModel(types, "modelWithDefault");
 
 module.exports = makeModel("ModelWithDefault", [Models, Model, NoModel]);

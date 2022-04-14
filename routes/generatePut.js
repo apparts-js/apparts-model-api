@@ -61,6 +61,7 @@ const generatePut = (
           (key) =>
             !(key in body) &&
             types[key].public &&
+            !types[key].readOnly &&
             (types[key].optional || types[key].default !== undefined)
         )
         .forEach((key) => {
@@ -90,12 +91,12 @@ const generatePut = (
           (key) =>
             !(key in body) &&
             types[key].public &&
+            !types[key].readOnly &&
             types[key].default !== undefined
         )
         .forEach((key) => {
           model.content = model.getDefaults([model.content], key)[0];
         });
-
       await model.update();
       return model.content.id;
     },
