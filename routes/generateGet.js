@@ -21,7 +21,7 @@ const createFilter = (prefix, useModel) => {
       if (tipe.mapped) {
         name = tipe.mapped;
       }
-      if (!params[key]) {
+      if (!params[key] && tipe.type !== "object" && tipe.type !== "array") {
         const convertedType = typeFromModeltype(tipe);
         delete convertedType.optional;
         filter.keys[name] = {

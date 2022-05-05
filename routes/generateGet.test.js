@@ -620,6 +620,23 @@ describe("filter api type", () => {
       type: "object",
     });
   });
+  test("Should not include objects, arrays", async () => {
+    expect(createFilter("", useAdvancedModel)).toStrictEqual({
+      keys: {
+        id: {
+          alternatives: [
+            {
+              type: "id",
+            },
+          ],
+          optional: true,
+          type: "oneOf",
+        },
+      },
+      optional: true,
+      type: "object",
+    });
+  });
 });
 
 describe("order api type", () => {
