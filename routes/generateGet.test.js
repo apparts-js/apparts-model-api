@@ -43,6 +43,7 @@ const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
 const { SubModel, useSubModel } = require("../tests/submodel.js");
 const {
+  AdvancedModels,
   AdvancedModel,
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
@@ -553,6 +554,58 @@ describe("get advanced model", () => {
     expect(response.body.length).toBe(1);
     checkType(response, fName);
   });
+  it("should return ordered by object keys", async () => {
+    const dbs = getPool();
+    await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 11, bcd: "zzz", nestedObj: { inner: "zzz" } },
+      },
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 999, bcd: "abc", nestedObj: { inner: "def" } },
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          order: encodeURIComponent(
+            JSON.stringify([{ key: "object.a", dir: "DESC" }])
+          ),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    console.log(response.body);
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([
+      { object: { a: 999 } },
+      { object: { a: 22 } },
+      { object: { a: 11 } },
+    ]);
+    expect(response.body.length).toBe(3);
+    checkType(response, fName);
+  });
+  it("should return ordereb by nested object keys", async () => {
+    const response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          order: encodeURIComponent(
+            JSON.stringify([{ key: "object.nestedObj.inner", dir: "DESC" }])
+          ),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    console.log(response.body);
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([
+      { object: { a: 22 } },
+      { object: { nestedObj: { inner: "zzz" } } },
+      { object: { nestedObj: { inner: "def" } } },
+    ]);
+    expect(response.body.length).toBe(3);
+    checkType(response, fName);
+  });
 });
 
 describe("filter api type", () => {
@@ -676,7 +729,7 @@ describe("order api type", () => {
       type: "array",
     });
   });
-  test("Should not include objects, arrays", async () => {
+  test("Should not include arrays, correctly show objects", async () => {
     expect(createOrder(useAdvancedModel)).toStrictEqual({
       items: {
         keys: {
@@ -695,6 +748,18 @@ describe("order api type", () => {
             alternatives: [
               {
                 value: "id",
+              },
+              {
+                value: "object.a",
+              },
+              {
+                value: "object.bcd",
+              },
+              {
+                value: "object.nestedObj.inner",
+              },
+              {
+                value: "object.nestedOneOf",
               },
             ],
             type: "oneOf",

@@ -17,6 +17,33 @@ const types = {
     keys: {
       a: { type: "int" },
       bcd: { type: "string" },
+      nestedObj: {
+        optional: true,
+        type: "object",
+        keys: {
+          inner: { type: "string" },
+        },
+      },
+      nestedArray: {
+        optional: true,
+        type: "array",
+        items: { type: "string" },
+      },
+      nestedObjValues: {
+        optional: true,
+        type: "object",
+        values: { type: "string" },
+      },
+      nestedOneOf: {
+        optional: true,
+        type: "oneOf",
+        alternatives: [{ type: "string" }, { type: "int" }],
+      },
+      nestedOneOfWithObj: {
+        optional: true,
+        type: "oneOf",
+        alternatives: [{ type: "string" }, { type: "object", keys: {} }],
+      },
     },
     public: true,
   },
