@@ -1,4 +1,3 @@
-const { createFilter, createOrder } = require("./generateGet");
 const generateGet = require("./generateGet");
 const { Models, Model, useModel } = require("../tests/model.js");
 const {
@@ -576,7 +575,6 @@ describe("get advanced model", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    console.log(response.body);
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject([
       { object: { a: 999 } },
@@ -586,7 +584,7 @@ describe("get advanced model", () => {
     expect(response.body.length).toBe(3);
     checkType(response, fName);
   });
-  it("should return ordereb by nested object keys", async () => {
+  it("should return ordered by nested object keys", async () => {
     const response = await request(app)
       .get(
         url(`advancedmodel`, {
@@ -596,7 +594,6 @@ describe("get advanced model", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    console.log(response.body);
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject([
       { object: { a: 22 } },
@@ -606,170 +603,43 @@ describe("get advanced model", () => {
     expect(response.body.length).toBe(3);
     checkType(response, fName);
   });
-});
-
-describe("filter api type", () => {
-  test("Should not include derived types", async () => {
-    expect(createFilter("", useModel)).toStrictEqual({
-      keys: {
-        id: {
-          alternatives: [
-            {
-              type: "id",
+  test("Should return filtered by object key", async () => {
+    const response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: JSON.stringify({
+            "object.a": {
+              gt: 11,
             },
-          ],
-          optional: true,
-          type: "oneOf",
-        },
-        optionalVal: {
-          alternatives: [
-            {
-              type: "string",
-            },
-            {
-              keys: {
-                like: {
-                  type: "string",
-                },
-              },
-              type: "object",
-            },
-          ],
-          optional: true,
-          type: "oneOf",
-        },
-        someNumber: {
-          alternatives: [
-            {
-              type: "int",
-            },
-            {
-              type: "object",
-              keys: {
-                gt: {
-                  optional: true,
-                  type: "int",
-                },
-                gte: {
-                  optional: true,
-                  type: "int",
-                },
-                lt: {
-                  optional: true,
-                  type: "int",
-                },
-                lte: {
-                  optional: true,
-                  type: "int",
-                },
-              },
-            },
-          ],
-          optional: true,
-          type: "oneOf",
-        },
-      },
-      optional: true,
-      type: "object",
-    });
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([
+      { object: { a: 22 } },
+      { object: { a: 999 } },
+    ]);
+    expect(response.body.length).toBe(2);
+    checkType(response, fName);
   });
-  test("Should not include objects, arrays", async () => {
-    expect(createFilter("", useAdvancedModel)).toStrictEqual({
-      keys: {
-        id: {
-          alternatives: [
-            {
-              type: "id",
+  test("Should return filtered by object key, with and", async () => {
+    const response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: JSON.stringify({
+            "object.a": {
+              gt: 11,
+              lt: 111,
             },
-          ],
-          optional: true,
-          type: "oneOf",
-        },
-      },
-      optional: true,
-      type: "object",
-    });
-  });
-});
-
-describe("order api type", () => {
-  test("Should not include derived types", async () => {
-    expect(createOrder(useModel)).toStrictEqual({
-      items: {
-        keys: {
-          dir: {
-            alternatives: [
-              {
-                value: "ASC",
-              },
-              {
-                value: "DESC",
-              },
-            ],
-            type: "oneOf",
-          },
-          key: {
-            alternatives: [
-              {
-                value: "id",
-              },
-              {
-                value: "optionalVal",
-              },
-              {
-                value: "someNumber",
-              },
-            ],
-            type: "oneOf",
-          },
-        },
-        type: "object",
-      },
-      optional: true,
-      type: "array",
-    });
-  });
-  test("Should not include arrays, correctly show objects", async () => {
-    expect(createOrder(useAdvancedModel)).toStrictEqual({
-      items: {
-        keys: {
-          dir: {
-            alternatives: [
-              {
-                value: "ASC",
-              },
-              {
-                value: "DESC",
-              },
-            ],
-            type: "oneOf",
-          },
-          key: {
-            alternatives: [
-              {
-                value: "id",
-              },
-              {
-                value: "object.a",
-              },
-              {
-                value: "object.bcd",
-              },
-              {
-                value: "object.nestedObj.inner",
-              },
-              {
-                value: "object.nestedOneOf",
-              },
-            ],
-            type: "oneOf",
-          },
-        },
-        type: "object",
-      },
-      optional: true,
-      type: "array",
-    });
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([{ object: { a: 22 } }]);
+    expect(response.body.length).toBe(1);
+    checkType(response, fName);
   });
 });
 

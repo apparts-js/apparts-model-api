@@ -4,130 +4,33 @@ const {
   createReturns,
   reverseMap,
   checkAuth,
-  typeFromModeltype,
   unmapKey,
 } = require("./common");
 const { prepauthTokenJWT } = require("@apparts/types");
 
-const createFilter = (prefix, useModel) => {
-  const filter = { optional: true, type: "object", keys: {} };
-  const [Models] = useModel();
-  const types = Models.getTypes();
-  const params = createParams(prefix, useModel);
-  for (const key in types) {
-    const tipe = types[key];
-    let name = key;
-    if (tipe.public && !tipe.derived) {
-      if (tipe.mapped) {
-        name = tipe.mapped;
-      }
-      if (!params[key] && tipe.type !== "object" && tipe.type !== "array") {
-        const convertedType = typeFromModeltype(tipe);
-        delete convertedType.optional;
-        filter.keys[name] = {
-          type: "oneOf",
-          alternatives: [convertedType],
-          optional: true,
-        };
-        if (tipe.type === "string") {
-          filter.keys[name].alternatives.push({
-            type: "object",
-            keys: {
-              like: { type: "string" },
-            },
-          });
-        }
-        if (
-          tipe.type === "int" ||
-          tipe.type === "float" ||
-          tipe.type === "time"
-        ) {
-          filter.keys[name].alternatives.push({
-            type: "object",
-            keys: {
-              gt: { type: tipe.type, optional: true },
-              gte: { type: tipe.type, optional: true },
-              lt: { type: tipe.type, optional: true },
-              lte: { type: tipe.type, optional: true },
-            },
-          });
-        }
-      }
-    }
+const { createFilter } = require("./get/createFilter");
+const { createOrder } = require("./get/createOrder");
+
+const getTypeOfDottedPath = (path, type) => {
+  if (path.length === 0) {
+    return type.type;
   }
-  return filter;
+  const [first, ...rest] = path;
+  return getTypeOfDottedPath(rest, type.keys[first]);
 };
 
-const canBeOrdered = ({ type, alternatives, keys }, strict = false) => {
-  if (type === "oneOf") {
-    return alternatives.reduce((a, b) => a && canBeOrdered(b, true), true);
-  }
-  if (type === "object") {
-    return !!keys && !strict;
-  }
-  return type !== "array";
-};
-
-const addToOrder = (order, tipe, name) => {
-  const convertedType = typeFromModeltype(tipe);
-  delete convertedType.optional;
-
-  if (!canBeOrdered(tipe)) {
-    return;
-  }
-
-  switch (tipe.type) {
-    case "object":
-      for (const key in tipe.keys) {
-        const subtype = tipe.keys[key];
-        addToOrder(order, subtype, name + "." + key);
-      }
-      break;
-    case "array":
-      break;
+const typeToJSType = (type) => {
+  switch (type) {
+    case "id":
+    case "int":
+    case "float":
+      return "number";
+    case "boolean":
+    case "bool":
+      return "boolean";
     default:
-      order.items.keys.key.alternatives.push({
-        value: name,
-      });
+      return "string";
   }
-};
-
-const createOrder = (useModel) => {
-  const order = {
-    optional: true,
-    type: "array",
-    items: {
-      type: "object",
-      keys: {
-        key: {
-          type: "oneOf",
-          alternatives: [],
-        },
-        dir: {
-          type: "oneOf",
-          alternatives: [{ value: "ASC" }, { value: "DESC" }],
-        },
-      },
-    },
-  };
-  const [Models] = useModel();
-  const types = Models.getTypes();
-  for (const key in types) {
-    const tipe = types[key];
-
-    if (tipe.type === "array" || (tipe.type === "object" && !tipe.keys)) {
-      continue;
-    }
-    let name = key;
-    if (tipe.public && !tipe.derived) {
-      if (tipe.mapped) {
-        name = tipe.mapped;
-      }
-
-      addToOrder(order, tipe, name);
-    }
-  }
-  return order;
 };
 
 const generateGet = (
@@ -159,23 +62,45 @@ const generateGet = (
       const [Many] = useModel(dbs);
       if (filter) {
         const types = Many.getTypes();
-        filter = reverseMap(filter, types);
         for (const key in filter) {
           if (typeof filter[key] === "object") {
             const operants = Object.keys(filter[key]);
+            const [first, ...path] = key.split(".");
+            let mappedOperants = operants.map((op) => ({
+              op,
+              val: filter[key][op],
+            }));
+            if (path.length > 0) {
+              delete filter[key];
+              const convertedType = { keys: types };
+              const valType = getTypeOfDottedPath(
+                [first, ...path],
+                convertedType
+              );
+              mappedOperants = mappedOperants.map((op) => ({
+                op: "of",
+                val: {
+                  path,
+                  cast: typeToJSType(valType),
+                  value: op,
+                },
+              }));
+            }
+            if (operants.length === 0) {
+              delete filter[key];
+              continue;
+            }
             if (operants.length >= 2) {
-              filter[key] = {
+              filter[first] = {
                 op: "and",
-                val: operants.map((op) => ({ op, val: filter[key][op] })),
+                val: mappedOperants,
               };
             } else if (operants.length === 1) {
-              const op = operants[0];
-              filter[key] = { op, val: filter[key][op] };
-            } else {
-              delete filter[key];
+              filter[first] = mappedOperants[0];
             }
           }
         }
+        filter = reverseMap(filter, types);
       }
 
       if (order) {
@@ -214,5 +139,3 @@ const generateGet = (
 };
 
 module.exports = generateGet;
-module.exports.createFilter = createFilter;
-module.exports.createOrder = createOrder;
