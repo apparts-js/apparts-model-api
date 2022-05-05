@@ -89,6 +89,11 @@ describe("filter api type", () => {
           optional: true,
           type: "oneOf",
         },
+        "object.nestedOneOfValues": {
+          alternatives: [{ value: 1 }, { value: 2 }],
+          optional: true,
+          type: "oneOf",
+        },
       },
       optional: true,
       type: "object",

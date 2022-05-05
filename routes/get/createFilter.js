@@ -7,7 +7,7 @@ const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
   if (type === "object") {
     return !!keys && !strict;
   }
-  return type !== "array" && type !== undefined;
+  return type !== "array" && (strict || type !== undefined);
 };
 
 const addBaseTypeFilter = (filter, tipes, name) => {

@@ -44,6 +44,15 @@ const types = {
         type: "oneOf",
         alternatives: [{ type: "string" }, { type: "object", keys: {} }],
       },
+      nestedOneOfValues: {
+        optional: true,
+        type: "oneOf",
+        alternatives: [{ value: 1 }, { value: 2 }],
+      },
+      value: {
+        optional: true,
+        value: 2,
+      },
     },
     public: true,
   },
