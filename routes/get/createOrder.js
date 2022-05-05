@@ -7,7 +7,7 @@ const canBeOrdered = ({ type, alternatives, keys }, strict = false) => {
   if (type === "object") {
     return !!keys && !strict;
   }
-  return type !== "array";
+  return type !== "array" && type !== undefined;
 };
 
 const addToOrder = (order, tipe, name) => {
