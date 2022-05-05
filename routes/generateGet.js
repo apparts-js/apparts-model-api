@@ -80,6 +80,11 @@ const createOrder = (useModel) => {
   const types = Models.getTypes();
   for (const key in types) {
     const tipe = types[key];
+
+    if (tipe.type === "object" || tipe.type === "array") {
+      continue;
+    }
+
     let name = key;
     if (tipe.public && !tipe.derived) {
       if (tipe.mapped) {

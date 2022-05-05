@@ -659,6 +659,36 @@ describe("order api type", () => {
       type: "array",
     });
   });
+  test("Should not include objects, arrays", async () => {
+    expect(createOrder(useAdvancedModel)).toStrictEqual({
+      items: {
+        keys: {
+          dir: {
+            alternatives: [
+              {
+                value: "ASC",
+              },
+              {
+                value: "DESC",
+              },
+            ],
+            type: "oneOf",
+          },
+          key: {
+            alternatives: [
+              {
+                value: "id",
+              },
+            ],
+            type: "oneOf",
+          },
+        },
+        type: "object",
+      },
+      optional: true,
+      type: "array",
+    });
+  });
 });
 
 describe("Title and description", () => {
