@@ -2,69 +2,74 @@ const { createFilter } = require("./createFilter");
 const { useModel } = require("../../tests/model.js");
 const { useAdvancedModel } = require("../../tests/advancedmodel.js");
 
+const filterAlts = (alts) => ({
+  alternatives: alts,
+  optional: true,
+  type: "oneOf",
+});
+
 describe("filter api type", () => {
-  const numberAlternatives = {
-    alternatives: [
-      {
-        type: "int",
-      },
-      {
-        type: "object",
-        keys: {
-          gt: {
-            optional: true,
-            type: "int",
-          },
-          gte: {
-            optional: true,
-            type: "int",
-          },
-          lt: {
-            optional: true,
-            type: "int",
-          },
-          lte: {
-            optional: true,
-            type: "int",
-          },
+  const numberAlternatives = [
+    {
+      type: "int",
+    },
+    {
+      type: "object",
+      keys: {
+        gt: {
+          optional: true,
+          type: "int",
+        },
+        gte: {
+          optional: true,
+          type: "int",
+        },
+        lt: {
+          optional: true,
+          type: "int",
+        },
+        lte: {
+          optional: true,
+          type: "int",
         },
       },
-    ],
-    optional: true,
-    type: "oneOf",
-  };
-  const idAlternatives = {
-    alternatives: [
-      {
-        type: "id",
-      },
-    ],
-    optional: true,
-    type: "oneOf",
-  };
-  const stringAlternatives = {
-    alternatives: [
-      {
-        type: "string",
-      },
-      {
-        keys: {
-          like: {
-            type: "string",
-          },
+    },
+  ];
+  const idAlternatives = [
+    {
+      type: "id",
+    },
+  ];
+  const stringAlternatives = [
+    {
+      type: "string",
+    },
+    {
+      keys: {
+        like: {
+          type: "string",
         },
-        type: "object",
       },
-    ],
-    optional: true,
-    type: "oneOf",
-  };
+      type: "object",
+    },
+  ];
+  const optionalAlternatives = [
+    {
+      type: "object",
+      keys: {
+        exists: { type: "boolean" },
+      },
+    },
+  ];
   test("Should not include derived types", async () => {
     expect(createFilter("", useModel)).toStrictEqual({
       keys: {
-        id: idAlternatives,
-        optionalVal: stringAlternatives,
-        someNumber: numberAlternatives,
+        id: filterAlts(idAlternatives),
+        optionalVal: filterAlts([
+          ...optionalAlternatives,
+          ...stringAlternatives,
+        ]),
+        someNumber: filterAlts(numberAlternatives),
       },
       optional: true,
       type: "object",
@@ -73,27 +78,29 @@ describe("filter api type", () => {
   test("Should not include arrays, correctly show objects", async () => {
     expect(createFilter("", useAdvancedModel)).toStrictEqual({
       keys: {
-        id: idAlternatives,
-        "object.a": numberAlternatives,
-        "object.bcd": stringAlternatives,
-        "object.nestedObj.inner": stringAlternatives,
-        "object.nestedOneOf": {
-          alternatives: [
-            {
-              type: "string",
-            },
-            {
-              type: "int",
-            },
-          ],
-          optional: true,
-          type: "oneOf",
-        },
-        "object.nestedOneOfValues": {
-          alternatives: [{ value: 1 }, { value: 2 }],
-          optional: true,
-          type: "oneOf",
-        },
+        id: filterAlts(idAlternatives),
+        "object.a": filterAlts(numberAlternatives),
+        "object.bcd": filterAlts(stringAlternatives),
+        "object.nestedObj": filterAlts(optionalAlternatives),
+        "object.nestedObj.inner": filterAlts(stringAlternatives),
+        "object.nestedArray": filterAlts(optionalAlternatives),
+        "object.nestedObjValues": filterAlts(optionalAlternatives),
+        "object.nestedOneOf": filterAlts([
+          ...optionalAlternatives,
+          {
+            type: "string",
+          },
+          {
+            type: "int",
+          },
+        ]),
+        "object.nestedOneOfWithObj": filterAlts(optionalAlternatives),
+        "object.nestedOneOfValues": filterAlts([
+          ...optionalAlternatives,
+          { value: 1 },
+          { value: 2 },
+        ]),
+        "object.value": filterAlts(optionalAlternatives),
       },
       optional: true,
       type: "object",

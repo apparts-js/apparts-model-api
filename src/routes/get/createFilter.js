@@ -10,19 +10,32 @@ const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
   return type !== "array" && (strict || type !== undefined);
 };
 
-const addBaseTypeFilter = (filter, tipes, name) => {
-  filter.keys[name] = {
-    type: "oneOf",
-    alternatives: tipes,
-    optional: true,
-  };
-};
-
 const addToFilter = (filter, tipe, name) => {
   const convertedType = typeFromModeltype(tipe);
   delete convertedType.optional;
 
-  if (!canBeFiltered(tipe)) {
+  const typeCanBeFiltered = canBeFiltered(tipe);
+
+  if (!tipe.optional && !typeCanBeFiltered) {
+    return;
+  }
+  filter.keys[name] = {
+    type: "oneOf",
+    alternatives: [],
+    optional: true,
+  };
+  const filterList = filter.keys[name].alternatives;
+
+  if (tipe.optional) {
+    filterList.push({
+      type: "object",
+      keys: {
+        exists: { type: "boolean" },
+      },
+    });
+  }
+
+  if (!typeCanBeFiltered) {
     return;
   }
 
@@ -34,11 +47,10 @@ const addToFilter = (filter, tipe, name) => {
       }
       break;
     case "oneOf":
-      addBaseTypeFilter(filter, tipe.alternatives, name);
+      filterList.push(...tipe.alternatives);
       break;
     case "string":
-      addBaseTypeFilter(filter, [convertedType], name);
-      filter.keys[name].alternatives.push({
+      filterList.push(convertedType, {
         type: "object",
         keys: {
           like: { type: "string" },
@@ -48,8 +60,7 @@ const addToFilter = (filter, tipe, name) => {
     case "int":
     case "float":
     case "time":
-      addBaseTypeFilter(filter, [convertedType], name);
-      filter.keys[name].alternatives.push({
+      filterList.push(convertedType, {
         type: "object",
         keys: {
           gt: { type: tipe.type, optional: true },
@@ -60,7 +71,7 @@ const addToFilter = (filter, tipe, name) => {
       });
       break;
     default:
-      addBaseTypeFilter(filter, [convertedType], name);
+      filterList.push(convertedType);
   }
 };
 
@@ -79,6 +90,11 @@ const createFilter = (prefix, useModel) => {
       if (!params[key]) {
         addToFilter(filter, tipe, name);
       }
+    }
+  }
+  for (const key in filter.keys) {
+    if (filter.keys[key].alternatives.length === 0) {
+      delete filter.keys[key];
     }
   }
   return filter;

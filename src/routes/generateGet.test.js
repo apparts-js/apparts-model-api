@@ -448,6 +448,46 @@ describe("Get", () => {
     expect(response2.status).toBe(200);
     checkType(response2, fName);
   });
+
+  it("should filter exists", async () => {
+    const responseExists = await request(app)
+      .get(
+        url("model", {
+          filter: formatFilter({ optionalVal: { exists: true } }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(
+      responseExists.body.reduce(
+        (a, { optionalVal }) => a && optionalVal !== null,
+        true
+      )
+    ).toBeTruthy();
+    expect(responseExists.body.length > 0).toBeTruthy();
+    expect(responseExists.status).toBe(200);
+    checkType(responseExists, fName);
+    const responseDoesNotExist = await request(app)
+      .get(
+        url("model", {
+          filter: formatFilter({ optionalVal: { exists: false } }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(
+      responseDoesNotExist.body.reduce(
+        (a, { optionalVal }) => a && optionalVal === undefined,
+        true
+      )
+    ).toBeTruthy();
+    expect(responseDoesNotExist.body.length > 0).toBeTruthy();
+    expect(responseDoesNotExist.status).toBe(200);
+    checkType(responseDoesNotExist, fName);
+
+    const { contents } = await new Models(getPool()).load({});
+    expect(contents.length).toBe(
+      responseDoesNotExist.body.length + responseExists.body.length
+    );
+  });
 });
 
 describe("Check authorization", () => {

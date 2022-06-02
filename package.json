@@ -34,9 +34,9 @@
     "@apparts/types": "^6.11.2"
   },
   "devDependencies": {
-    "@apparts/backend-test": "^1.2.0",
+    "@apparts/backend-test": "^2.0.4",
     "@apparts/config": "^1.0.6",
-    "@apparts/db": "^2.6.0",
+    "@apparts/db": "^3.5.0",
     "@apparts/error": "^1.0.3",
     "@apparts/model": "^4.5.0",
     "@apparts/types": "^6.11.2",
