@@ -4,6 +4,7 @@ const {
   nameFromPrefix,
   reverseMap,
   checkAuth,
+  createIdParam,
 } = require("./common");
 const { HttpError, fromThrows } = require("@apparts/error");
 const { prepauthTokenJWT } = require("@apparts/types");
@@ -68,7 +69,7 @@ const generatePost = (
       returns: [
         {
           status: 200,
-          type: "id",
+          ...createIdParam(useModel, idField),
         },
         {
           status: 400,
