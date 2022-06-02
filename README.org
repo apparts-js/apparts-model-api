@@ -3,7 +3,7 @@
 #+AUTHOR: Philipp Uhl
 
 Generate CRUDish API-endpoints for a model defined with the
-[[https://github.com/phuhl/apparts-model][@apparts/model]] package.
+[[https://github.com/apparts-js/apparts-model][@apparts/model]] package.
 
 * Installation
 
@@ -22,7 +22,7 @@ function.
   - =app : App= :: The express app
   - =model : function= :: A function that returns an array in
     the form of =[OneModel, ManyModel, NoneModel]= (as does the
-    =makeModel= function from [[https://github.com/phuhl/apparts-model][@apparts/model]] package).
+    =makeModel= function from [[https://github.com/apparts-js/apparts-model][@apparts/model]] package).
   - =routes : object= :: An object that contains options for the routes
     to be generated. If one of the keys is not present in the object,
     that route will not be generated. Possible keys are:
@@ -35,7 +35,7 @@ function.
     The values for each of these keys are objects, that can contain:
     - =access : (request, me) => boolean= :: A functions that defines
       access rights for the individual endpoint. It receives the same
-      parameters as a request handler from [[https://github.com/phuhl/apparts-types][@apparts/types]] receives. It
+      parameters as a request handler from [[https://github.com/apparts-js/apparts-types][@apparts/types]] receives. It
       returns a boolean, that decides, if access should be granted or
       not.
     - =title : string= :: A custom title for the documentation
