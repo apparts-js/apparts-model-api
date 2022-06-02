@@ -8,7 +8,14 @@ const { generateMethods } = require("./");
 
 const fName = "",
   auth = { get: { access: anybody } };
-const methods = generateMethods("/v/1/model", useModel, auth, "");
+const methods = generateMethods(
+  "/v/1/model",
+  useModel,
+  auth,
+  "",
+  undefined,
+  "id"
+);
 
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
@@ -35,6 +42,14 @@ CREATE TABLE advancedmodel (
   id SERIAL PRIMARY KEY,
   textarray text[],
   object json
+);
+CREATE TABLE strangeids (
+  id VARCHAR(8) PRIMARY KEY,
+  val INT NOT NULL
+);
+CREATE TABLE namedidmodel (
+  "specialId" SERIAL PRIMARY KEY,
+  val INT NOT NULL
 );`,
     ],
   });
@@ -46,6 +61,8 @@ const {
   AdvancedModel,
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
+const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
+const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
 
 const formatFilter = (a) => encodeURIComponent(JSON.stringify(a));
 
@@ -464,7 +481,14 @@ describe("get subresources", () => {
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useSubModel, auth, "");
+  const methods2 = generateMethods(
+    path,
+    useSubModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -530,7 +554,14 @@ describe("get advanced model", () => {
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useAdvancedModel, auth, "");
+  const methods2 = generateMethods(
+    path,
+    useAdvancedModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
 
   test("Should return model", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -645,17 +676,97 @@ describe("get advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateGet("model", useModel, {}, "").options;
+    const options1 = generateGet("model", useModel, {}, "", "id").options;
     const options2 = generateGet(
       "model",
       useModel,
       { title: "My title", description: "yay" },
-      ""
+      "",
+      "id"
     ).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Get Model");
     expect(options2.title).toBe("My title");
     expect(options2.description).toBe("yay");
+  });
+});
+
+describe("Ids of other format", () => {
+  const path = "/v/1/strangemodel";
+  addCrud({
+    prefix: path,
+    app,
+    model: useStangeIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+  const methods2 = generateMethods(
+    path,
+    useStangeIdModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
+
+  it("should get with other id format", async () => {
+    methods.get[fName] = methods2.get[fName];
+    const dbs = getPool();
+    await new StangeIdModel(dbs, {
+      id: "test1",
+      val: 1,
+    }).store();
+    const response = await request(app)
+      .get(url("strangemodel"))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject([
+      {
+        id: "test1",
+        val: 1,
+      },
+    ]);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
+  });
+});
+
+describe("Ids with different name", () => {
+  const path = "/v/1/namedid";
+  addCrud({
+    prefix: path,
+    app,
+    model: useNamedIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    idField: "specialId",
+  });
+  const methods2 = generateMethods(
+    path,
+    useNamedIdModel,
+    auth,
+    "",
+    undefined,
+    "specialId"
+  );
+
+  it("should put with named id", async () => {
+    methods.get[fName] = methods2.get[fName];
+    const dbs = getPool();
+    await new NamedIdModel(dbs, {
+      specialId: 1,
+      val: 1,
+    }).store();
+    const response = await request(app)
+      .get(url("namedid"))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject([
+      {
+        specialId: 1,
+        val: 1,
+      },
+    ]);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
   });
 });
 

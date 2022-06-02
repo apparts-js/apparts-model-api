@@ -37,9 +37,9 @@ const typeFromModeltype = (tipe) => {
   return res;
 };
 
-const createIdParam = (useModel) => {
+const createIdParam = (useModel, idField) => {
   const [Models] = useModel();
-  const idType = Models.getTypes().id;
+  const idType = Models.getTypes()[idField];
   return typeFromModeltype(idType);
 };
 

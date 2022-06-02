@@ -8,7 +8,14 @@ const { generateMethods } = require("./");
 
 const fName = "/:id",
   auth = { put: { access: anybody } };
-const methods = generateMethods("/v/1/model", useModel, auth, "");
+const methods = generateMethods(
+  "/v/1/model",
+  useModel,
+  auth,
+  "",
+  undefined,
+  "id"
+);
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "put",
@@ -52,7 +59,11 @@ CREATE TABLE strangeids (
   id VARCHAR(8) PRIMARY KEY,
   val INT NOT NULL
 );
-      `,
+
+CREATE TABLE namedidmodel (
+  "specialId" SERIAL PRIMARY KEY,
+  val INT NOT NULL
+);`,
     ],
     apiVersion: 1,
   });
@@ -68,6 +79,7 @@ const {
   ModelWithDefault,
 } = require("../tests/modelWithDefault.js");
 const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
+const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
 
 describe("Put", () => {
   const path = "/v/1/model";
@@ -493,12 +505,21 @@ describe("put advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generatePut("model", useModel, {}, "").options;
+    const options1 = generatePut(
+      "model",
+      useModel,
+      {},
+      "",
+      undefined,
+      "id"
+    ).options;
     const options2 = generatePut(
       "model",
       useModel,
       { title: "My title", description: "yay" },
-      ""
+      "",
+      undefined,
+      "id"
     ).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Alter Model");
@@ -516,7 +537,14 @@ describe("Ids of other format", () => {
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useStangeIdModel, auth, "");
+  const methods2 = generateMethods(
+    path,
+    useStangeIdModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
 
   it("should put with other id format", async () => {
     methods.put[fName] = methods2.put[fName];
@@ -536,6 +564,50 @@ describe("Ids of other format", () => {
     });
     expect(model2.content).toMatchObject({
       id: "test1",
+      val: 2,
+    });
+    checkType(response, fName);
+  });
+});
+
+describe("Ids with different name", () => {
+  const fName = "/:specialId";
+  const path = "/v/1/namedid";
+  addCrud({
+    prefix: path,
+    app,
+    model: useNamedIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    idField: "specialId",
+  });
+  const methods2 = generateMethods(
+    path,
+    useNamedIdModel,
+    auth,
+    "",
+    undefined,
+    "specialId"
+  );
+
+  it("should put with named id", async () => {
+    methods.put[fName] = methods2.put[fName];
+    const dbs = getPool();
+    const model1 = await new NamedIdModel(dbs, {
+      specialId: 1,
+      val: 1,
+    }).store();
+    const response = await request(app)
+      .put(url("namedid/" + model1.content.specialId))
+      .send({ val: 2 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toBe(1);
+    expect(response.status).toBe(200);
+    const model2 = await new NamedIdModel(dbs).load({
+      specialId: 1,
+    });
+    expect(model2.content).toMatchObject({
+      specialId: 1,
       val: 2,
     });
     checkType(response, fName);

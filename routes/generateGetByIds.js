@@ -11,13 +11,17 @@ const generateGetByIds = (
   prefix,
   useModel,
   { access: authF, title, description },
-  webtokenkey
+  webtokenkey,
+  idField
 ) => {
   const getF = prepauthTokenJWT(webtokenkey)(
     {
       params: {
         ...createParams(prefix, useModel),
-        ids: { type: "array", items: createIdParam(useModel) },
+        [idField + "s"]: {
+          type: "array",
+          items: createIdParam(useModel, idField),
+        },
       },
     },
     async (req, me) => {
@@ -25,7 +29,7 @@ const generateGetByIds = (
 
       const {
         dbs,
-        params: { ids, ...restParams },
+        params: { [idField + "s"]: ids, ...restParams },
       } = req;
 
       if (ids.length === 0) {
@@ -34,7 +38,7 @@ const generateGetByIds = (
 
       const [Many] = useModel(dbs);
       const res = new Many();
-      await res.load({ id: { op: "in", val: ids }, ...restParams });
+      await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
       await res.generateDerived();
       return res.getPublic();
     },

@@ -10,7 +10,7 @@ const fName = "";
 const path = "/v/1/model",
   auth = { post: anybody };
 
-const methods = generateMethods(path, useModel, auth, "");
+const methods = generateMethods(path, useModel, auth, "", undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "post",
@@ -50,6 +50,15 @@ CREATE TABLE advancedmodel (
   id SERIAL PRIMARY KEY,
   textarray text[],
   object json
+);
+
+CREATE TABLE strangeids (
+  id VARCHAR(8) PRIMARY KEY,
+  val INT NOT NULL
+);
+CREATE TABLE namedidmodel (
+  "specialId" SERIAL PRIMARY KEY,
+  val INT NOT NULL
 );`,
     ],
   });
@@ -65,6 +74,8 @@ const {
   useModelWithDefault,
   ModelWithDefault,
 } = require("../tests/modelWithDefault.js");
+const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
+const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
 
 describe("Post", () => {
   const path = "/v/1/model";
@@ -406,17 +417,103 @@ describe("post advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generatePost("model", useModel, {}, "").options;
+    const options1 = generatePost(
+      "model",
+      useModel,
+      {},
+      "",
+      undefined,
+      "id"
+    ).options;
     const options2 = generatePost(
       "model",
       useModel,
       { title: "My title", description: "yay" },
-      ""
+      "",
+      undefined,
+      "id"
     ).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Create Model");
     expect(options2.title).toBe("My title");
     expect(options2.description).toBe("yay");
+  });
+});
+
+describe("Ids of other format", () => {
+  const path = "/v/1/strangemodel";
+  addCrud({
+    prefix: path,
+    app,
+    model: useStangeIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+  const methods2 = generateMethods(
+    path,
+    useStangeIdModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
+
+  it("should post with other id format", async () => {
+    methods.post[fName] = methods2.post[fName];
+    const dbs = getPool();
+    const response = await request(app)
+      .post(url("strangemodel"))
+      .send({ id: "test1", val: 2 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toBe("test1");
+    expect(response.status).toBe(200);
+    const model2 = await new StangeIdModel(dbs).load({
+      id: "test1",
+    });
+    expect(model2.content).toMatchObject({
+      id: "test1",
+      val: 2,
+    });
+    checkType(response, fName);
+  });
+});
+
+describe("Ids with different name", () => {
+  const path = "/v/1/namedid";
+  addCrud({
+    prefix: path,
+    app,
+    model: useNamedIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    idField: "specialId",
+  });
+  const methods2 = generateMethods(
+    path,
+    useNamedIdModel,
+    auth,
+    "",
+    undefined,
+    "specialId"
+  );
+
+  it("should put with named id", async () => {
+    methods.post[fName] = methods2.post[fName];
+    const dbs = getPool();
+    const response = await request(app)
+      .post(url("namedid"))
+      .send({ val: 2 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toBe(1);
+    expect(response.status).toBe(200);
+    const model2 = await new NamedIdModel(dbs).load({
+      specialId: 1,
+    });
+    expect(model2.content).toMatchObject({
+      specialId: 1,
+      val: 2,
+    });
+    checkType(response, fName);
   });
 });
 

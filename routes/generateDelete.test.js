@@ -8,7 +8,14 @@ const { generateMethods } = require("./");
 
 const fName = "/:ids",
   auth = { delete: anybody };
-const methods = generateMethods("/v/1/model", useModel, auth, "");
+const methods = generateMethods(
+  "/v/1/model",
+  useModel,
+  auth,
+  "",
+  undefined,
+  "id"
+);
 
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
@@ -40,7 +47,10 @@ CREATE TABLE strangeids (
   id VARCHAR(8) PRIMARY KEY,
   val INT NOT NULL
 );
-    `,
+CREATE TABLE namedidmodel (
+  "specialId" SERIAL PRIMARY KEY,
+  val INT NOT NULL
+);`,
     ],
     apiVersion: 1,
   });
@@ -53,6 +63,7 @@ const {
   useAdvancedModel,
 } = require("../tests/advancedmodel.js");
 const { StangeIdModels, useStangeIdModel } = require("../tests/strangeids.js");
+const { NamedIdModels, useNamedIdModel } = require("../tests/namedIdModel.js");
 
 describe("Delete", () => {
   const path = "/v/1/model";
@@ -271,12 +282,21 @@ describe("delete advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateDelete("model", useModel, {}, "").options;
+    const options1 = generateDelete(
+      "model",
+      useModel,
+      {},
+      "",
+      undefined,
+      "id"
+    ).options;
     const options2 = generateDelete(
       "model",
       useModel,
       { title: "My title", description: "yay" },
-      ""
+      "",
+      undefined,
+      "id"
     ).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Delete Model");
@@ -294,7 +314,14 @@ describe("Ids of other format", () => {
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useStangeIdModel, auth, "");
+  const methods2 = generateMethods(
+    path,
+    useStangeIdModel,
+    auth,
+    "",
+    undefined,
+    "id"
+  );
 
   it("should delete with other id format", async () => {
     methods.delete[fName] = methods2.delete[fName];
@@ -318,6 +345,56 @@ describe("Ids of other format", () => {
     expect(model2.contents).toMatchObject([
       {
         id: "test2",
+        val: 2,
+      },
+    ]);
+    expect(model2.contents.length).toBe(1);
+    checkType(response, fName);
+  });
+});
+
+describe("Ids with different name", () => {
+  const fName = "/:specialIds";
+  const path = "/v/1/namedid";
+  addCrud({
+    prefix: path,
+    app,
+    model: useNamedIdModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    idField: "specialId",
+  });
+  const methods2 = generateMethods(
+    path,
+    useNamedIdModel,
+    auth,
+    "",
+    undefined,
+    "specialId"
+  );
+
+  it("should delete with named id", async () => {
+    methods.delete[fName] = methods2.delete[fName];
+    const dbs = getPool();
+    await new NamedIdModels(dbs, [
+      {
+        specialId: 1,
+        val: 1,
+      },
+      {
+        specialId: 2,
+        val: 2,
+      },
+    ]).store();
+    const response = await request(app)
+      .delete(url("namedid/" + JSON.stringify([1])))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toBe("ok");
+    expect(response.status).toBe(200);
+    const model2 = await new NamedIdModels(dbs).load({});
+    expect(model2.contents).toMatchObject([
+      {
+        specialId: 2,
         val: 2,
       },
     ]);

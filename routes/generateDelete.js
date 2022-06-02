@@ -12,13 +12,18 @@ const generateDelete = (
   prefix,
   useModel,
   { access: authF, title, description },
-  webtokenkey
+  webtokenkey,
+  trackChanges,
+  idField
 ) => {
   const deleteF = prepauthTokenJWT(webtokenkey)(
     {
       params: {
         ...createParams(prefix, useModel),
-        ids: { type: "array", items: createIdParam(useModel) },
+        [idField + "s"]: {
+          type: "array",
+          items: createIdParam(useModel, idField),
+        },
       },
     },
     async (req, me) => {
@@ -26,7 +31,7 @@ const generateDelete = (
 
       const {
         dbs,
-        params: { ids, ...restParams },
+        params: { [idField + "s"]: ids, ...restParams },
       } = req;
 
       if (ids.length === 0) {
@@ -35,7 +40,7 @@ const generateDelete = (
 
       const [Many] = useModel(dbs);
       const res = new Many();
-      await res.load({ id: { op: "in", val: ids }, ...restParams });
+      await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
       await fromThrows(
         () => res.deleteAll(),
         IsReference,
@@ -45,7 +50,7 @@ const generateDelete = (
             "Could not delete as other items reference this item"
           )
       );
-
+      trackChanges && (await trackChanges(me, res.contents, null));
       return "ok";
     },
     {

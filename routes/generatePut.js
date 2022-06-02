@@ -14,13 +14,15 @@ const generatePut = (
   prefix,
   useModel,
   { access: authF, title, description },
-  webtokenkey
+  webtokenkey,
+  trackChanges,
+  idField
 ) => {
   const putF = prepauthTokenJWT(webtokenkey)(
     {
       params: {
         ...createParams(prefix, useModel),
-        id: createIdParam(useModel),
+        [idField]: createIdParam(useModel, idField),
       },
       body: {
         ...createBody(prefix, useModel),
@@ -84,6 +86,7 @@ const generatePut = (
         NotFound,
         () => HttpError.notFound(nameFromPrefix(prefix))
       );
+      const contentBefore = model.content;
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
 
       Object.keys(types)
@@ -98,7 +101,8 @@ const generatePut = (
           model.content = model.getDefaults([model.content], key)[0];
         });
       await model.update();
-      return model.content.id;
+      trackChanges && (await trackChanges(me, contentBefore, model.content));
+      return model.content[idField];
     },
     {
       title: title || "Alter " + nameFromPrefix(prefix),
@@ -106,7 +110,7 @@ const generatePut = (
       returns: [
         {
           status: 200,
-          ...createIdParam(useModel),
+          ...createIdParam(useModel, idField),
         },
         {
           status: 400,

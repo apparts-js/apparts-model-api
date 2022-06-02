@@ -5,8 +5,23 @@ const generatePut = require("./generatePut");
 const generatePatch = require("./generatePatch");
 const generateDelete = require("./generateDelete");
 
-const addCrud = ({ prefix, app, model, routes, webtokenkey }) => {
-  const methods = generateMethods(prefix, model, routes, webtokenkey);
+const addCrud = ({
+  prefix,
+  app,
+  model,
+  routes,
+  webtokenkey,
+  trackChanges,
+  idField = "id",
+}) => {
+  const methods = generateMethods(
+    prefix,
+    model,
+    routes,
+    webtokenkey,
+    trackChanges,
+    idField
+  );
 
   Object.keys(methods).forEach((method) =>
     Object.keys(methods[method]).forEach((route) =>
@@ -15,39 +30,65 @@ const addCrud = ({ prefix, app, model, routes, webtokenkey }) => {
   );
 };
 
-const generateMethods = (prefix, useModel, routes, webtokenkey) => {
+const generateMethods = (
+  prefix,
+  useModel,
+  routes,
+  webtokenkey,
+  trackChanges,
+  idField
+) => {
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
     res.get[""] = generateGet(prefix, useModel, routes.get, webtokenkey);
   }
   if (routes.getByIds) {
-    res.get["/:ids"] = generateGetByIds(
+    res.get[`/:${idField}s`] = generateGetByIds(
       prefix,
       useModel,
       routes.getByIds,
-      webtokenkey
+      webtokenkey,
+      idField
     );
   }
   if (routes.post) {
-    res.post[""] = generatePost(prefix, useModel, routes.post, webtokenkey);
+    res.post[""] = generatePost(
+      prefix,
+      useModel,
+      routes.post,
+      webtokenkey,
+      trackChanges,
+      idField
+    );
   }
   if (routes.put) {
-    res.put["/:id"] = generatePut(prefix, useModel, routes.put, webtokenkey);
+    res.put["/:" + idField] = generatePut(
+      prefix,
+      useModel,
+      routes.put,
+      webtokenkey,
+      trackChanges,
+      idField
+    );
   }
   if (routes.patch) {
-    res.patch["/:id"] = generatePatch(
+    res.patch["/:" + idField] = generatePatch(
       prefix,
       useModel,
       routes.patch,
-      webtokenkey
+      webtokenkey,
+      trackChanges,
+      idField
     );
   }
   if (routes.delete) {
-    res.delete["/:ids"] = generateDelete(
+    res.delete["/:" + idField + "s"] = generateDelete(
       prefix,
       useModel,
       routes.delete,
-      webtokenkey
+      webtokenkey,
+      trackChanges,
+      idField
     );
   }
   return res;

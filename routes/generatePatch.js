@@ -33,13 +33,15 @@ const generatePatch = (
   prefix,
   useModel,
   { access: authF, title, description },
-  webtokenkey
+  webtokenkey,
+  trackChanges,
+  idField
 ) => {
   const patchF = prepauthTokenJWT(webtokenkey)(
     {
       params: {
         ...createParams(prefix, useModel),
-        id: createIdParam(useModel),
+        [idField]: createIdParam(useModel, idField),
       },
       body: {
         ...makePatchBody(createBody(prefix, useModel)),
@@ -100,9 +102,11 @@ const generatePatch = (
         NotFound,
         () => HttpError.notFound(nameFromPrefix(prefix))
       );
+      const contentBefore = model.content;
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
       await model.update();
-      return model.content.id;
+      trackChanges && (await trackChanges(me, contentBefore, model.content));
+      return model.content[idField];
     },
     {
       title: title || "Patch " + nameFromPrefix(prefix),
@@ -110,7 +114,7 @@ const generatePatch = (
       returns: [
         {
           status: 200,
-          ...createIdParam(useModel),
+          ...createIdParam(useModel, idField),
         },
         {
           status: 400,

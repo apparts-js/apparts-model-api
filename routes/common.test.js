@@ -16,7 +16,9 @@ const methods = generateMethods(
     put: anybody,
     delete: anybody,
   },
-  ""
+  "",
+  undefined,
+  "id"
 );
 
 const { app, error, checkType } = require("@apparts/backend-test")({

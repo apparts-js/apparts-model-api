@@ -14,7 +14,9 @@ const generatePost = (
   prefix,
   useModel,
   { access: authF, title, description },
-  webtokenkey
+  webtokenkey,
+  trackChanges,
+  idField
 ) => {
   const postF = prepauthTokenJWT(webtokenkey)(
     {
@@ -61,7 +63,8 @@ const generatePost = (
         DoesExist,
         () => new HttpError(412, "Could not create item because it exists")
       );
-      return model.content.id;
+      trackChanges && (await trackChanges(me, null, model.content));
+      return model.content[idField];
     },
     {
       title: title || "Create " + nameFromPrefix(prefix),
