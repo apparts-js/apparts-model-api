@@ -42,9 +42,11 @@ function.
     - =description : string= :: A custom description for the
       documentation
   - =idField?: string= :: (optional, default value is =id=) When using a
-    field for identifying, named different than "id", you must specify
+    field for identifying, named different than =id=, you must specify
     the fields name using this parameter. This also changes the routes
-    to use the idField's value instead of "id" (e.g. =GET /v/1/user/:customIds=).
+    to use the =idField='s value instead of =id= and =(idField + 's')= for
+    the pluralizations of =id= (e.g. =GET /v/1/user/:customIds= for 
+    =idField= of =customId=).
   - =webtokenkey : string= :: The key to be used for the JWT
     verification (done by =prepauth.prepauthTokenJWT= from
     [[https://github.com/phuhl/apparts-types][@apparts/types]])
