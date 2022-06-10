@@ -8,9 +8,15 @@ const or =
   async (...params) => {
     let counter = fs.length,
       done = false;
-    return new Promise((res) =>
+    return new Promise((res, rej) =>
       fs.forEach(async (f) => {
-        const result = await f(...params);
+        let result;
+        try {
+          result = await f(...params);
+        } catch (e) {
+          done = true;
+          rej(e);
+        }
         if (result && !done) {
           done = true;
           res(true);

@@ -1,4 +1,4 @@
-const { and, andS, or, orS, anybody } = require("./accessLogic");
+const { and, andS, or, orS } = require("./accessLogic");
 
 describe("or", () => {
   it("should let in based on or", async () => {
@@ -25,7 +25,9 @@ describe("or", () => {
         () => false
       )()
     ).toBe(false);
+  });
 
+  it("should await auth function results", async () => {
     expect(
       await or(
         async () => false,
@@ -40,6 +42,31 @@ describe("or", () => {
         async () => false
       )()
     ).toBe(true);
+  });
+
+  it("should handle promise rejections", async () => {
+    expect(
+      await or(
+        async () => true,
+        async () => {
+          throw new Error("ups");
+        },
+        async () => {
+          throw new Error("ups");
+        }
+      )()
+    ).toBe(true);
+
+    await expect(() =>
+      or(
+        async () => {
+          throw new Error("ups");
+        },
+        async () => {
+          throw new Error("ups");
+        }
+      )()
+    ).rejects.toThrow("ups");
   });
 });
 
@@ -68,7 +95,9 @@ describe("and", () => {
         () => true
       )()
     ).toBe(true);
+  });
 
+  it("should await auth function results", async () => {
     expect(
       await and(
         async () => true,
@@ -83,6 +112,21 @@ describe("and", () => {
         async () => true
       )()
     ).toBe(true);
+  });
+
+  it("should handle promise rejections", async () => {
+    await expect(() =>
+      and(
+        async () => true,
+        async () => {
+          throw new Error("ups");
+        },
+        async () => false,
+        async () => {
+          throw new Error("ups");
+        }
+      )()
+    ).rejects.toThrow("ups");
   });
 });
 
@@ -111,7 +155,9 @@ describe("orS", () => {
         () => false
       )()
     ).toBe(false);
+  });
 
+  it("should await auth function results", async () => {
     expect(
       await orS(
         async () => false,
@@ -126,6 +172,31 @@ describe("orS", () => {
         async () => false
       )()
     ).toBe(true);
+  });
+  it("should handle promise rejections", async () => {
+    expect(
+      await or(
+        async () => true,
+        async () => {
+          throw new Error("ups");
+        },
+        async () => {
+          throw new Error("ups");
+        }
+      )()
+    ).toBe(true);
+
+    await expect(() =>
+      orS(
+        async () => {
+          throw new Error("ups");
+        },
+        async () => {
+          throw new Error("ups");
+        },
+        async () => true
+      )()
+    ).rejects.toThrow("ups");
   });
 });
 
@@ -154,7 +225,9 @@ describe("andS", () => {
         () => true
       )()
     ).toBe(true);
+  });
 
+  it("should await auth function results", async () => {
     expect(
       await andS(
         async () => true,
@@ -169,5 +242,19 @@ describe("andS", () => {
         async () => true
       )()
     ).toBe(true);
+  });
+  it("should handle promise rejections", async () => {
+    await expect(() =>
+      andS(
+        async () => true,
+        async () => {
+          throw new Error("ups");
+        },
+        async () => false,
+        async () => {
+          throw new Error("ups");
+        }
+      )()
+    ).rejects.toThrow("ups");
   });
 });
