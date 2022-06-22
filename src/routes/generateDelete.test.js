@@ -251,6 +251,44 @@ describe("Delete subresources", () => {
   });
 });
 
+describe("delete subresources with optional relation", () => {
+  const path = "/v/1/:optionalVal/model";
+  addCrud({
+    prefix: path,
+    app,
+    model: useModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+
+  test("Should delete a subresouce", async () => {
+    // This makes allChecked (at the end) think, these tests operate
+    // on the same function as the ones from above. I can't let them
+    // run on the same function as the returns are slightly different.
+    // Little hacky but I don't want to rewrite all tests.
+    methods.get[fName] = methods2.get[fName];
+
+    const dbs = getPool();
+    const submodel = await new Model(dbs, {
+      optionalVal: "test123",
+      mapped: 1221,
+    }).store();
+
+    const response = await request(app)
+      .delete(url(`test123/model/${JSON.stringify([submodel.content.id])}`))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe("ok");
+    await new NoModel(dbs, {
+      id: submodel.content.id,
+      optionalVal: "test123",
+      mapped: 1221,
+    });
+    checkType(response, fName);
+  });
+});
+
 describe("delete advanced model", () => {
   const path = "/v/1/advancedmodel";
   addCrud({

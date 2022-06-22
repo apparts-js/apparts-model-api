@@ -467,6 +467,45 @@ describe("Put subresources", () => {
   });
 });
 
+describe("put subresources with optional relation", () => {
+  const path = "/v/1/:optionalVal/model";
+  addCrud({
+    prefix: path,
+    app,
+    model: useModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+
+  test("Should put a subresouce", async () => {
+    // This makes allChecked (at the end) think, these tests operate
+    // on the same function as the ones from above. I can't let them
+    // run on the same function as the returns are slightly different.
+    // Little hacky but I don't want to rewrite all tests.
+    methods.get[fName] = methods2.get[fName];
+
+    const dbs = getPool();
+    const submodel = await new Model(dbs, {
+      optionalVal: "test123",
+      mapped: 1221,
+    }).store();
+
+    const response = await request(app)
+      .put(url(`test123/model/${submodel.content.id}`))
+      .send({ someNumber: 1222 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(submodel.content.id);
+    checkType(response, fName);
+    const modelNew = await new Model(dbs).loadById(submodel.content.id);
+    expect(modelNew.content).toMatchObject({
+      mapped: 1222,
+      optionalVal: null,
+    });
+  });
+});
+
 describe("put advanced model", () => {
   const path = "/v/1/advancedmodel";
 

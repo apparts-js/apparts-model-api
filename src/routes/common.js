@@ -78,9 +78,9 @@ const createBody = (prefix, useModel) => {
       }
       if (!params[key]) {
         bodyParams[name] = typeFromModeltype(tipe);
-      }
-      if (tipe.optional === true || tipe.default !== undefined) {
-        bodyParams[name].optional = true;
+        if (tipe.optional === true || tipe.default !== undefined) {
+          bodyParams[name].optional = true;
+        }
       }
     }
   }

@@ -491,4 +491,25 @@ describe("createBody", () => {
       val: { type: "string" },
     });
   });
+
+  test("Should handle optional params when creating body", async () => {
+    const [Models, Model, NoModel] = _useModel(
+      {
+        id: {
+          type: "id",
+          public: true,
+        },
+        val: {
+          type: "string",
+          public: true,
+          optinoal: true,
+        },
+      },
+      "modelWithReadOnly"
+    );
+    const { useMyModel } = makeModel("MyModel", [Models, Model, NoModel]);
+    expect(createBody(":val", useMyModel)).toStrictEqual({
+      id: { type: "id" },
+    });
+  });
 });

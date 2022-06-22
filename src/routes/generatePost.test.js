@@ -383,6 +383,36 @@ describe("Post subresources", () => {
   });
 });
 
+describe("Post subresources with optional relation", () => {
+  const path = "/v/1/:optionalVal/model";
+  addCrud({
+    prefix: path,
+    app,
+    model: useModel,
+    routes: auth,
+    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+
+  test("Should post a subresouce", async () => {
+    const dbs = getPool();
+    const response = await request(app)
+      .post(url(`test123/model`))
+      .send({
+        someNumber: 1221,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+
+    const submodel = await new Model(dbs).load({ id: response.body });
+    expect(submodel.content).toMatchObject({
+      id: submodel.content.id,
+      optionalVal: "test123",
+      mapped: 1221,
+    });
+    checkType(response, fName);
+  });
+});
+
 describe("post advanced model", () => {
   const path = "/v/1/advancedmodel";
   addCrud({
