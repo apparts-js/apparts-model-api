@@ -30,7 +30,7 @@
     "url": "https://github.com/phuhl/apparts-model-api/issues"
   },
   "peerDependencies": {
-    "@apparts/model": "^4.2.0",
+    "@apparts/model": "^4.5.0",
     "@apparts/types": "^6.11.2"
   },
   "devDependencies": {
