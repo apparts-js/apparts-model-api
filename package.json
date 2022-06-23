@@ -7,7 +7,7 @@
     "testOne": "jest",
     "test": "jest --watch --detectOpenHandles",
     "testCoverage": "jest --coverage",
-    "prepublishOnly": "npm run clean && npm run ci && npm run build",
+    "prepublishOnly": "npm run ci && npm run clean && npm run build",
     "build": "",
     "clean": "rimraf coverage build tmp",
     "ci": "npm ci && npm run ci:prettier && npm run ci:eslint && npm run ci:test",
