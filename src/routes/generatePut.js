@@ -87,7 +87,12 @@ const generatePut = (
         () => HttpError.notFound(nameFromPrefix(prefix))
       );
       const contentBefore = model.content;
-      model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
+      model.content = {
+        ...model.content,
+        ...body,
+        ...optionalsToBeRemoved,
+        ...params,
+      };
 
       Object.keys(types)
         .filter(

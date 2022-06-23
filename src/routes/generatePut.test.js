@@ -501,7 +501,7 @@ describe("put subresources with optional relation", () => {
     const modelNew = await new Model(dbs).loadById(submodel.content.id);
     expect(modelNew.content).toMatchObject({
       mapped: 1222,
-      optionalVal: null,
+      optionalVal: "test123",
     });
   });
 });
