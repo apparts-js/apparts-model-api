@@ -7,7 +7,7 @@
     "testOne": "jest",
     "test": "jest --watch --detectOpenHandles",
     "testCoverage": "jest --coverage",
-    "prepublishOnly": "npm run clean && npm ci  && npm run ci && npm run build",
+    "prepublishOnly": "npm run clean && npm run ci && npm run build",
     "build": "",
     "clean": "rimraf coverage build tmp",
     "ci": "npm ci && npm run ci:prettier && npm run ci:eslint && npm run ci:test",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@apparts/backend-test": "^2.0.4",
-    "@apparts/config": "^1.0.6",
+    "@apparts/config": "^1.1.0",
     "@apparts/db": "^3.5.0",
     "@apparts/error": "^1.0.3",
     "@apparts/model": "^4.5.0",
