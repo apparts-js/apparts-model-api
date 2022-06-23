@@ -47,5 +47,9 @@
     "prettier": "^2.5.1",
     "rimraf": "^3.0.2"
   },
-  "homepage": "https://github.com/phuhl/apparts-model-api#readme"
+  "homepage": "https://github.com/phuhl/apparts-model-api#readme",
+  "volta": {
+    "node": "18.1.0",
+    "npm": "8.5.5"
+  }
 }
