@@ -18,6 +18,9 @@ const generatePut = (
   trackChanges,
   idField
 ) => {
+  if (!authF) {
+    throw new Error(`Route (put) ${prefix} has no access control function.`);
+  }
   const putF = prepauthTokenJWT(webtokenkey)(
     {
       params: {

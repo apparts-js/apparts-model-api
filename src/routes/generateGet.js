@@ -39,6 +39,9 @@ const generateGet = (
   { access: authF, title, description },
   webtokenkey
 ) => {
+  if (!authF) {
+    throw new Error(`Route (get) ${prefix} has no access control function.`);
+  }
   const getF = prepauthTokenJWT(webtokenkey)(
     {
       query: {

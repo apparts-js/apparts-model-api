@@ -16,6 +16,9 @@ const generateDelete = (
   trackChanges,
   idField
 ) => {
+  if (!authF) {
+    throw new Error(`Route (delete) ${prefix} has no access control function.`);
+  }
   const deleteF = prepauthTokenJWT(webtokenkey)(
     {
       params: {

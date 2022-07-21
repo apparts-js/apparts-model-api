@@ -14,6 +14,11 @@ const generateGetByIds = (
   webtokenkey,
   idField
 ) => {
+  if (!authF) {
+    throw new Error(
+      `Route (getByIds) ${prefix} has no access control function.`
+    );
+  }
   const getF = prepauthTokenJWT(webtokenkey)(
     {
       params: {

@@ -97,6 +97,12 @@ describe("Put", () => {
     checkType
   );
 
+  it("should reject without access function", async () => {
+    expect(() =>
+      generatePut("model", useModel, {}, "", undefined, "id")
+    ).toThrow("Route (put) model has no access control function.");
+  });
+
   test("Put with too few values", async () => {
     const dbs = getPool();
     const model = await new Model(dbs, { mapped: 7 }).store();
@@ -547,7 +553,7 @@ describe("Title and description", () => {
     const options1 = generatePut(
       "model",
       useModel,
-      {},
+      { access: anybody },
       "",
       undefined,
       "id"
@@ -555,7 +561,7 @@ describe("Title and description", () => {
     const options2 = generatePut(
       "model",
       useModel,
-      { title: "My title", description: "yay" },
+      { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
       "id"

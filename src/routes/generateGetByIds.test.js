@@ -78,6 +78,12 @@ describe("getByIds", () => {
 
   checkJWT(() => request(app).get(url("model/[]")), "/:ids", checkType);
 
+  it("should reject without access function", async () => {
+    expect(() => generateGetByIds("model", useModel, {}, "", "id")).toThrow(
+      "Route (getByIds) model has no access control function."
+    );
+  });
+
   test("Get all", async () => {
     const dbs = getPool();
     const model1 = await new Model(dbs, {
@@ -296,11 +302,17 @@ describe("getByIds advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateGetByIds("model", useModel, {}, "", "id").options;
+    const options1 = generateGetByIds(
+      "model",
+      useModel,
+      { access: anybody },
+      "",
+      "id"
+    ).options;
     const options2 = generateGetByIds(
       "model",
       useModel,
-      { title: "My title", description: "yay" },
+      { title: "My title", description: "yay", access: anybody },
       "",
       "id"
     ).options;

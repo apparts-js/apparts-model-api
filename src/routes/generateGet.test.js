@@ -77,6 +77,12 @@ describe("Get", () => {
   });
   checkJWT(() => request(app).get(url("model")), "", checkType);
 
+  it("should reject without access function", async () => {
+    expect(() => generateGet("model", useModel, {}, "", "id")).toThrow(
+      "Route (get) model has no access control function."
+    );
+  });
+
   test("Get all", async () => {
     const dbs = getPool();
     const model1 = await new Model(dbs, {
@@ -755,11 +761,17 @@ describe("get advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateGet("model", useModel, {}, "", "id").options;
+    const options1 = generateGet(
+      "model",
+      useModel,
+      { access: anybody },
+      "",
+      "id"
+    ).options;
     const options2 = generateGet(
       "model",
       useModel,
-      { title: "My title", description: "yay" },
+      { title: "My title", description: "yay", access: anybody },
       "",
       "id"
     ).options;

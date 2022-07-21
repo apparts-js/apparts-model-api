@@ -2,7 +2,7 @@ const { HttpError } = require("@apparts/error");
 
 const checkAuth = async (authF, res, me) => {
   if (!authF) {
-    return;
+    throw new Error("Route without auth func found!");
   }
   const allowed = await authF(res, me);
   if (!allowed) {

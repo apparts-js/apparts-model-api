@@ -37,6 +37,10 @@ const generatePatch = (
   trackChanges,
   idField
 ) => {
+  if (!authF) {
+    throw new Error(`Route (patch) ${prefix} has no access control function.`);
+  }
+
   const patchF = prepauthTokenJWT(webtokenkey)(
     {
       params: {

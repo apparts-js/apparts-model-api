@@ -18,6 +18,10 @@ const generatePost = (
   trackChanges,
   idField
 ) => {
+  if (!authF) {
+    throw new Error(`Route (post) ${prefix} has no access control function.`);
+  }
+
   const postF = prepauthTokenJWT(webtokenkey)(
     {
       params: {

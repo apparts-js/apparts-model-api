@@ -8,7 +8,7 @@ const { generateMethods } = require("./");
 
 const fName = "";
 const path = "/v/1/model",
-  auth = { post: anybody };
+  auth = { post: { access: anybody } };
 
 const methods = generateMethods(path, useModel, auth, "", undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
@@ -92,6 +92,13 @@ describe("Post", () => {
     fName,
     checkType
   );
+
+  it("should reject without access function", async () => {
+    expect(() =>
+      generatePost("model", useModel, {}, "", undefined, "id")
+    ).toThrow("Route (post) model has no access control function.");
+  });
+
   test("Post with too few values", async () => {
     const dbs = getPool();
     const response = await request(app)
@@ -450,7 +457,7 @@ describe("Title and description", () => {
     const options1 = generatePost(
       "model",
       useModel,
-      {},
+      { access: anybody },
       "",
       undefined,
       "id"
@@ -458,7 +465,7 @@ describe("Title and description", () => {
     const options2 = generatePost(
       "model",
       useModel,
-      { title: "My title", description: "yay" },
+      { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
       "id"

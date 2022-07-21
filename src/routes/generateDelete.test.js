@@ -7,7 +7,7 @@ const {
 const { generateMethods } = require("./");
 
 const fName = "/:ids",
-  auth = { delete: anybody };
+  auth = { delete: { access: anybody } };
 const methods = generateMethods(
   "/v/1/model",
   useModel,
@@ -80,6 +80,12 @@ describe("Delete", () => {
     fName,
     checkType
   );
+
+  it("should reject without access function", async () => {
+    expect(() =>
+      generateDelete("model", useModel, {}, "", undefined, "id")
+    ).toThrow("Route (delete) model has no access control function.");
+  });
 
   test("Delete", async () => {
     const dbs = getPool();
@@ -323,7 +329,7 @@ describe("Title and description", () => {
     const options1 = generateDelete(
       "model",
       useModel,
-      {},
+      { access: anybody },
       "",
       undefined,
       "id"
@@ -331,7 +337,7 @@ describe("Title and description", () => {
     const options2 = generateDelete(
       "model",
       useModel,
-      { title: "My title", description: "yay" },
+      { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
       "id"
