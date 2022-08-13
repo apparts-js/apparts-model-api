@@ -5,9 +5,13 @@ const {
   reverseMap,
   checkAuth,
   createIdParam,
+  makeSchema,
 } = require("./common");
-const { HttpError, fromThrows } = require("@apparts/error");
-const { prepauthTokenJWT } = require("@apparts/types");
+const {
+  HttpError,
+  prepauthTokenJWT,
+  httpErrorSchema,
+} = require("@apparts/prep");
 const { DoesExist } = require("@apparts/model");
 
 const generatePost = (
@@ -24,12 +28,28 @@ const generatePost = (
 
   const postF = prepauthTokenJWT(webtokenkey)(
     {
-      params: {
-        ...createParams(prefix, useModel),
+      title: title || "Create " + nameFromPrefix(prefix),
+      description,
+
+      receives: {
+        params: makeSchema({
+          ...createParams(prefix, useModel),
+        }),
+        body: makeSchema({
+          ...createBody(prefix, useModel),
+        }),
       },
-      body: {
-        ...createBody(prefix, useModel),
-      },
+      returns: [
+        makeSchema({
+          ...createIdParam(useModel, idField),
+        }),
+        httpErrorSchema(
+          400,
+          "Could not create item because your request had too many parameters"
+        ),
+        httpErrorSchema(412, "Could not create item because it exists"),
+        httpErrorSchema(403, "You don't have the rights to retrieve this."),
+      ],
     },
     async (req, me) => {
       await checkAuth(authF, req, me);
@@ -40,16 +60,18 @@ const generatePost = (
       const [, One] = useModel(dbs);
 
       const types = One.getTypes();
-      body = await fromThrows(
-        () => reverseMap(body, types),
-        HttpError,
-        (e) =>
-          new HttpError(
+      try {
+        body = reverseMap(body, types);
+      } catch (e) {
+        if (e instanceof HttpError) {
+          return new HttpError(
             400,
             "Could not create item because your request had too many parameters",
-            e.message
-          )
-      );
+            e.message.error
+          );
+        }
+        throw e;
+      }
 
       for (const key of Object.keys(body)) {
         if (!types[key] || !types[key].public || types[key].auto) {
@@ -62,30 +84,17 @@ const generatePost = (
       }
 
       const model = new One({ ...body, ...params });
-      await fromThrows(
-        () => model.store(),
-        DoesExist,
-        () => new HttpError(412, "Could not create item because it exists")
-      );
+      try {
+        await model.store();
+      } catch (e) {
+        if (e instanceof DoesExist) {
+          return new HttpError(412, "Could not create item because it exists");
+        }
+        throw e;
+      }
+
       trackChanges && (await trackChanges(me, null, model.content));
       return model.content[idField];
-    },
-    {
-      title: title || "Create " + nameFromPrefix(prefix),
-      description,
-      returns: [
-        {
-          status: 200,
-          ...createIdParam(useModel, idField),
-        },
-        {
-          status: 400,
-          error:
-            "Could not create item because your request had too many parameters",
-        },
-        { status: 412, error: "Could not create item because it exists" },
-        { status: 403, error: "You don't have the rights to retrieve this." },
-      ],
     }
   );
   return postF;

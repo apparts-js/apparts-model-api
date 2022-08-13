@@ -4,8 +4,9 @@ const {
   createReturns,
   checkAuth,
   createIdParam,
+  makeSchema,
 } = require("./common");
-const { prepauthTokenJWT } = require("@apparts/types");
+const { prepauthTokenJWT, httpErrorSchema } = require("@apparts/prep");
 
 const generateGetByIds = (
   prefix,
@@ -21,13 +22,27 @@ const generateGetByIds = (
   }
   const getF = prepauthTokenJWT(webtokenkey)(
     {
-      params: {
-        ...createParams(prefix, useModel),
-        [idField + "s"]: {
-          type: "array",
-          items: createIdParam(useModel, idField),
-        },
+      title: title || "Get " + nameFromPrefix(prefix) + " by Ids",
+      description,
+      receives: {
+        params: makeSchema({
+          ...createParams(prefix, useModel),
+          [idField + "s"]: {
+            type: "array",
+            items: createIdParam(useModel, idField),
+          },
+        }),
       },
+      returns: [
+        makeSchema({
+          type: "array",
+          items: {
+            type: "object",
+            keys: createReturns(useModel),
+          },
+        }),
+        httpErrorSchema(403, "You don't have the rights to retrieve this."),
+      ],
     },
     async (req, me) => {
       await checkAuth(authF, req, me);
@@ -46,21 +61,6 @@ const generateGetByIds = (
       await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
       await res.generateDerived();
       return res.getPublic();
-    },
-    {
-      title: title || "Get " + nameFromPrefix(prefix) + " by Ids",
-      description,
-      returns: [
-        {
-          status: 200,
-          type: "array",
-          items: {
-            type: "object",
-            keys: createReturns(useModel),
-          },
-        },
-        { status: 403, error: "You don't have the rights to retrieve this." },
-      ],
     }
   );
   return getF;

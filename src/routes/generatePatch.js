@@ -5,9 +5,13 @@ const {
   createBody,
   checkAuth,
   createIdParam,
+  makeSchema,
 } = require("./common");
-const { HttpError, fromThrows } = require("@apparts/error");
-const { prepauthTokenJWT } = require("@apparts/types");
+const {
+  HttpError,
+  prepauthTokenJWT,
+  httpErrorSchema,
+} = require("@apparts/prep");
 const { NotFound } = require("@apparts/model");
 
 const makePatchBody = (types) => {
@@ -43,13 +47,32 @@ const generatePatch = (
 
   const patchF = prepauthTokenJWT(webtokenkey)(
     {
-      params: {
-        ...createParams(prefix, useModel),
-        [idField]: createIdParam(useModel, idField),
+      title: title || "Patch " + nameFromPrefix(prefix),
+      description,
+      receives: {
+        params: makeSchema({
+          ...createParams(prefix, useModel),
+          [idField]: createIdParam(useModel, idField),
+        }),
+        body: makeSchema({
+          ...makePatchBody(createBody(prefix, useModel)),
+        }),
       },
-      body: {
-        ...makePatchBody(createBody(prefix, useModel)),
-      },
+      returns: [
+        makeSchema({
+          ...createIdParam(useModel, idField),
+        }),
+        httpErrorSchema(
+          400,
+          "Could not alter item because your request had too many parameters"
+        ),
+        httpErrorSchema(
+          400,
+          "Could not alter item because it would change a path id"
+        ),
+        httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
+        httpErrorSchema(403, "You don't have the rights to retrieve this."),
+      ],
     },
     async (req, me) => {
       await checkAuth(authF, req, me);
@@ -59,16 +82,18 @@ const generatePatch = (
       const [, One] = useModel(dbs);
 
       const types = One.getTypes();
-      body = await fromThrows(
-        () => reverseMap(body, types),
-        HttpError,
-        (e) =>
-          new HttpError(
+      try {
+        body = reverseMap(body, types);
+      } catch (e) {
+        if (e instanceof HttpError) {
+          return new HttpError(
             400,
             "Could not alter item because your request had too many parameters",
-            e.message
-          )
-      );
+            e.message.error
+          );
+        }
+        throw e;
+      }
 
       for (const key of Object.keys(body)) {
         if (!types[key] || !types[key].public || types[key].auto) {
@@ -97,41 +122,24 @@ const generatePatch = (
         return new HttpError(
           400,
           "Could not alter item because it would change a path id",
-          paramOverlap
+          JSON.stringify(paramOverlap)
         );
       }
 
-      const model = await fromThrows(
-        () => new One().load(params),
-        NotFound,
-        () => HttpError.notFound(nameFromPrefix(prefix))
-      );
+      let model;
+      try {
+        model = await new One().load(params);
+      } catch (e) {
+        if (e instanceof NotFound) {
+          return HttpError.notFound(nameFromPrefix(prefix));
+        }
+        throw e;
+      }
       const contentBefore = model.content;
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
       await model.update();
       trackChanges && (await trackChanges(me, contentBefore, model.content));
       return model.content[idField];
-    },
-    {
-      title: title || "Patch " + nameFromPrefix(prefix),
-      description,
-      returns: [
-        {
-          status: 200,
-          ...createIdParam(useModel, idField),
-        },
-        {
-          status: 400,
-          error:
-            "Could not alter item because your request had too many parameters",
-        },
-        {
-          status: 400,
-          error: "Could not alter item because it would change a path id",
-        },
-        { status: 404, error: nameFromPrefix(prefix) + " not found" },
-        { status: 403, error: "You don't have the rights to retrieve this." },
-      ],
     }
   );
   return patchF;

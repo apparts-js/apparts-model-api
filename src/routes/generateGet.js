@@ -5,8 +5,9 @@ const {
   reverseMap,
   checkAuth,
   unmapKey,
+  makeSchema,
 } = require("./common");
-const { prepauthTokenJWT } = require("@apparts/types");
+const { prepauthTokenJWT, httpErrorSchema } = require("@apparts/prep");
 
 const { createFilter } = require("./get/createFilter");
 const { createOrder } = require("./get/createOrder");
@@ -44,13 +45,27 @@ const generateGet = (
   }
   const getF = prepauthTokenJWT(webtokenkey)(
     {
-      query: {
-        limit: { type: "int", default: 50 },
-        offset: { type: "int", default: 0 },
-        order: createOrder(useModel),
-        filter: createFilter(prefix, useModel),
+      title: title || "Get " + nameFromPrefix(prefix),
+      description,
+      receives: {
+        query: makeSchema({
+          limit: { type: "int", default: 50 },
+          offset: { type: "int", default: 0 },
+          order: createOrder(useModel),
+          filter: createFilter(prefix, useModel),
+        }),
+        params: makeSchema(createParams(prefix, useModel)),
       },
-      params: createParams(prefix, useModel),
+      returns: [
+        makeSchema({
+          type: "array",
+          items: {
+            type: "object",
+            keys: createReturns(useModel),
+          },
+        }),
+        httpErrorSchema(403, "You don't have the rights to retrieve this."),
+      ],
     },
     async (req, me) => {
       await checkAuth(authF, req, me);
@@ -121,21 +136,6 @@ const generateGet = (
       await res.load({ ...filter, ...params }, limit, offset, order);
       await res.generateDerived();
       return res.getPublic();
-    },
-    {
-      title: title || "Get " + nameFromPrefix(prefix),
-      description,
-      returns: [
-        {
-          status: 200,
-          type: "array",
-          items: {
-            type: "object",
-            keys: createReturns(useModel),
-          },
-        },
-        { status: 403, error: "You don't have the rights to retrieve this." },
-      ],
     }
   );
   return getF;

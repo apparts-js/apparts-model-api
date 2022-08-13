@@ -1,4 +1,4 @@
-const { HttpError } = require("@apparts/error");
+const { HttpError } = require("@apparts/prep");
 
 const checkAuth = async (authF, res, me) => {
   if (!authF) {
@@ -149,7 +149,17 @@ const unmapKey = (key, types) => {
   }
 };
 
+const makeSchema = (type) => ({
+  getType() {
+    return type;
+  },
+  getModelType() {
+    return type;
+  },
+});
+
 module.exports = {
+  makeSchema,
   createParams,
   createBody,
   checkAuth,
