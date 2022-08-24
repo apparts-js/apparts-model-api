@@ -66,7 +66,16 @@ const generateGet = (
       if (filter) {
         const types = Many.getTypes();
         for (const key in filter) {
-          if (typeof filter[key] === "object") {
+          if (filter[key] === null) {
+            delete filter[key];
+            continue;
+          }
+
+          if (
+            typeof filter[key] === "object" &&
+            !Array.isArray(filter[key]) &&
+            filter[key] !== null
+          ) {
             const operants = Object.keys(filter[key]);
             const [first, ...path] = key.split(".");
             let mappedOperants = operants.map((op) => ({
