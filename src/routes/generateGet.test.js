@@ -252,6 +252,23 @@ describe("Get", () => {
     checkType(response, fName);
   });
 
+  test("Get with filter with null value", async () => {
+    const response = await request(app)
+      .get(
+        url("model", {
+          filter: JSON.stringify({ optionalVal: null }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    const normalResponse = await request(app)
+      .get(url("model"))
+      .set("Authorization", "Bearer " + jwt());
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(normalResponse.body.length);
+    checkType(response, fName);
+  });
+
   test("Get with filter on mapped type", async () => {
     const dbs = getPool();
     const model1 = await new Model(dbs, {
