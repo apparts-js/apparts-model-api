@@ -48,6 +48,11 @@ describe("filter api type", () => {
       keys: {
         like: {
           type: "string",
+          optional: true,
+        },
+        ilike: {
+          type: "string",
+          optional: true,
         },
       },
       type: "object",
