@@ -37,7 +37,7 @@
   "devDependencies": {
     "@apparts/backend-test": "^3.0.0",
     "@apparts/config": "^1.1.0",
-    "@apparts/db": "^3.5.0",
+    "@apparts/db": "^3.7.0",
     "@apparts/model": "^4.6.3",
     "@apparts/prep": "^1.0.0",
     "@apparts/types": "^7.2.0",

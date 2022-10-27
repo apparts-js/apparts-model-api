@@ -53,7 +53,8 @@ const addToFilter = (filter, tipe, name) => {
       filterList.push(convertedType, {
         type: "object",
         keys: {
-          like: { type: "string" },
+          like: { type: "string", optional: true },
+          ilike: { type: "string", optional: true },
         },
       });
       break;

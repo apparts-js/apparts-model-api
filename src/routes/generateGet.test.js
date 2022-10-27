@@ -206,7 +206,9 @@ describe("Get", () => {
     checkType(response, fName);
     checkType(response2, fName);
   });
+});
 
+describe("Filters", () => {
   test("Get with malformated filter", async () => {
     const response = await request(app)
       .get(
@@ -365,7 +367,7 @@ describe("Get", () => {
     checkType(response, fName);
   });
 
-  test("Get filtered string", async () => {
+  it("should get like-filtered string", async () => {
     const dbs = getPool();
     await new Model(dbs, {
       mapped: 30,
@@ -374,6 +376,10 @@ describe("Get", () => {
     const model2 = await new Model(dbs, {
       mapped: 12,
       optionalVal: "dirty",
+    }).store();
+    await new Model(dbs, {
+      mapped: 12,
+      optionalVal: "diRty",
     }).store();
     const response = await request(app)
       .get(
@@ -389,6 +395,27 @@ describe("Get", () => {
       },
     ]);
     expect(response.body.length).toBe(1);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
+  });
+
+  it("should get ilike-filtered string", async () => {
+    const response = await request(app)
+      .get(
+        url("model", {
+          filter: formatFilter({ optionalVal: { ilike: "%rty" } }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject([
+      {
+        optionalVal: "dirty",
+      },
+      {
+        optionalVal: "diRty",
+      },
+    ]);
+    expect(response.body.length).toBe(2);
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
