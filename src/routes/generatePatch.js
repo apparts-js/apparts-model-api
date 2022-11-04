@@ -131,7 +131,7 @@ const generatePatch = (
         model = await new One().load(params);
       } catch (e) {
         if (e instanceof NotFound) {
-          return HttpError.notFound(nameFromPrefix(prefix));
+          return new HttpError(404, nameFromPrefix(prefix) + " not found");
         }
         throw e;
       }
