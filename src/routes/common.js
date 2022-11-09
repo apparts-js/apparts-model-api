@@ -1,3 +1,4 @@
+const { traverseType } = require("@apparts/types");
 const { HttpError } = require("@apparts/prep");
 
 const checkAuth = async (authF, res, me) => {
@@ -63,21 +64,16 @@ const createParams = (prefix, useModel) => {
 };
 
 const recursiveCreateBody = (tipe) => {
-  let result = undefined;
-  if (!tipe.readOnly) {
-    result = typeFromModeltype(tipe);
-
+  return traverseType(tipe, (tipe) => {
+    if (tipe.readOnly) {
+      return undefined;
+    }
+    const result = typeFromModeltype(tipe);
     if ("default" in tipe) {
       result.default = tipe.default;
     }
-
-    if (tipe.type === "object" && "keys" in tipe) {
-      for (const key in tipe.keys) {
-        result.keys[key] = recursiveCreateBody(tipe.keys[key]);
-      }
-    }
-  }
-  return result;
+    return result;
+  });
 };
 
 const createBody = (prefix, useModel) => {

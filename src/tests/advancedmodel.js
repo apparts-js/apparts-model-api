@@ -54,6 +54,24 @@ const types = {
         value: 2,
       },
       innerWithDef: { type: "string", default: "the default" },
+      deepInner: {
+        type: "array",
+        optional: true,
+        items: {
+          type: "oneOf",
+          alternatives: [
+            {
+              type: "object",
+              keys: {
+                a: {
+                  type: "string",
+                  default: "deep default",
+                },
+              },
+            },
+          ],
+        },
+      },
     },
     public: true,
   },
