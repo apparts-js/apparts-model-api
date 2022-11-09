@@ -74,6 +74,9 @@ describe("order api type", () => {
               {
                 value: "object.nestedOneOfValues",
               },
+              {
+                value: "object.innerWithDef",
+              },
             ],
             type: "oneOf",
           },

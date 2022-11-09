@@ -527,7 +527,7 @@ describe("put advanced model", () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup" },
+      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
     }).store();
 
     const response = await request(app)
@@ -540,9 +540,10 @@ describe("put advanced model", () => {
     expect(response.status).toBe(200);
     expect(response.body).toBe(model1.content.id);
     const modelNew = await new AdvancedModel(dbs).loadById(model1.content.id);
-    expect(modelNew.content).toMatchObject({
+    expect(modelNew.content).toStrictEqual({
+      id: 1,
       textarray: ["dritter", "vierter"],
-      object: { a: 23, bcd: "nope" },
+      object: { a: 23, bcd: "nope", innerWithDef: "the default" },
     });
     checkType(response, fName);
   });

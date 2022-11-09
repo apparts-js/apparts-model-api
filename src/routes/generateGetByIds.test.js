@@ -287,7 +287,7 @@ describe("getByIds advanced model", () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup" },
+      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
     }).store();
 
     const response = await request(app)

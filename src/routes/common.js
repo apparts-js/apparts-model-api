@@ -11,26 +11,27 @@ const checkAuth = async (authF, res, me) => {
 };
 
 const typeFromModeltype = (tipe) => {
-  const res = {
-    type: tipe.type,
-  };
+  const res = {};
 
-  if (tipe.items) {
+  if ("type" in tipe) {
+    res.type = tipe.type;
+  }
+  if ("items" in tipe) {
     res.items = tipe.items;
   }
-  if (tipe.keys) {
+  if ("keys" in tipe) {
     res.keys = tipe.keys;
   }
-  if (tipe.values) {
+  if ("values" in tipe) {
     res.values = tipe.values;
   }
-  if (tipe.value) {
+  if ("value" in tipe) {
     res.value = tipe.value;
   }
-  if (tipe.optional) {
+  if ("optional" in tipe) {
     res.optional = tipe.optional;
   }
-  if (tipe.alternatives) {
+  if ("alternatives" in tipe) {
     res.alternatives = tipe.alternatives;
   }
 
@@ -61,6 +62,24 @@ const createParams = (prefix, useModel) => {
   return paramTypes;
 };
 
+const recursiveCreateBody = (tipe) => {
+  let result = undefined;
+  if (!tipe.readOnly) {
+    result = typeFromModeltype(tipe);
+
+    if ("default" in tipe) {
+      result.default = tipe.default;
+    }
+
+    if (tipe.type === "object" && "keys" in tipe) {
+      for (const key in tipe.keys) {
+        result.keys[key] = recursiveCreateBody(tipe.keys[key]);
+      }
+    }
+  }
+  return result;
+};
+
 const createBody = (prefix, useModel) => {
   const params = createParams(prefix, useModel);
   const [Models] = useModel();
@@ -77,10 +96,7 @@ const createBody = (prefix, useModel) => {
         name = tipe.mapped;
       }
       if (!params[key]) {
-        bodyParams[name] = typeFromModeltype(tipe);
-        if (tipe.optional === true || tipe.default !== undefined) {
-          bodyParams[name].optional = true;
-        }
+        bodyParams[name] = recursiveCreateBody(tipe);
       }
     }
   }

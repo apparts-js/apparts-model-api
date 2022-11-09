@@ -53,6 +53,7 @@ const types = {
         optional: true,
         value: 2,
       },
+      innerWithDef: { type: "string", default: "the default" },
     },
     public: true,
   },

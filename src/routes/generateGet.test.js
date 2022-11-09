@@ -702,7 +702,7 @@ describe("get advanced model", () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup" },
+      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
     }).store();
 
     const response = await request(app)
@@ -718,11 +718,21 @@ describe("get advanced model", () => {
     await new AdvancedModels(dbs, [
       {
         textarray: ["erster", "zweiter"],
-        object: { a: 11, bcd: "zzz", nestedObj: { inner: "zzz" } },
+        object: {
+          a: 11,
+          bcd: "zzz",
+          nestedObj: { inner: "zzz" },
+          innerWithDef: "bla",
+        },
       },
       {
         textarray: ["erster", "zweiter"],
-        object: { a: 999, bcd: "abc", nestedObj: { inner: "def" } },
+        object: {
+          a: 999,
+          bcd: "abc",
+          nestedObj: { inner: "def" },
+          innerWithDef: "bla",
+        },
       },
     ]).store();
 

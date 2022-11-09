@@ -472,7 +472,7 @@ describe("patch advanced model", () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup" },
+      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
     }).store();
 
     const response = await request(app)
@@ -487,7 +487,7 @@ describe("patch advanced model", () => {
     const modelNew = await new AdvancedModel(dbs).loadById(model1.content.id);
     expect(modelNew.content).toMatchObject({
       textarray: ["dritter", "vierter"],
-      object: { a: 23, bcd: "nope" },
+      object: { a: 23, bcd: "nope", innerWithDef: "the default" },
     });
     checkType(response, fName);
   });
@@ -496,7 +496,7 @@ describe("patch advanced model", () => {
     const dbs = getPool();
     const model = await new AdvancedModel(dbs, {
       textarray: ["a", "b"],
-      object: { a: 2, bcd: "test" },
+      object: { a: 2, bcd: "test", innerWithDef: "bla" },
     }).store();
     const response = await request(app)
       .patch(url("advancedmodel/" + model.content.id))

@@ -106,6 +106,7 @@ describe("filter api type", () => {
           { value: 2 },
         ]),
         "object.value": filterAlts(optionalAlternatives),
+        "object.innerWithDef": filterAlts(stringAlternatives),
       },
       optional: true,
       type: "object",
