@@ -65,7 +65,7 @@ const createParams = (prefix, useModel) => {
 
 const recursiveCreateBody = (tipe) => {
   return traverseType(tipe, (tipe) => {
-    if (tipe.readOnly && !("default" in tipe)) {
+    if (tipe.readOnly) {
       return undefined;
     }
     const result = typeFromModeltype(tipe);
@@ -110,13 +110,7 @@ const nameFromPrefix = (prefix) => {
 };
 
 const recursiveCreateReturns = (tipe) => {
-  return traverseType(tipe, (tipe) => {
-    const result = typeFromModeltype(tipe);
-    if ("default" in tipe) {
-      result.default = tipe.default;
-    }
-    return result;
-  });
+  return traverseType(tipe, (tipe) => typeFromModeltype(tipe));
 };
 
 const createReturns = (useModel) => {
