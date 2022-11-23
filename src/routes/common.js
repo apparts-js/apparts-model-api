@@ -109,6 +109,10 @@ const nameFromPrefix = (prefix) => {
     .replace(/^\w/, (c) => c.toUpperCase());
 };
 
+const recursiveCreateReturns = (tipe) => {
+  return traverseType(tipe, (tipe) => typeFromModeltype(tipe));
+};
+
 const createReturns = (useModel) => {
   const [Models] = useModel();
   const returns = {};
@@ -120,7 +124,7 @@ const createReturns = (useModel) => {
       if (tipe.mapped) {
         name = tipe.mapped;
       }
-      returns[name] = typeFromModeltype(tipe);
+      returns[name] = recursiveCreateReturns(tipe);
       if (tipe.optional) {
         returns[name].optional = true;
       }

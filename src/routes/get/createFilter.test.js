@@ -106,6 +106,7 @@ describe("filter api type", () => {
           { value: 2 },
         ]),
         "object.value": filterAlts(optionalAlternatives),
+        "object.readOnlyString": filterAlts(stringAlternatives),
         "object.innerWithDef": filterAlts(stringAlternatives),
         "object.deepInner": filterAlts(optionalAlternatives),
       },

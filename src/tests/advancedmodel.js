@@ -53,6 +53,11 @@ const types = {
         optional: true,
         value: 2,
       },
+      readOnlyString: {
+        type: "string",
+        readOnly: true,
+        default: "default read",
+      },
       innerWithDef: { type: "string", default: "the default" },
       deepInner: {
         type: "array",
