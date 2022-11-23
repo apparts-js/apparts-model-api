@@ -527,7 +527,12 @@ describe("put advanced model", () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      object: {
+        a: 22,
+        bcd: "jup",
+        innerWithDef: "bla",
+        readOnlyString: "read",
+      },
     }).store();
 
     const response = await request(app)
@@ -543,7 +548,12 @@ describe("put advanced model", () => {
     expect(modelNew.content).toStrictEqual({
       id: 1,
       textarray: ["dritter", "vierter"],
-      object: { a: 23, bcd: "nope", innerWithDef: "the default" },
+      object: {
+        a: 23,
+        bcd: "nope",
+        innerWithDef: "the default",
+        readOnlyString: "default read",
+      },
     });
     checkType(response, fName);
   });

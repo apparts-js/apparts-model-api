@@ -432,7 +432,7 @@ describe("post advanced model", () => {
 
   test("Should create model", async () => {
     const dbs = getPool();
-
+    console.log("start");
     const response = await request(app)
       .post(url(`advancedmodel`))
       .send({
@@ -443,7 +443,6 @@ describe("post advanced model", () => {
     const modelNew = await new AdvancedModel(dbs).load({});
     expect(response.status).toBe(200);
     expect(response.body).toBe(modelNew.content.id);
-
     expect(modelNew.content).toMatchObject({
       textarray: ["dritter", "vierter"],
       object: { a: 23, bcd: "nope" },

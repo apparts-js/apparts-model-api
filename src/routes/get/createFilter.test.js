@@ -81,7 +81,7 @@ describe("filter api type", () => {
     });
   });
   test("Should not include arrays, correctly show objects", async () => {
-    expect(createFilter("", useAdvancedModel)).toStrictEqual({
+    const a = {
       keys: {
         id: filterAlts(idAlternatives),
         "object.a": filterAlts(numberAlternatives),
@@ -106,11 +106,15 @@ describe("filter api type", () => {
           { value: 2 },
         ]),
         "object.value": filterAlts(optionalAlternatives),
+        "object.readOnlyString": filterAlts(stringAlternatives),
         "object.innerWithDef": filterAlts(stringAlternatives),
         "object.deepInner": filterAlts(optionalAlternatives),
       },
       optional: true,
       type: "object",
-    });
+    };
+    console.log(JSON.stringify(a, null, 2));
+    console.log(JSON.stringify(createFilter("", useAdvancedModel), null, 2));
+    expect(createFilter("", useAdvancedModel)).toStrictEqual(a);
   });
 });

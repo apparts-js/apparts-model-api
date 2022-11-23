@@ -75,6 +75,9 @@ describe("order api type", () => {
                 value: "object.nestedOneOfValues",
               },
               {
+                value: "object.readOnlyString",
+              },
+              {
                 value: "object.innerWithDef",
               },
             ],

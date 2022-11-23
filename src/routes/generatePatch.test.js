@@ -467,27 +467,50 @@ describe("patch advanced model", () => {
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-
+  let modelId;
   test("Should update model", async () => {
     const dbs = getPool();
     const model1 = await new AdvancedModel(dbs, {
       textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      object: {
+        a: 22,
+        bcd: "jup",
+        innerWithDef: "bla",
+        readOnlyString: "read",
+      },
     }).store();
-
+    modelId = model1.content.id;
     const response = await request(app)
-      .patch(url(`advancedmodel/` + model1.content.id))
+      .patch(url(`advancedmodel/` + modelId))
       .send({
         textarray: ["dritter", "vierter"],
         object: { a: 23, bcd: "nope" },
       })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toBe(model1.content.id);
-    const modelNew = await new AdvancedModel(dbs).loadById(model1.content.id);
+    expect(response.body).toBe(modelId);
+    const modelNew = await new AdvancedModel(dbs).loadById(modelId);
     expect(modelNew.content).toMatchObject({
       textarray: ["dritter", "vierter"],
       object: { a: 23, bcd: "nope", innerWithDef: "the default" },
+    });
+    checkType(response, fName);
+  });
+
+  test("Should fail to update model", async () => {
+    const response = await request(app)
+      .patch(url(`advancedmodel/` + modelId))
+      .send({
+        textarray: ["dritter", "vierter"],
+        object: { a: 23, bcd: "nope" },
+        read: "try",
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(400);
+    expect(response.body).toStrictEqual({
+      description: '"read" does not exist',
+      error:
+        "Could not alter item because your request had too many parameters",
     });
     checkType(response, fName);
   });
@@ -496,7 +519,12 @@ describe("patch advanced model", () => {
     const dbs = getPool();
     const model = await new AdvancedModel(dbs, {
       textarray: ["a", "b"],
-      object: { a: 2, bcd: "test", innerWithDef: "bla" },
+      object: {
+        a: 2,
+        bcd: "test",
+        innerWithDef: "bla",
+        readOnlyString: "read",
+      },
     }).store();
     const response = await request(app)
       .patch(url("advancedmodel/" + model.content.id))
