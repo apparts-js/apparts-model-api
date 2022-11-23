@@ -432,7 +432,6 @@ describe("post advanced model", () => {
 
   test("Should create model", async () => {
     const dbs = getPool();
-    console.log("start");
     const response = await request(app)
       .post(url(`advancedmodel`))
       .send({

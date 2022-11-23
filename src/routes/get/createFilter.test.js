@@ -81,7 +81,7 @@ describe("filter api type", () => {
     });
   });
   test("Should not include arrays, correctly show objects", async () => {
-    const a = {
+    expect(createFilter("", useAdvancedModel)).toStrictEqual({
       keys: {
         id: filterAlts(idAlternatives),
         "object.a": filterAlts(numberAlternatives),
@@ -112,9 +112,6 @@ describe("filter api type", () => {
       },
       optional: true,
       type: "object",
-    };
-    console.log(JSON.stringify(a, null, 2));
-    console.log(JSON.stringify(createFilter("", useAdvancedModel), null, 2));
-    expect(createFilter("", useAdvancedModel)).toStrictEqual(a);
+    });
   });
 });
