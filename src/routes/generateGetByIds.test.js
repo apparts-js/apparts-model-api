@@ -1,4 +1,4 @@
-const { Model, useModel } = require("../tests/model.js");
+import { Models } from "../tests/model";
 const generateGetByIds = require("./generateGetByIds");
 const {
   addCrud,
@@ -10,7 +10,7 @@ const fName = "/:ids",
   auth = { getByIds: { access: anybody } };
 const methods = generateMethods(
   "/v/1/model",
-  useModel,
+  Models,
   auth,
   "",
   undefined,
@@ -58,20 +58,17 @@ CREATE TABLE namedidmodel (
 
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModel, useSubModel } = require("../tests/submodel.js");
-const {
-  AdvancedModel,
-  useAdvancedModel,
-} = require("../tests/advancedmodel.js");
-const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
-const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
+const { SubModels } = require("../tests/submodel");
+const { AdvancedModels } = require("../tests/advancedmodel");
+const { StrangeIdModels } = require("../tests/strangeids");
+const { NamedIdModels } = require("../tests/namedIdModel");
 
 describe("getByIds", () => {
   const path = "/v/1/model";
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -79,19 +76,21 @@ describe("getByIds", () => {
   checkJWT(() => request(app).get(url("model/[]")), "/:ids", checkType);
 
   it("should reject without access function", async () => {
-    expect(() => generateGetByIds("model", useModel, {}, "", "id")).toThrow(
+    expect(() => generateGetByIds("model", Models, {}, "", "id")).toThrow(
       "Route (getByIds) model has no access control function."
     );
   });
 
   test("Get all", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, {
-      mapped: 10,
-      optionalVal: "test",
-    }).store();
-    await new Model(dbs, { mapped: 11 }).store();
-    const model3 = await new Model(dbs, { mapped: 12 }).store();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        optionalVal: "test",
+      },
+    ]).store();
+    await new Models(dbs, [{ mapped: 11 }]).store();
+    const model3 = await new Models(dbs, [{ mapped: 12 }]).store();
     const response = await request(app)
       .get(
         url("model/" + JSON.stringify([model3.content.id, model1.content.id]))
@@ -121,7 +120,7 @@ describe("Check authorization", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: { getByIds: { access: () => false } },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -144,18 +143,11 @@ describe("getByIds subresources", () => {
   addCrud({
     prefix: path,
     app,
-    model: useSubModel,
+    model: SubModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(
-    path,
-    useSubModel,
-    auth,
-    "",
-    undefined,
-    "id"
-  );
+  const methods2 = generateMethods(path, SubModels, auth, "", undefined, "id");
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -165,20 +157,28 @@ describe("getByIds subresources", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    const model2 = await new Model(dbs, { mapped: 101 }).store();
-    const submodel1 = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
-    await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
-    const submodel3 = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
-    await new SubModel(dbs, {
-      modelId: model2.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 101 }]).store();
+    const submodel1 = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
+    await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
+    const submodel3 = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
+    await new SubModels(dbs, [
+      {
+        modelId: model2.content.id,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(
@@ -225,11 +225,11 @@ describe("getByIds subresources with optional relation", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
 
   test("Should getByIds a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -239,10 +239,12 @@ describe("getByIds subresources with optional relation", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const submodel = await new Model(dbs, {
-      optionalVal: "test123",
-      mapped: 1221,
-    }).store();
+    const submodel = await new Models(dbs, [
+      {
+        optionalVal: "test123",
+        mapped: 1221,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url(`test123/model/${JSON.stringify([submodel.content.id])}`))
@@ -264,13 +266,13 @@ describe("getByIds advanced model", () => {
   addCrud({
     prefix: path,
     app,
-    model: useAdvancedModel,
+    model: AdvancedModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useAdvancedModel,
+    AdvancedModels,
     auth,
     "",
     undefined,
@@ -285,10 +287,12 @@ describe("getByIds advanced model", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const model1 = await new AdvancedModel(dbs, {
-      textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
-    }).store();
+    const model1 = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url(`advancedmodel/` + JSON.stringify([model1.content.id])))
@@ -304,14 +308,14 @@ describe("Title and description", () => {
   test("Should set default title", async () => {
     const options1 = generateGetByIds(
       "model",
-      useModel,
+      Models,
       { access: anybody },
       "",
       "id"
     ).options;
     const options2 = generateGetByIds(
       "model",
-      useModel,
+      Models,
       { title: "My title", description: "yay", access: anybody },
       "",
       "id"
@@ -328,13 +332,13 @@ describe("Ids of other format", () => {
   addCrud({
     prefix: path,
     app,
-    model: useStangeIdModel,
+    model: StrangeIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useStangeIdModel,
+    StrangeIdModels,
     auth,
     "",
     undefined,
@@ -344,10 +348,12 @@ describe("Ids of other format", () => {
   it("should get with other id format", async () => {
     methods.get[fName] = methods2.get[fName];
     const dbs = getPool();
-    const model1 = await new StangeIdModel(dbs, {
-      id: "test1",
-      val: 1,
-    }).store();
+    const model1 = await new StrangeIdModels(dbs, [
+      {
+        id: "test1",
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .get(url("strangemodel/" + JSON.stringify([model1.content.id])))
       .set("Authorization", "Bearer " + jwt());
@@ -369,14 +375,14 @@ describe("Ids with different name", () => {
   addCrud({
     prefix: path,
     app,
-    model: useNamedIdModel,
+    model: NamedIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
-    useNamedIdModel,
+    NamedIdModels,
     auth,
     "",
     undefined,
@@ -386,10 +392,12 @@ describe("Ids with different name", () => {
   it("should get with other id format", async () => {
     methods.get[fName] = methods2.get[fName];
     const dbs = getPool();
-    const model1 = await new NamedIdModel(dbs, {
-      specialId: 1,
-      val: 1,
-    }).store();
+    const model1 = await new NamedIdModels(dbs, [
+      {
+        specialId: 1,
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .get(url("namedid/" + JSON.stringify([model1.content.specialId])))
       .set("Authorization", "Bearer " + jwt());

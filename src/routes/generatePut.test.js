@@ -1,4 +1,4 @@
-const { Model, useModel } = require("../tests/model.js");
+import { Models } from "../tests/model";
 const generatePut = require("./generatePut");
 const {
   addCrud,
@@ -10,7 +10,7 @@ const fName = "/:id",
   auth = { put: { access: anybody } };
 const methods = generateMethods(
   "/v/1/model",
-  useModel,
+  Models,
   auth,
   "",
   undefined,
@@ -69,24 +69,18 @@ CREATE TABLE namedidmodel (
   });
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModel, useSubModel } = require("../tests/submodel.js");
-const {
-  AdvancedModel,
-  useAdvancedModel,
-} = require("../tests/advancedmodel.js");
-const {
-  useModelWithDefault,
-  ModelWithDefault,
-} = require("../tests/modelWithDefault.js");
-const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
-const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
+const { SubModels } = require("../tests/submodel");
+const { AdvancedModels } = require("../tests/advancedmodel");
+const { ModelsWithDefault } = require("../tests/modelWithDefault");
+const { StrangeIdModels } = require("../tests/strangeids");
+const { NamedIdModels } = require("../tests/namedIdModel");
 
 describe("Put", () => {
   const path = "/v/1/model";
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -98,19 +92,21 @@ describe("Put", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() =>
-      generatePut("model", useModel, {}, "", undefined, "id")
-    ).toThrow("Route (put) model has no access control function.");
+    expect(() => generatePut("model", Models, {}, "", undefined, "id")).toThrow(
+      "Route (put) model has no access control function."
+    );
   });
 
   test("Put with too few values", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 7 }).store();
+    const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({})
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect({ ...model.content, optionalVal: null }).toMatchObject(
       modelNew.content
     );
@@ -121,14 +117,16 @@ describe("Put", () => {
 
   test("Put non-existing model", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 7 }).store();
+    const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
       .put(url("model/" + (model.content.id + 1)))
       .send({
         someNumber: 99,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect({ ...model.content, optionalVal: null }).toMatchObject(
       modelNew.content
     );
@@ -139,14 +137,16 @@ describe("Put", () => {
 
   test("Put", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 8 }).store();
+    const model = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
         someNumber: 99,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(modelNew.content).toMatchObject({
@@ -159,7 +159,7 @@ describe("Put", () => {
 
   test("Put, set optional value", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 9 }).store();
+    const model = await new Models(dbs, [{ mapped: 9 }]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
@@ -167,7 +167,7 @@ describe("Put", () => {
         optionalVal: "testYes",
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).load({ optionalVal: "testYes" });
+    const modelNew = await new Models(dbs).loadOne({ optionalVal: "testYes" });
     expect(response.status).toBe(200);
     expect(response.body).toBe(model.content.id);
     expect(response.body).toBe(modelNew.content.id);
@@ -181,17 +181,21 @@ describe("Put", () => {
 
   test("Put, remove optional value", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 10,
-      optionalVal: "shouldBeGone",
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 10,
+        optionalVal: "shouldBeGone",
+      },
+    ]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
         someNumber: 10,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(response.status).toBe(200);
     expect(response.body).toBe(model.content.id);
     expect(modelNew.content).toMatchObject({
@@ -204,10 +208,12 @@ describe("Put", () => {
 
   test("Put with non-public value", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 10,
-      optionalVal: null,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 10,
+        optionalVal: null,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
@@ -215,7 +221,9 @@ describe("Put", () => {
         hasDefault: 10,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(model.content).toMatchObject(modelNew.content);
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
@@ -229,10 +237,12 @@ describe("Put", () => {
 
   test("Put with non existing value", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 11,
-      optionalVal: null,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 11,
+        optionalVal: null,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
@@ -240,7 +250,9 @@ describe("Put", () => {
         rubbish: true,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(model.content).toMatchObject(modelNew.content);
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
@@ -254,10 +266,12 @@ describe("Put", () => {
 
   test("Put with unmapped value", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 12,
-      optionalVal: null,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 12,
+        optionalVal: null,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
@@ -265,7 +279,9 @@ describe("Put", () => {
         someNumber: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(model.content).toMatchObject(modelNew.content);
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
@@ -281,7 +297,9 @@ describe("Put", () => {
         mapped: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew2 = await new Model(dbs).loadById(model.content.id);
+    const modelNew2 = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(model.content).toMatchObject(modelNew2.content);
     expect(response2.status).toBe(400);
     expect(response2.body).toMatchObject(error("Fieldmissmatch"));
@@ -289,10 +307,12 @@ describe("Put", () => {
   });
   test("Put with id", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 14,
-      optionalVal: null,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 14,
+        optionalVal: null,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
@@ -300,7 +320,9 @@ describe("Put", () => {
         someNumber: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(model.content).toMatchObject(modelNew.content);
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
@@ -318,18 +340,20 @@ describe("Check removal of default value", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModelWithDefault,
+    model: ModelsWithDefault,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Put with non-public value with default", async () => {
     const dbs = getPool();
-    const model = await new ModelWithDefault(dbs, {
-      mapped: 10,
-      optionalVal: null,
-      hasReadOnlyWithDefault: 99,
-    }).store();
+    const model = await new ModelsWithDefault(dbs, [
+      {
+        mapped: 10,
+        optionalVal: null,
+        hasReadOnlyWithDefault: 99,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("modelWithDefault/" + model.content.id))
       .send({
@@ -339,7 +363,9 @@ describe("Check removal of default value", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
     checkType(response, fName);
-    const modelNew = await new ModelWithDefault(dbs).loadById(model.content.id);
+    const modelNew = await new ModelsWithDefault(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(modelNew.content).toStrictEqual({
       ...model.content,
       mapped: 100,
@@ -349,17 +375,21 @@ describe("Check removal of default value", () => {
 
   test("Put, remove optional value with default", async () => {
     const dbs = getPool();
-    const model = await new ModelWithDefault(dbs, {
-      mapped: 10,
-      hasDefault: 33,
-    }).store();
+    const model = await new ModelsWithDefault(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 33,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("modelWithDefault/" + model.content.id))
       .send({
         someNumber: 10,
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new ModelWithDefault(dbs).loadById(model.content.id);
+    const modelNew = await new ModelsWithDefault(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(response.status).toBe(200);
     expect(response.body).toBe(model.content.id);
     expect(modelNew.content).toMatchObject({
@@ -376,7 +406,7 @@ describe("Check authorization", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: { put: { access: () => false } },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -399,23 +429,25 @@ describe("Put subresources", () => {
   addCrud({
     prefix: path,
     app,
-    model: useSubModel,
+    model: SubModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Put a subresouce", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    await new Model(dbs, { mapped: 101 }).store();
-    const submodel = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    await new Models(dbs, [{ mapped: 101 }]).store();
+    const submodel = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
     const response = await request(app)
       .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists now" })
       .set("Authorization", "Bearer " + jwt());
-    const submodelNew = await new SubModel(dbs).load({});
+    const submodelNew = await new SubModels(dbs).loadOne({});
     expect(response.status).toBe(200);
     expect(response.body).toBe(submodel.content.id);
     expect(submodelNew.content).toMatchObject({
@@ -428,15 +460,19 @@ describe("Put subresources", () => {
 
   test("Put a subresouce with correct id", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    const submodel = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    const submodel = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
     const response = await request(app)
       .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists", modelId: model1.content.id })
       .set("Authorization", "Bearer " + jwt());
-    const submodelNew = await new SubModel(dbs).loadById(submodel.content.id);
+    const submodelNew = await new SubModels(dbs).loadOneByKeys({
+      id: submodel.content.id,
+    });
     expect(response.status).toBe(200);
     expect(response.body).toBe(submodel.content.id);
     expect(submodelNew.content).toMatchObject({
@@ -450,16 +486,20 @@ describe("Put subresources", () => {
 
   test("Put a subresouce with wrong id", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    const model2 = await new Model(dbs, { mapped: 101 }).store();
-    const submodel = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 101 }]).store();
+    const submodel = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
     const response = await request(app)
       .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists now", modelId: model2.content.id })
       .set("Authorization", "Bearer " + jwt());
-    const submodelNew = await new SubModel(dbs).loadById(submodel.content.id);
+    const submodelNew = await new SubModels(dbs).loadOneByKeys({
+      id: submodel.content.id,
+    });
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
       error("Could not alter item because it would change a path id")
@@ -478,11 +518,11 @@ describe("put subresources with optional relation", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
 
   test("Should put a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -492,10 +532,12 @@ describe("put subresources with optional relation", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const submodel = await new Model(dbs, {
-      optionalVal: "test123",
-      mapped: 1221,
-    }).store();
+    const submodel = await new Models(dbs, [
+      {
+        optionalVal: "test123",
+        mapped: 1221,
+      },
+    ]).store();
 
     const response = await request(app)
       .put(url(`test123/model/${submodel.content.id}`))
@@ -504,7 +546,9 @@ describe("put subresources with optional relation", () => {
     expect(response.status).toBe(200);
     expect(response.body).toBe(submodel.content.id);
     checkType(response, fName);
-    const modelNew = await new Model(dbs).loadById(submodel.content.id);
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: submodel.content.id,
+    });
     expect(modelNew.content).toMatchObject({
       mapped: 1222,
       optionalVal: "test123",
@@ -518,17 +562,19 @@ describe("put advanced model", () => {
   addCrud({
     prefix: path,
     app,
-    model: useAdvancedModel,
+    model: AdvancedModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should update model", async () => {
     const dbs = getPool();
-    const model1 = await new AdvancedModel(dbs, {
-      textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
-    }).store();
+    const model1 = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      },
+    ]).store();
 
     const response = await request(app)
       .put(url(`advancedmodel/` + model1.content.id))
@@ -539,7 +585,9 @@ describe("put advanced model", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
     expect(response.body).toBe(model1.content.id);
-    const modelNew = await new AdvancedModel(dbs).loadById(model1.content.id);
+    const modelNew = await new AdvancedModels(dbs).loadOneByKeys({
+      id: model1.content.id,
+    });
     expect(modelNew.content).toStrictEqual({
       id: 1,
       textarray: ["dritter", "vierter"],
@@ -553,7 +601,7 @@ describe("Title and description", () => {
   test("Should set default title", async () => {
     const options1 = generatePut(
       "model",
-      useModel,
+      Models,
       { access: anybody },
       "",
       undefined,
@@ -561,7 +609,7 @@ describe("Title and description", () => {
     ).options;
     const options2 = generatePut(
       "model",
-      useModel,
+      Models,
       { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
@@ -579,13 +627,13 @@ describe("Ids of other format", () => {
   addCrud({
     prefix: path,
     app,
-    model: useStangeIdModel,
+    model: StrangeIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useStangeIdModel,
+    StrangeIdModels,
     auth,
     "",
     undefined,
@@ -595,17 +643,19 @@ describe("Ids of other format", () => {
   it("should put with other id format", async () => {
     methods.put[fName] = methods2.put[fName];
     const dbs = getPool();
-    const model1 = await new StangeIdModel(dbs, {
-      id: "test1",
-      val: 1,
-    }).store();
+    const model1 = await new StrangeIdModels(dbs, [
+      {
+        id: "test1",
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("strangemodel/" + model1.content.id))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe("test1");
     expect(response.status).toBe(200);
-    const model2 = await new StangeIdModel(dbs).load({
+    const model2 = await new StrangeIdModels(dbs).loadOne({
       id: "test1",
     });
     expect(model2.content).toMatchObject({
@@ -622,14 +672,14 @@ describe("Ids with different name", () => {
   addCrud({
     prefix: path,
     app,
-    model: useNamedIdModel,
+    model: NamedIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
-    useNamedIdModel,
+    NamedIdModels,
     auth,
     "",
     undefined,
@@ -639,17 +689,19 @@ describe("Ids with different name", () => {
   it("should put with named id", async () => {
     methods.put[fName] = methods2.put[fName];
     const dbs = getPool();
-    const model1 = await new NamedIdModel(dbs, {
-      specialId: 1,
-      val: 1,
-    }).store();
+    const model1 = await new NamedIdModels(dbs, [
+      {
+        specialId: 1,
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .put(url("namedid/" + model1.content.specialId))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe(1);
     expect(response.status).toBe(200);
-    const model2 = await new NamedIdModel(dbs).load({
+    const model2 = await new NamedIdModels(dbs).loadOne({
       specialId: 1,
     });
     expect(model2.content).toMatchObject({

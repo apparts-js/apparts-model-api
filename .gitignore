@@ -13,3 +13,5 @@ coverage/
 
 #tern files
 .tern-port
+
+build/

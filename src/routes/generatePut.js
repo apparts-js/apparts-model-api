@@ -16,7 +16,7 @@ const { NotFound } = require("@apparts/model");
 
 const generatePut = (
   prefix,
-  useModel,
+  Model,
   { access: authF, title, description },
   webtokenkey,
   trackChanges,
@@ -31,16 +31,16 @@ const generatePut = (
       description,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, useModel),
-          [idField]: createIdParam(useModel, idField),
+          ...createParams(prefix, Model),
+          [idField]: createIdParam(Model, idField),
         }),
         body: makeSchema({
-          ...createBody(prefix, useModel),
+          ...createBody(prefix, Model),
         }),
       },
       returns: [
         makeSchema({
-          ...createIdParam(useModel, idField),
+          ...createIdParam(Model, idField),
         }),
         httpErrorSchema(
           400,
@@ -59,9 +59,8 @@ const generatePut = (
 
       const { dbs, params } = req;
       let { body } = req;
-      const [, One] = useModel(dbs);
 
-      const types = One.getTypes();
+      const types = Model.getSchema().getModelType();
 
       try {
         body = reverseMap(body, types);
@@ -112,7 +111,7 @@ const generatePut = (
 
       let model;
       try {
-        model = await new One().load(params);
+        model = await new Model(dbs).loadOne(params);
       } catch (e) {
         if (e instanceof NotFound) {
           return new HttpError(404, nameFromPrefix(prefix) + " not found");

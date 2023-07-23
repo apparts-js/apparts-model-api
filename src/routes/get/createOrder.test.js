@@ -1,10 +1,10 @@
 const { createOrder } = require("./createOrder");
-const { useModel } = require("../../tests/model.js");
-const { useAdvancedModel } = require("../../tests/advancedmodel.js");
+import { Models } from "../../tests/model";
+import { AdvancedModels } from "../../tests/advancedmodel";
 
 describe("order api type", () => {
   test("Should not include derived types", async () => {
-    expect(createOrder(useModel)).toStrictEqual({
+    expect(createOrder(Models)).toStrictEqual({
       items: {
         keys: {
           dir: {
@@ -40,7 +40,7 @@ describe("order api type", () => {
     });
   });
   test("Should not include arrays, correctly show objects", async () => {
-    expect(createOrder(useAdvancedModel)).toStrictEqual({
+    expect(createOrder(AdvancedModels)).toStrictEqual({
       items: {
         keys: {
           dir: {

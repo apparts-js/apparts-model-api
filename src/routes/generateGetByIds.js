@@ -10,7 +10,7 @@ const { prepauthTokenJWT, httpErrorSchema } = require("@apparts/prep");
 
 const generateGetByIds = (
   prefix,
-  useModel,
+  Model,
   { access: authF, title, description },
   webtokenkey,
   idField
@@ -26,10 +26,10 @@ const generateGetByIds = (
       description,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, useModel),
+          ...createParams(prefix, Model),
           [idField + "s"]: {
             type: "array",
-            items: createIdParam(useModel, idField),
+            items: createIdParam(Model, idField),
           },
         }),
       },
@@ -38,7 +38,7 @@ const generateGetByIds = (
           type: "array",
           items: {
             type: "object",
-            keys: createReturns(useModel),
+            keys: createReturns(Model),
           },
         }),
         httpErrorSchema(403, "You don't have the rights to retrieve this."),
@@ -56,11 +56,9 @@ const generateGetByIds = (
         return [];
       }
 
-      const [Many] = useModel(dbs);
-      const res = new Many();
+      const res = new Model(dbs);
       await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
-      await res.generateDerived();
-      return res.getPublic();
+      return await res.getPublic();
     }
   );
   return getF;

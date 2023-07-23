@@ -17,6 +17,9 @@ const typeFromModeltype = (tipe) => {
   if ("type" in tipe) {
     res.type = tipe.type;
   }
+  if ("semantic" in tipe) {
+    res.semantic = tipe.semantic;
+  }
   if ("items" in tipe) {
     res.items = tipe.items;
   }
@@ -39,25 +42,25 @@ const typeFromModeltype = (tipe) => {
   return res;
 };
 
-const createIdParam = (useModel, idField) => {
-  const [Models] = useModel();
-  const idType = Models.getTypes()[idField];
+const createIdParam = (Model, idField) => {
+  const types = Model.getSchema().getModelType();
+  const idType = types[idField];
   return typeFromModeltype(idType);
 };
 
-const createParams = (prefix, useModel) => {
-  const [Models] = useModel();
+const createParams = (prefix, Model) => {
+  const types = Model.getSchema().getModelType();
   const pathParams = prefix
     .split("/")
     .filter((part) => part.substr(0, 1) === ":")
     .map((part) => part.slice(1));
   const paramTypes = {};
   for (const pathParam of pathParams) {
-    if (!Models.getTypes()[pathParam]) {
+    if (!types[pathParam]) {
       throw "Param " + pathParam + " not known in model for path " + prefix;
     }
     paramTypes[pathParam] = {
-      type: Models.getTypes()[pathParam].type,
+      type: types[pathParam].type,
     };
   }
   return paramTypes;
@@ -76,11 +79,10 @@ const recursiveCreateBody = (tipe) => {
   });
 };
 
-const createBody = (prefix, useModel) => {
-  const params = createParams(prefix, useModel);
-  const [Models] = useModel();
+const createBody = (prefix, Model) => {
+  const params = createParams(prefix, Model);
+  const types = Model.getSchema().getModelType();
   const bodyParams = {};
-  const types = Models.getTypes();
   for (const key in types) {
     const tipe = types[key];
     if (tipe.derived) {
@@ -109,10 +111,10 @@ const nameFromPrefix = (prefix) => {
     .replace(/^\w/, (c) => c.toUpperCase());
 };
 
-const createReturns = (useModel) => {
-  const [Models] = useModel();
+const createReturns = (Model) => {
+  const types = Model.getSchema().getModelType();
   const returns = {};
-  const types = Models.getTypes();
+
   for (const key in types) {
     const tipe = types[key];
     let name = key;

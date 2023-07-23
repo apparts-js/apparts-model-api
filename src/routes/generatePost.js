@@ -12,11 +12,11 @@ const {
   prepauthTokenJWT,
   httpErrorSchema,
 } = require("@apparts/prep");
-const { DoesExist } = require("@apparts/model");
+const { NotUnique } = require("@apparts/model");
 
 const generatePost = (
   prefix,
-  useModel,
+  Model,
   { access: authF, title, description },
   webtokenkey,
   trackChanges,
@@ -33,15 +33,15 @@ const generatePost = (
 
       receives: {
         params: makeSchema({
-          ...createParams(prefix, useModel),
+          ...createParams(prefix, Model),
         }),
         body: makeSchema({
-          ...createBody(prefix, useModel),
+          ...createBody(prefix, Model),
         }),
       },
       returns: [
         makeSchema({
-          ...createIdParam(useModel, idField),
+          ...createIdParam(Model, idField),
         }),
         httpErrorSchema(
           400,
@@ -57,9 +57,7 @@ const generatePost = (
       const { dbs, params } = req;
       let { body } = req;
 
-      const [, One] = useModel(dbs);
-
-      const types = One.getTypes();
+      const types = Model.getSchema().getModelType();
       try {
         body = reverseMap(body, types);
       } catch (e) {
@@ -83,11 +81,11 @@ const generatePost = (
         }
       }
 
-      const model = new One({ ...body, ...params });
+      const model = new Model(dbs, [{ ...body, ...params }]);
       try {
         await model.store();
       } catch (e) {
-        if (e instanceof DoesExist) {
+        if (e instanceof NotUnique) {
           return new HttpError(412, "Could not create item because it exists");
         }
         throw e;

@@ -1,6 +1,7 @@
+import * as types from "@apparts/types";
 const { createBody } = require("./common");
-const { useModel } = require("../tests/model.js");
-const { makeModel, useModel: _useModel } = require("@apparts/model");
+import { Models } from "../tests/model";
+const { useModel } = require("@apparts/model");
 const {
   addCrud,
   accessLogic: { anybody, and, andS, or, orS },
@@ -8,7 +9,7 @@ const {
 const { generateMethods } = require("./");
 const methods = generateMethods(
   "/v/1/model",
-  useModel,
+  Models,
   {
     get: { access: anybody },
     getByIds: { access: anybody },
@@ -49,7 +50,7 @@ describe("No functions", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: {},
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -96,7 +97,7 @@ describe("Anybody", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: {
       get: { access: anybody },
       getByIds: { access: anybody },
@@ -147,7 +148,7 @@ describe("accessFunc return values", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: {
       get: {
         access: async () =>
@@ -185,7 +186,7 @@ describe("accessFunc should have request, dbs, me", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: {
       get: {
         access: async ({ dbs }, me) => {
@@ -453,7 +454,7 @@ describe("orS", () => {
 
 describe("createBody", () => {
   test("Should not produce derived values in body", async () => {
-    expect(createBody("", useModel)).toStrictEqual({
+    expect(createBody("", Models)).toStrictEqual({
       optionalVal: {
         optional: true,
         type: "string",
@@ -465,51 +466,34 @@ describe("createBody", () => {
   });
 
   test("Should not produce readOnly values in body", async () => {
-    const [Models, Model, NoModel] = _useModel(
-      {
-        id: {
-          type: "id",
-          public: true,
-          auto: true,
-          key: true,
-        },
-        val: {
-          type: "string",
-          public: true,
-        },
-        created: {
-          type: "time",
-          default: () => 100,
-          public: true,
-          readOnly: true,
-        },
-      },
-      "modelWithReadOnly"
-    );
-    const { useMyModel } = makeModel("MyModel", [Models, Model, NoModel]);
-    expect(createBody("", useMyModel)).toStrictEqual({
+    const Models = useModel({
+      collection: "modelWithReadOnly",
+      typeSchema: types.obj({
+        id: types.int().semantic("id").key().auto().public(),
+        val: types.string().public(),
+        created: types
+          .int()
+          .semantic("time")
+          .default(() => 100)
+          .public()
+          .readOnly(),
+      }),
+    });
+    expect(createBody("", Models)).toStrictEqual({
       val: { type: "string" },
     });
   });
 
   test("Should handle optional params when creating body", async () => {
-    const [Models, Model, NoModel] = _useModel(
-      {
-        id: {
-          type: "id",
-          public: true,
-        },
-        val: {
-          type: "string",
-          public: true,
-          optinoal: true,
-        },
-      },
-      "modelWithReadOnly"
-    );
-    const { useMyModel } = makeModel("MyModel", [Models, Model, NoModel]);
-    expect(createBody(":val", useMyModel)).toStrictEqual({
-      id: { type: "id" },
+    const Models = useModel({
+      collection: "modelWithReadOnly",
+      typeSchema: types.obj({
+        id: types.int().semantic("id").public(),
+        val: types.string().public(),
+      }),
+    });
+    expect(createBody(":val", Models)).toStrictEqual({
+      id: { type: "int", semantic: "id" },
     });
   });
 });

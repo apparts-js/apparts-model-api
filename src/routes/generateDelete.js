@@ -15,7 +15,7 @@ const {
 
 const generateDelete = (
   prefix,
-  useModel,
+  Model,
   { access: authF, title, description },
   webtokenkey,
   trackChanges,
@@ -30,10 +30,10 @@ const generateDelete = (
       description,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, useModel),
+          ...createParams(prefix, Model),
           [idField + "s"]: {
             type: "array",
-            items: createIdParam(useModel, idField),
+            items: createIdParam(Model, idField),
           },
         }),
       },
@@ -58,8 +58,7 @@ const generateDelete = (
         return "ok";
       }
 
-      const [Many] = useModel(dbs);
-      const res = new Many();
+      const res = new Model(dbs);
       await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
       try {
         await res.deleteAll();

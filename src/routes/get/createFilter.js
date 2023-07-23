@@ -61,26 +61,29 @@ const addToFilter = (filter, tipe, name) => {
     case "int":
     case "float":
     case "time":
-      filterList.push(convertedType, {
-        type: "object",
-        keys: {
-          gt: { type: tipe.type, optional: true },
-          gte: { type: tipe.type, optional: true },
-          lt: { type: tipe.type, optional: true },
-          lte: { type: tipe.type, optional: true },
-        },
-      });
+      if (tipe.semantic !== "id") {
+        filterList.push(convertedType, {
+          type: "object",
+          keys: {
+            gt: { type: tipe.type, optional: true },
+            gte: { type: tipe.type, optional: true },
+            lt: { type: tipe.type, optional: true },
+            lte: { type: tipe.type, optional: true },
+          },
+        });
+      } else {
+        filterList.push(convertedType);
+      }
       break;
     default:
       filterList.push(convertedType);
   }
 };
 
-const createFilter = (prefix, useModel) => {
+const createFilter = (prefix, Model) => {
   const filter = { optional: true, type: "object", keys: {} };
-  const [Models] = useModel();
-  const types = Models.getTypes();
-  const params = createParams(prefix, useModel);
+  const types = Model.getSchema().getModelType();
+  const params = createParams(prefix, Model);
   for (const key in types) {
     const tipe = types[key];
     let name = key;

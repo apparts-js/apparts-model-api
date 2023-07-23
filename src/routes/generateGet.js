@@ -36,7 +36,7 @@ const typeToJSType = (type) => {
 
 const generateGet = (
   prefix,
-  useModel,
+  Model,
   { access: authF, title, description },
   webtokenkey
 ) => {
@@ -51,17 +51,17 @@ const generateGet = (
         query: makeSchema({
           limit: { type: "int", default: 50 },
           offset: { type: "int", default: 0 },
-          order: createOrder(useModel),
-          filter: createFilter(prefix, useModel),
+          order: createOrder(Model),
+          filter: createFilter(prefix, Model),
         }),
-        params: makeSchema(createParams(prefix, useModel)),
+        params: makeSchema(createParams(prefix, Model)),
       },
       returns: [
         makeSchema({
           type: "array",
           items: {
             type: "object",
-            keys: createReturns(useModel),
+            keys: createReturns(Model),
           },
         }),
         httpErrorSchema(403, "You don't have the rights to retrieve this."),
@@ -77,9 +77,8 @@ const generateGet = (
       } = req;
       let { filter, order } = req.query;
 
-      const [Many] = useModel(dbs);
       if (filter) {
-        const types = Many.getTypes();
+        const types = Model.getSchema().getModelType();
         for (const key in filter) {
           if (filter[key] === null) {
             delete filter[key];
@@ -131,7 +130,7 @@ const generateGet = (
       }
 
       if (order) {
-        const types = Many.getTypes();
+        const types = Model.getSchema().getModelType();
         order = order.map(({ dir, key }) => {
           const [first, ...path] = key.split(".");
           return {
@@ -141,10 +140,9 @@ const generateGet = (
           };
         });
       }
-      const res = new Many();
+      const res = new Model(dbs);
       await res.load({ ...filter, ...params }, limit, offset, order);
-      await res.generateDerived();
-      return res.getPublic();
+      return await res.getPublic();
     }
   );
   return getF;

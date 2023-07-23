@@ -1,4 +1,4 @@
-const { NoModel, Model, useModel } = require("../tests/model.js");
+import { Models } from "../tests/model";
 const generatePost = require("./generatePost");
 const {
   addCrud,
@@ -10,7 +10,7 @@ const fName = "";
 const path = "/v/1/model",
   auth = { post: { access: anybody } };
 
-const methods = generateMethods(path, useModel, auth, "", undefined, "id");
+const methods = generateMethods(path, Models, auth, "", undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "post",
@@ -64,25 +64,20 @@ CREATE TABLE namedidmodel (
   });
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModel, useSubModel } = require("../tests/submodel.js");
-const { MultiModel, useMultiModel } = require("../tests/multiKeyModel.js");
-const {
-  AdvancedModel,
-  useAdvancedModel,
-} = require("../tests/advancedmodel.js");
-const {
-  useModelWithDefault,
-  ModelWithDefault,
-} = require("../tests/modelWithDefault.js");
-const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
-const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
+
+const { SubModels } = require("../tests/submodel");
+const { AdvancedModels } = require("../tests/advancedmodel");
+const { ModelsWithDefault } = require("../tests/modelWithDefault");
+const { StrangeIdModels } = require("../tests/strangeids");
+const { NamedIdModels } = require("../tests/namedIdModel");
+const { MultiModels } = require("../tests/multiKeyModel");
 
 describe("Post", () => {
   const path = "/v/1/model";
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -95,7 +90,7 @@ describe("Post", () => {
 
   it("should reject without access function", async () => {
     expect(() =>
-      generatePost("model", useModel, {}, "", undefined, "id")
+      generatePost("model", Models, {}, "", undefined, "id")
     ).toThrow("Route (post) model has no access control function.");
   });
 
@@ -105,7 +100,7 @@ describe("Post", () => {
       .post(url("model"))
       .send({})
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({});
+    await new Models(dbs).loadNone({});
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(error("Fieldmissmatch"));
     checkType(response, fName);
@@ -119,7 +114,7 @@ describe("Post", () => {
         someNumber: 99,
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new Model(dbs).load({});
+    const model = await new Models(dbs).loadOne({});
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(model.content).toMatchObject({
@@ -139,7 +134,7 @@ describe("Post", () => {
         optionalVal: "testYes",
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new Model(dbs).load({ optionalVal: "testYes" });
+    const model = await new Models(dbs).loadOne({ optionalVal: "testYes" });
     expect(response.status).toBe(200);
     expect(response.body).toBe(model.content.id);
     expect(model.content).toMatchObject({
@@ -159,7 +154,7 @@ describe("Post", () => {
         hasDefault: 10,
       })
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ mapped: 100 });
+    await new Models(dbs).loadNone({ mapped: 100 });
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
       error(
@@ -179,7 +174,7 @@ describe("Post", () => {
         rubbish: true,
       })
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ mapped: 100 });
+    await new Models(dbs).loadNone({ mapped: 100 });
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
       error(
@@ -199,7 +194,7 @@ describe("Post", () => {
         someNumber: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ mapped: 100 });
+    await new Models(dbs).loadNone({ mapped: 100 });
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
       error(
@@ -214,7 +209,7 @@ describe("Post", () => {
         mapped: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ mapped: 100 });
+    await new Models(dbs).loadNone({ mapped: 100 });
     expect(response2.status).toBe(400);
     expect(response2.body).toMatchObject(error("Fieldmissmatch"));
     checkType(response2, fName);
@@ -228,7 +223,7 @@ describe("Post", () => {
         someNumber: 100,
       })
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ mapped: 100 });
+    await new Models(dbs).loadNone({ mapped: 100 });
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject(
       error(
@@ -245,7 +240,7 @@ describe("Post", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModelWithDefault,
+    model: ModelsWithDefault,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -264,7 +259,7 @@ describe("Post", () => {
         hasDefault: 9,
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new ModelWithDefault(dbs).load({ mapped: 100 });
+    const model = await new ModelsWithDefault(dbs).loadOne({ mapped: 100 });
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(model.content).toMatchObject({
@@ -282,7 +277,7 @@ describe("Post", () => {
         someNumber: 101,
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new ModelWithDefault(dbs).load({ mapped: 101 });
+    const model = await new ModelsWithDefault(dbs).loadOne({ mapped: 101 });
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(model.content).toMatchObject({
@@ -299,7 +294,7 @@ describe("Check authorization", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: { post: { access: () => false } },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -323,7 +318,7 @@ describe("Post multikey", () => {
   addCrud({
     prefix: path,
     app,
-    model: useMultiModel,
+    model: MultiModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -337,7 +332,7 @@ describe("Post multikey", () => {
         key: "myKey",
       })
       .set("Authorization", "Bearer " + jwt());
-    const model = await new MultiModel(dbs).load({});
+    const model = await new MultiModels(dbs).loadOne({});
     expect(model.content).toMatchObject({ id: 1000, key: "myKey" });
     expect(response.status).toBe(200);
     expect(response.body).toBe(1000);
@@ -353,7 +348,7 @@ describe("Post multikey", () => {
         key: "myKey",
       })
       .set("Authorization", "Bearer " + jwt());
-    await new MultiModel(dbs).load({});
+    await new MultiModels(dbs).loadOne({});
     expect(response.status).toBe(412);
     expect(response.body).toMatchObject(
       error("Could not create item because it exists")
@@ -367,19 +362,19 @@ describe("Post subresources", () => {
   addCrud({
     prefix: path,
     app,
-    model: useSubModel,
+    model: SubModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Post a subresouce", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    await new Model(dbs, { mapped: 101 }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    await new Models(dbs, [{ mapped: 101 }]).store();
     const response = await request(app)
       .post(url(`model/${model1.content.id}/submodel`))
       .set("Authorization", "Bearer " + jwt());
-    const submodel = await new SubModel(dbs).load({});
+    const submodel = await new SubModels(dbs).loadOne({});
     expect(response.status).toBe(200);
     expect(response.body).toBe(submodel.content.id);
     expect(submodel.content).toMatchObject({
@@ -395,7 +390,7 @@ describe("Post subresources with optional relation", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -410,7 +405,7 @@ describe("Post subresources with optional relation", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
 
-    const submodel = await new Model(dbs).load({ id: response.body });
+    const submodel = await new Models(dbs).loadOne({ id: response.body });
     expect(submodel.content).toMatchObject({
       id: submodel.content.id,
       optionalVal: "test123",
@@ -425,7 +420,7 @@ describe("post advanced model", () => {
   addCrud({
     prefix: path,
     app,
-    model: useAdvancedModel,
+    model: AdvancedModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -440,7 +435,7 @@ describe("post advanced model", () => {
         object: { a: 23, bcd: "nope" },
       })
       .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new AdvancedModel(dbs).load({});
+    const modelNew = await new AdvancedModels(dbs).loadOne({});
     expect(response.status).toBe(200);
     expect(response.body).toBe(modelNew.content.id);
 
@@ -456,7 +451,7 @@ describe("Title and description", () => {
   test("Should set default title", async () => {
     const options1 = generatePost(
       "model",
-      useModel,
+      Models,
       { access: anybody },
       "",
       undefined,
@@ -464,7 +459,7 @@ describe("Title and description", () => {
     ).options;
     const options2 = generatePost(
       "model",
-      useModel,
+      Models,
       { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
@@ -482,13 +477,13 @@ describe("Ids of other format", () => {
   addCrud({
     prefix: path,
     app,
-    model: useStangeIdModel,
+    model: StrangeIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useStangeIdModel,
+    StrangeIdModels,
     auth,
     "",
     undefined,
@@ -504,7 +499,7 @@ describe("Ids of other format", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe("test1");
     expect(response.status).toBe(200);
-    const model2 = await new StangeIdModel(dbs).load({
+    const model2 = await new StrangeIdModels(dbs).loadOne({
       id: "test1",
     });
     expect(model2.content).toMatchObject({
@@ -520,14 +515,14 @@ describe("Ids with different name", () => {
   addCrud({
     prefix: path,
     app,
-    model: useNamedIdModel,
+    model: NamedIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
-    useNamedIdModel,
+    NamedIdModels,
     auth,
     "",
     undefined,
@@ -543,7 +538,7 @@ describe("Ids with different name", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe(1);
     expect(response.status).toBe(200);
-    const model2 = await new NamedIdModel(dbs).load({
+    const model2 = await new NamedIdModels(dbs).loadOne({
       specialId: 1,
     });
     expect(model2.content).toMatchObject({

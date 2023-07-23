@@ -1,6 +1,6 @@
 const { createFilter } = require("./createFilter");
-const { useModel } = require("../../tests/model.js");
-const { useAdvancedModel } = require("../../tests/advancedmodel.js");
+import { Models } from "../../tests/model";
+import { AdvancedModels } from "../../tests/advancedmodel";
 
 const filterAlts = (alts) => ({
   alternatives: alts,
@@ -37,7 +37,8 @@ describe("filter api type", () => {
   ];
   const idAlternatives = [
     {
-      type: "id",
+      type: "int",
+      semantic: "id",
     },
   ];
   const stringAlternatives = [
@@ -67,7 +68,7 @@ describe("filter api type", () => {
     },
   ];
   test("Should not include derived types", async () => {
-    expect(createFilter("", useModel)).toStrictEqual({
+    expect(createFilter("", Models)).toStrictEqual({
       keys: {
         id: filterAlts(idAlternatives),
         optionalVal: filterAlts([
@@ -81,7 +82,7 @@ describe("filter api type", () => {
     });
   });
   test("Should not include arrays, correctly show objects", async () => {
-    expect(createFilter("", useAdvancedModel)).toStrictEqual({
+    expect(createFilter("", AdvancedModels)).toStrictEqual({
       keys: {
         id: filterAlts(idAlternatives),
         "object.a": filterAlts(numberAlternatives),

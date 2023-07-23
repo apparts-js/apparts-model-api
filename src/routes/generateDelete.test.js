@@ -1,4 +1,4 @@
-const { NoModel, Model, useModel } = require("../tests/model.js");
+import { Models } from "../tests/model";
 const generateDelete = require("./generateDelete");
 const {
   addCrud,
@@ -10,7 +10,7 @@ const fName = "/:ids",
   auth = { delete: { access: anybody } };
 const methods = generateMethods(
   "/v/1/model",
-  useModel,
+  Models,
   auth,
   "",
   undefined,
@@ -56,21 +56,17 @@ CREATE TABLE namedidmodel (
   });
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModel, NoSubModel, useSubModel } = require("../tests/submodel.js");
-const {
-  AdvancedModel,
-  NoAdvancedModel,
-  useAdvancedModel,
-} = require("../tests/advancedmodel.js");
-const { StangeIdModels, useStangeIdModel } = require("../tests/strangeids.js");
-const { NamedIdModels, useNamedIdModel } = require("../tests/namedIdModel.js");
+const { SubModels } = require("../tests/submodel");
+const { AdvancedModels } = require("../tests/advancedmodel");
+const { StrangeIdModels } = require("../tests/strangeids");
+const { NamedIdModels } = require("../tests/namedIdModel");
 
 describe("Delete", () => {
   const path = "/v/1/model";
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -83,33 +79,33 @@ describe("Delete", () => {
 
   it("should reject without access function", async () => {
     expect(() =>
-      generateDelete("model", useModel, {}, "", undefined, "id")
+      generateDelete("model", Models, {}, "", undefined, "id")
     ).toThrow("Route (delete) model has no access control function.");
   });
 
   test("Delete", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 8 }).store();
+    const model = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
       .delete(url("model/" + JSON.stringify([model.content.id])))
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe("ok");
     expect(response.status).toBe(200);
-    await new NoModel(dbs).loadNone({ id: model.content.id });
+    await new Models(dbs).loadNone({ id: model.content.id });
     checkType(response, fName);
   });
 
   test("Delete multiple", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 8 }).store();
-    const model2 = await new Model(dbs, { mapped: 8 }).store();
+    const model1 = await new Models(dbs, [{ mapped: 8 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
       .delete(
         url("model/" + JSON.stringify([model1.content.id, model2.content.id]))
       )
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ id: model1.content.id });
-    await new NoModel(dbs).loadNone({ id: model2.content.id });
+    await new Models(dbs).loadNone({ id: model1.content.id });
+    await new Models(dbs).loadNone({ id: model2.content.id });
     expect(response.body).toBe("ok");
     expect(response.status).toBe(200);
     checkType(response, fName);
@@ -126,14 +122,16 @@ describe("Delete", () => {
 
   test("Delete non existing model", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 11,
-      optionalVal: null,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 11,
+        optionalVal: null,
+      },
+    ]).store();
     const response = await request(app)
       .delete(url("model/[393939]"))
       .set("Authorization", "Bearer " + jwt());
-    await new Model(dbs).loadById(model.content.id);
+    await new Models(dbs).loadOneByKeys({ id: model.content.id });
     expect(response.status).toBe(200);
     expect(response.body).toBe("ok");
     checkType(response, fName);
@@ -141,8 +139,8 @@ describe("Delete", () => {
 
   test("Delete multiple, some don't exist", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 8 }).store();
-    const model2 = await new Model(dbs, { mapped: 8 }).store();
+    const model1 = await new Models(dbs, [{ mapped: 8 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
       .delete(
         url(
@@ -151,8 +149,8 @@ describe("Delete", () => {
         )
       )
       .set("Authorization", "Bearer " + jwt());
-    await new NoModel(dbs).loadNone({ id: model1.content.id });
-    await new NoModel(dbs).loadNone({ id: model2.content.id });
+    await new Models(dbs).loadNone({ id: model1.content.id });
+    await new Models(dbs).loadNone({ id: model2.content.id });
     expect(response.body).toBe("ok");
     expect(response.status).toBe(200);
     checkType(response, fName);
@@ -164,7 +162,7 @@ describe("Check authorization", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: { delete: { access: () => false } },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -186,7 +184,7 @@ describe("Delete subresources", () => {
   addCrud({
     prefix: path,
     app,
-    model: useSubModel,
+    model: SubModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -200,21 +198,25 @@ describe("Delete subresources", () => {
 
   test("Delete a subresouce", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    const model2 = await new Model(dbs, { mapped: 101 }).store();
-    const submodel = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
-    const submodel2 = await new SubModel(dbs, {
-      modelId: model2.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 101 }]).store();
+    const submodel = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
+    const submodel2 = await new SubModels(dbs, [
+      {
+        modelId: model2.content.id,
+      },
+    ]).store();
     const response = await request(app)
       .delete(
         url(`model/${model1.content.id}/submodel/[${submodel.content.id}]`)
       )
       .set("Authorization", "Bearer " + jwt());
-    await new NoSubModel(dbs).loadNone({ modelId: model1.content.id });
-    const submodelNew = await new SubModel(dbs).load({
+    await new SubModels(dbs).loadNone({ modelId: model1.content.id });
+    const submodelNew = await new SubModels(dbs).loadOne({
       modelId: model2.content.id,
     });
     expect(response.status).toBe(200);
@@ -228,12 +230,14 @@ describe("Delete subresources", () => {
 
   test("Delete reference of a a subresouce", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, { mapped: 100 }).store();
-    const submodel = await new SubModel(dbs, {
-      modelId: model.content.id,
-    }).store();
-    await new SubModel(dbs).loadById(submodel.content.id);
-    await new Model(dbs).loadById(model.content.id);
+    const model = await new Models(dbs, [{ mapped: 100 }]).store();
+    const submodel = await new SubModels(dbs, [
+      {
+        modelId: model.content.id,
+      },
+    ]).store();
+    await new SubModels(dbs).loadOneByKeys({ id: submodel.content.id });
+    await new Models(dbs).loadOneByKeys({ id: model.content.id });
     const response = await request(app)
       .delete(url(`model/[${model.content.id}]`))
       .set("Authorization", "Bearer " + jwt());
@@ -243,8 +247,12 @@ describe("Delete subresources", () => {
       error("Could not delete as other items reference this item")
     );
 
-    const submodelNew = await new SubModel(dbs).loadById(submodel.content.id);
-    const modelNew = await new Model(dbs).loadById(model.content.id);
+    const submodelNew = await new SubModels(dbs).loadOneByKeys({
+      id: submodel.content.id,
+    });
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
     expect(submodelNew.content).toMatchObject({
       id: submodel.content.id,
       modelId: model.content.id,
@@ -262,11 +270,11 @@ describe("delete subresources with optional relation", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
 
   test("Should delete a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -276,17 +284,19 @@ describe("delete subresources with optional relation", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const submodel = await new Model(dbs, {
-      optionalVal: "test123",
-      mapped: 1221,
-    }).store();
+    const submodel = await new Models(dbs, [
+      {
+        optionalVal: "test123",
+        mapped: 1221,
+      },
+    ]).store();
 
     const response = await request(app)
       .delete(url(`test123/model/${JSON.stringify([submodel.content.id])}`))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
     expect(response.body).toBe("ok");
-    await new NoModel(dbs, {
+    await new Models(dbs).loadNone({
       id: submodel.content.id,
       optionalVal: "test123",
       mapped: 1221,
@@ -300,7 +310,7 @@ describe("delete advanced model", () => {
   addCrud({
     prefix: path,
     app,
-    model: useAdvancedModel,
+    model: AdvancedModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -308,16 +318,18 @@ describe("delete advanced model", () => {
   test("Should delete model", async () => {
     const dbs = getPool();
 
-    const model1 = await new AdvancedModel(dbs, {
-      textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
-    }).store();
+    const model1 = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      },
+    ]).store();
 
     const response = await request(app)
       .delete(url(`advancedmodel/` + JSON.stringify([model1.content.id])))
       .set("Authorization", "Bearer " + jwt());
 
-    await new NoAdvancedModel(dbs).loadNone({});
+    await new AdvancedModels(dbs).loadNone({});
     expect(response.status).toBe(200);
     expect(response.body).toBe("ok");
     checkType(response, fName);
@@ -328,7 +340,7 @@ describe("Title and description", () => {
   test("Should set default title", async () => {
     const options1 = generateDelete(
       "model",
-      useModel,
+      Models,
       { access: anybody },
       "",
       undefined,
@@ -336,7 +348,7 @@ describe("Title and description", () => {
     ).options;
     const options2 = generateDelete(
       "model",
-      useModel,
+      Models,
       { title: "My title", description: "yay", access: anybody },
       "",
       undefined,
@@ -354,13 +366,13 @@ describe("Ids of other format", () => {
   addCrud({
     prefix: path,
     app,
-    model: useStangeIdModel,
+    model: StrangeIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useStangeIdModel,
+    StrangeIdModels,
     auth,
     "",
     undefined,
@@ -370,7 +382,7 @@ describe("Ids of other format", () => {
   it("should delete with other id format", async () => {
     methods.delete[fName] = methods2.delete[fName];
     const dbs = getPool();
-    await new StangeIdModels(dbs, [
+    await new StrangeIdModels(dbs, [
       {
         id: "test1",
         val: 1,
@@ -385,7 +397,7 @@ describe("Ids of other format", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe("ok");
     expect(response.status).toBe(200);
-    const model2 = await new StangeIdModels(dbs).load({});
+    const model2 = await new StrangeIdModels(dbs).load({});
     expect(model2.contents).toMatchObject([
       {
         id: "test2",
@@ -403,14 +415,14 @@ describe("Ids with different name", () => {
   addCrud({
     prefix: path,
     app,
-    model: useNamedIdModel,
+    model: NamedIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
-    useNamedIdModel,
+    NamedIdModels,
     auth,
     "",
     undefined,

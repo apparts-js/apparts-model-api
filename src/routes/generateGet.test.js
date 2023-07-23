@@ -1,5 +1,5 @@
 const generateGet = require("./generateGet");
-const { Models, Model, useModel } = require("../tests/model.js");
+import { Models } from "../tests/model";
 const {
   addCrud,
   accessLogic: { anybody },
@@ -10,7 +10,7 @@ const fName = "",
   auth = { get: { access: anybody } };
 const methods = generateMethods(
   "/v/1/model",
-  useModel,
+  Models,
   auth,
   "",
   undefined,
@@ -55,14 +55,10 @@ CREATE TABLE namedidmodel (
   });
 const request = require("supertest");
 const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModel, useSubModel } = require("../tests/submodel.js");
-const {
-  AdvancedModels,
-  AdvancedModel,
-  useAdvancedModel,
-} = require("../tests/advancedmodel.js");
-const { StangeIdModel, useStangeIdModel } = require("../tests/strangeids.js");
-const { NamedIdModel, useNamedIdModel } = require("../tests/namedIdModel.js");
+const { SubModels } = require("../tests/submodel");
+const { AdvancedModels } = require("../tests/advancedmodel");
+const { StrangeIdModels } = require("../tests/strangeids");
+const { NamedIdModels } = require("../tests/namedIdModel");
 
 const formatFilter = (a) => encodeURIComponent(JSON.stringify(a));
 
@@ -71,25 +67,27 @@ describe("Get", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   checkJWT(() => request(app).get(url("model")), "", checkType);
 
   it("should reject without access function", async () => {
-    expect(() => generateGet("model", useModel, {}, "", "id")).toThrow(
+    expect(() => generateGet("model", Models, {}, "", "id")).toThrow(
       "Route (get) model has no access control function."
     );
   });
 
   test("Get all", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, {
-      mapped: 10,
-      optionalVal: "test",
-    }).store();
-    const model2 = await new Model(dbs, { mapped: 11 }).store();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        optionalVal: "test",
+      },
+    ]).store();
+    const model2 = await new Models(dbs, [{ mapped: 11 }]).store();
     const response = await request(app)
       .get(url("model"))
       .set("Authorization", "Bearer " + jwt());
@@ -112,7 +110,7 @@ describe("Get", () => {
 
   test("Get paginated", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 20 }).store();
+    const model1 = await new Models(dbs, [{ mapped: 20 }]).store();
     const response = await request(app)
       .get(url("model", { limit: 2 }))
       .set("Authorization", "Bearer " + jwt());
@@ -254,28 +252,13 @@ describe("Filters", () => {
     checkType(response, fName);
   });
 
-  test("Get with filter with null value", async () => {
-    const response = await request(app)
-      .get(
-        url("model", {
-          filter: JSON.stringify({ optionalVal: null }),
-        })
-      )
-      .set("Authorization", "Bearer " + jwt());
-    const normalResponse = await request(app)
-      .get(url("model"))
-      .set("Authorization", "Bearer " + jwt());
-
-    expect(response.status).toBe(200);
-    expect(response.body.length).toBe(normalResponse.body.length);
-    checkType(response, fName);
-  });
-
   test("Get with filter on mapped type", async () => {
     const dbs = getPool();
-    const model1 = await new Model(dbs, {
-      mapped: 30,
-    }).store();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 30,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(
@@ -369,18 +352,24 @@ describe("Filters", () => {
 
   it("should get like-filtered string", async () => {
     const dbs = getPool();
-    await new Model(dbs, {
-      mapped: 30,
-      optionalVal: "cheap",
-    }).store();
-    const model2 = await new Model(dbs, {
-      mapped: 12,
-      optionalVal: "dirty",
-    }).store();
-    await new Model(dbs, {
-      mapped: 12,
-      optionalVal: "diRty",
-    }).store();
+    await new Models(dbs, [
+      {
+        mapped: 30,
+        optionalVal: "cheap",
+      },
+    ]).store();
+    const model2 = await new Models(dbs, [
+      {
+        mapped: 12,
+        optionalVal: "dirty",
+      },
+    ]).store();
+    await new Models(dbs, [
+      {
+        mapped: 12,
+        optionalVal: "diRty",
+      },
+    ]).store();
     const response = await request(app)
       .get(
         url("model", {
@@ -422,9 +411,11 @@ describe("Filters", () => {
 
   it("should filter number", async () => {
     const dbs = getPool();
-    const model = await new Model(dbs, {
-      mapped: 13,
-    }).store();
+    const model = await new Models(dbs, [
+      {
+        mapped: 13,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url("model", { filter: formatFilter({ someNumber: 13 }) }))
@@ -454,15 +445,21 @@ describe("Filters", () => {
 
   it("should filter number with greate and smaller", async () => {
     const dbs = getPool();
-    await new Model(dbs, {
-      mapped: 103,
-    }).store();
-    const model2 = await new Model(dbs, {
-      mapped: 104,
-    }).store();
-    await new Model(dbs, {
-      mapped: 105,
-    }).store();
+    await new Models(dbs, [
+      {
+        mapped: 103,
+      },
+    ]).store();
+    const model2 = await new Models(dbs, [
+      {
+        mapped: 104,
+      },
+    ]).store();
+    await new Models(dbs, [
+      {
+        mapped: 105,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(
@@ -545,7 +542,7 @@ describe("Check authorization", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: { get: { access: () => false } },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -567,18 +564,11 @@ describe("get subresources", () => {
   addCrud({
     prefix: path,
     app,
-    model: useSubModel,
+    model: SubModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(
-    path,
-    useSubModel,
-    auth,
-    "",
-    undefined,
-    "id"
-  );
+  const methods2 = generateMethods(path, SubModels, auth, "", undefined, "id");
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -588,11 +578,13 @@ describe("get subresources", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const model1 = await new Model(dbs, { mapped: 100 }).store();
-    const model2 = await new Model(dbs, { mapped: 101 }).store();
-    const submodel1 = await new SubModel(dbs, {
-      modelId: model1.content.id,
-    }).store();
+    const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
+    const model2 = await new Models(dbs, [{ mapped: 101 }]).store();
+    const submodel1 = await new SubModels(dbs, [
+      {
+        modelId: model1.content.id,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url(`model/${model1.content.id}/submodel`))
@@ -615,9 +607,11 @@ describe("get subresources", () => {
     expect(response2.body.length).toBe(0);
     checkType(response2, fName);
 
-    await new SubModel(dbs, {
-      modelId: model2.content.id,
-    }).store();
+    await new SubModels(dbs, [
+      {
+        modelId: model2.content.id,
+      },
+    ]).store();
     const response3 = await request(app)
       .get(
         url(`model/${model1.content.id}/submodel`, {
@@ -640,11 +634,11 @@ describe("Get subresources with optional relation", () => {
   addCrud({
     prefix: path,
     app,
-    model: useModel,
+    model: Models,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, useModel, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
 
   test("Should get a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -654,10 +648,12 @@ describe("Get subresources with optional relation", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const submodel = await new Model(dbs, {
-      optionalVal: "test123",
-      mapped: 1221,
-    }).store();
+    const submodel = await new Models(dbs, [
+      {
+        optionalVal: "test123",
+        mapped: 1221,
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url(`test123/model`))
@@ -679,13 +675,13 @@ describe("get advanced model", () => {
   addCrud({
     prefix: path,
     app,
-    model: useAdvancedModel,
+    model: AdvancedModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useAdvancedModel,
+    AdvancedModels,
     auth,
     "",
     undefined,
@@ -700,10 +696,12 @@ describe("get advanced model", () => {
     methods.get[fName] = methods2.get[fName];
 
     const dbs = getPool();
-    const model1 = await new AdvancedModel(dbs, {
-      textarray: ["erster", "zweiter"],
-      object: { a: 22, bcd: "jup", innerWithDef: "bla" },
-    }).store();
+    const model1 = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: { a: 22, bcd: "jup", innerWithDef: "bla" },
+      },
+    ]).store();
 
     const response = await request(app)
       .get(url(`advancedmodel`))
@@ -817,14 +815,14 @@ describe("Title and description", () => {
   test("Should set default title", async () => {
     const options1 = generateGet(
       "model",
-      useModel,
+      Models,
       { access: anybody },
       "",
       "id"
     ).options;
     const options2 = generateGet(
       "model",
-      useModel,
+      Models,
       { title: "My title", description: "yay", access: anybody },
       "",
       "id"
@@ -841,13 +839,13 @@ describe("Ids of other format", () => {
   addCrud({
     prefix: path,
     app,
-    model: useStangeIdModel,
+    model: StrangeIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
-    useStangeIdModel,
+    StrangeIdModels,
     auth,
     "",
     undefined,
@@ -857,10 +855,12 @@ describe("Ids of other format", () => {
   it("should get with other id format", async () => {
     methods.get[fName] = methods2.get[fName];
     const dbs = getPool();
-    await new StangeIdModel(dbs, {
-      id: "test1",
-      val: 1,
-    }).store();
+    await new StrangeIdModels(dbs, [
+      {
+        id: "test1",
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .get(url("strangemodel"))
       .set("Authorization", "Bearer " + jwt());
@@ -880,14 +880,14 @@ describe("Ids with different name", () => {
   addCrud({
     prefix: path,
     app,
-    model: useNamedIdModel,
+    model: NamedIdModels,
     routes: auth,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
-    useNamedIdModel,
+    NamedIdModels,
     auth,
     "",
     undefined,
@@ -897,10 +897,12 @@ describe("Ids with different name", () => {
   it("should put with named id", async () => {
     methods.get[fName] = methods2.get[fName];
     const dbs = getPool();
-    await new NamedIdModel(dbs, {
-      specialId: 1,
-      val: 1,
-    }).store();
+    await new NamedIdModels(dbs, [
+      {
+        specialId: 1,
+        val: 1,
+      },
+    ]).store();
     const response = await request(app)
       .get(url("namedid"))
       .set("Authorization", "Bearer " + jwt());

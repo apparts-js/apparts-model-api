@@ -34,7 +34,7 @@ const addToOrder = (order, tipe, name) => {
   }
 };
 
-const createOrder = (useModel) => {
+const createOrder = (Model) => {
   const order = {
     optional: true,
     type: "array",
@@ -52,8 +52,7 @@ const createOrder = (useModel) => {
       },
     },
   };
-  const [Models] = useModel();
-  const types = Models.getTypes();
+  const types = Model.getSchema().getModelType();
   for (const key in types) {
     const tipe = types[key];
 
