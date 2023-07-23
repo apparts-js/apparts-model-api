@@ -1,9 +1,16 @@
-const generateGet = require("./generateGet");
-const generateGetByIds = require("./generateGetByIds");
-const generatePost = require("./generatePost");
-const generatePut = require("./generatePut");
-const generatePatch = require("./generatePatch");
-const generateDelete = require("./generateDelete");
+import generateGet from "./generateGet";
+import generateGetByIds from "./generateGetByIds";
+import generatePost from "./generatePost";
+import generatePut from "./generatePut";
+import generatePatch from "./generatePatch";
+import generateDelete from "./generateDelete";
+import { Application } from "express";
+
+type RouteConfig = {
+  access: (request: unknown, me: unknown) => boolean;
+  title: string;
+  description: string;
+};
 
 const addCrud = ({
   prefix,
@@ -13,6 +20,25 @@ const addCrud = ({
   webtokenkey,
   trackChanges,
   idField = "id",
+}: {
+  prefix?: string;
+  app: Application;
+  model;
+  routes: {
+    get?: RouteConfig;
+    getByIds?: RouteConfig;
+    post?: RouteConfig;
+    put?: RouteConfig;
+    patch?: RouteConfig;
+    delete?: RouteConfig;
+  };
+  webtokenkey: string;
+  trackChanges?: (
+    me: unknown,
+    contentBefore: unknown,
+    contentAfter: unknown
+  ) => Promise<void>;
+  idField?: string;
 }) => {
   const methods = generateMethods(
     prefix,
@@ -94,4 +120,4 @@ const generateMethods = (
   return res;
 };
 
-module.exports = { addCrud, generateMethods };
+export { addCrud, generateMethods };
