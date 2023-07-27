@@ -2,14 +2,14 @@ import * as types from "@apparts/types";
 const { createBody } = require("./common");
 import { Models } from "../tests/model";
 const { useModel } = require("@apparts/model");
-const { useChecks } = require("@apparts/prep");
 const {
-  addCrud,
+  useChecks,
   anybody,
   rejectAccess,
   accessFn,
   jwtAnd: _jwtAnd,
-} = require("../");
+} = require("@apparts/prep");
+const { addCrud } = require("../");
 const jwtAnd = _jwtAnd("rsoaietn0932lyrstenoie3nrst");
 const { generateMethods } = require("./");
 const methods = generateMethods(

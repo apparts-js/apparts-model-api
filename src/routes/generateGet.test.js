@@ -1,8 +1,8 @@
 const generateGet = require("./generateGet");
 import { Models } from "../tests/model";
-const { addCrud, rejectAccess } = require("../");
+const { addCrud } = require("../");
 const { generateMethods } = require("./");
-const { validJwt } = require("@apparts/prep");
+const { validJwt, rejectAccess } = require("@apparts/prep");
 
 const fName = "",
   auth = { get: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };

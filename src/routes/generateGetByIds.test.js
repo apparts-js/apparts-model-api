@@ -1,8 +1,8 @@
 import { Models } from "../tests/model";
 const generateGetByIds = require("./generateGetByIds");
-const { addCrud, rejectAccess } = require("../");
+const { addCrud } = require("../");
 const { generateMethods } = require("./");
-const { validJwt } = require("@apparts/prep");
+const { validJwt, rejectAccess } = require("@apparts/prep");
 
 const fName = "/:ids",
   auth = { getByIds: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
