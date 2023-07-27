@@ -3,11 +3,10 @@ const {
   nameFromPrefix,
   createReturns,
   reverseMap,
-  checkAuth,
   unmapKey,
   makeSchema,
 } = require("./common");
-const { prepauthTokenJWT, httpErrorSchema } = require("@apparts/prep");
+const { prepare } = require("@apparts/prep");
 
 const { createFilter } = require("./get/createFilter");
 const { createOrder } = require("./get/createOrder");
@@ -37,16 +36,16 @@ const typeToJSType = (type) => {
 const generateGet = (
   prefix,
   Model,
-  { access: authF, title, description },
-  webtokenkey
+  { hasAccess: authF, title, description }
 ) => {
   if (!authF) {
     throw new Error(`Route (get) ${prefix} has no access control function.`);
   }
-  const getF = prepauthTokenJWT(webtokenkey)(
+  const getF = prepare(
     {
       title: title || "Get " + nameFromPrefix(prefix),
       description,
+      hasAccess: authF,
       receives: {
         query: makeSchema({
           limit: { type: "int", default: 50 },
@@ -64,12 +63,9 @@ const generateGet = (
             keys: createReturns(Model),
           },
         }),
-        httpErrorSchema(403, "You don't have the rights to retrieve this."),
       ],
     },
-    async (req, me) => {
-      await checkAuth(authF, req, me);
-
+    async (req) => {
       const {
         dbs,
         query: { limit, offset },

@@ -2,32 +2,27 @@ const { value } = require("@apparts/types");
 const {
   createParams,
   nameFromPrefix,
-  checkAuth,
   createIdParam,
   makeSchema,
 } = require("./common");
 const { IsReference } = require("@apparts/model");
-const {
-  prepauthTokenJWT,
-  HttpError,
-  httpErrorSchema,
-} = require("@apparts/prep");
+const { prepare, HttpError, httpErrorSchema } = require("@apparts/prep");
 
 const generateDelete = (
   prefix,
   Model,
-  { access: authF, title, description },
-  webtokenkey,
+  { hasAccess: authF, title, description },
   trackChanges,
   idField
 ) => {
   if (!authF) {
     throw new Error(`Route (delete) ${prefix} has no access control function.`);
   }
-  const deleteF = prepauthTokenJWT(webtokenkey)(
+  const deleteF = prepare(
     {
       title: title || "Delete " + nameFromPrefix(prefix),
       description,
+      hasAccess: authF,
       receives: {
         params: makeSchema({
           ...createParams(prefix, Model),
@@ -39,16 +34,13 @@ const generateDelete = (
       },
       returns: [
         value("ok"),
-        httpErrorSchema(403, "You don't have the rights to retrieve this."),
         httpErrorSchema(
           412,
           "Could not delete as other items reference this item"
         ),
       ],
     },
-    async (req, me) => {
-      await checkAuth(authF, req, me);
-
+    async (req, _, me) => {
       const {
         dbs,
         params: { [idField + "s"]: ids, ...restParams },

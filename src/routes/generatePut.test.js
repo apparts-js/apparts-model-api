@@ -1,21 +1,12 @@
 import { Models } from "../tests/model";
 const generatePut = require("./generatePut");
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "/:id",
-  auth = { put: { access: anybody } };
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  "",
-  undefined,
-  "id"
-);
+  auth = { put: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "put",
@@ -82,7 +73,6 @@ describe("Put", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -92,7 +82,7 @@ describe("Put", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() => generatePut("model", Models, {}, "", undefined, "id")).toThrow(
+    expect(() => generatePut("model", Models, {}, undefined, "id")).toThrow(
       "Route (put) model has no access control function."
     );
   });
@@ -342,7 +332,6 @@ describe("Check removal of default value", () => {
     app,
     model: ModelsWithDefault,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Put with non-public value with default", async () => {
@@ -407,8 +396,7 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { put: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: { put: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -420,7 +408,6 @@ describe("Check authorization", () => {
     expect(responsePut.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
-    checkType(responsePut, fName);
   });
 });
 
@@ -431,7 +418,6 @@ describe("Put subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Put a subresouce", async () => {
@@ -520,9 +506,8 @@ describe("put subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should put a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -564,7 +549,6 @@ describe("put advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should update model", async () => {
@@ -602,16 +586,18 @@ describe("Title and description", () => {
     const options1 = generatePut(
       "model",
       Models,
-      { access: anybody },
-      "",
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       undefined,
       "id"
     ).options;
     const options2 = generatePut(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
-      "",
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       undefined,
       "id"
     ).options;
@@ -629,13 +615,11 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -674,14 +658,12 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

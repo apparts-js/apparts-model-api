@@ -1,21 +1,12 @@
 const generateGet = require("./generateGet");
 import { Models } from "../tests/model";
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "",
-  auth = { get: { access: anybody } };
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  "",
-  undefined,
-  "id"
-);
+  auth = { get: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
@@ -69,7 +60,6 @@ describe("Get", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   checkJWT(() => request(app).get(url("model")), "", checkType);
 
@@ -543,8 +533,11 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { get: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: {
+      get: {
+        hasAccess: rejectAccess,
+      },
+    },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -552,10 +545,6 @@ describe("Check authorization", () => {
       .get(path)
       .set("Authorization", "Bearer " + jwt());
     expect(responseGet.status).toBe(403);
-    expect(responseGet.body).toMatchObject(
-      error("You don't have the rights to retrieve this.")
-    );
-    checkType(responseGet, fName);
   });
 });
 
@@ -566,7 +555,6 @@ describe("get subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(path, SubModels, auth, "", undefined, "id");
 
@@ -636,7 +624,6 @@ describe("Get subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
 
@@ -677,7 +664,6 @@ describe("get advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
@@ -816,14 +802,18 @@ describe("Title and description", () => {
     const options1 = generateGet(
       "model",
       Models,
-      { access: anybody },
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       "",
       "id"
     ).options;
     const options2 = generateGet(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       "",
       "id"
     ).options;
@@ -841,7 +831,6 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
@@ -882,7 +871,6 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(

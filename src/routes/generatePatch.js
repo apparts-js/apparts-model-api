@@ -3,15 +3,10 @@ const {
   nameFromPrefix,
   reverseMap,
   createBody,
-  checkAuth,
   createIdParam,
   makeSchema,
 } = require("./common");
-const {
-  HttpError,
-  prepauthTokenJWT,
-  httpErrorSchema,
-} = require("@apparts/prep");
+const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
 const { NotFound } = require("@apparts/model");
 
 const makePatchBody = (types) => {
@@ -36,8 +31,7 @@ const makePatchBody = (types) => {
 const generatePatch = (
   prefix,
   Model,
-  { access: authF, title, description },
-  webtokenkey,
+  { hasAccess: authF, title, description },
   trackChanges,
   idField
 ) => {
@@ -45,10 +39,11 @@ const generatePatch = (
     throw new Error(`Route (patch) ${prefix} has no access control function.`);
   }
 
-  const patchF = prepauthTokenJWT(webtokenkey)(
+  const patchF = prepare(
     {
       title: title || "Patch " + nameFromPrefix(prefix),
       description,
+      hasAccess: authF,
       receives: {
         params: makeSchema({
           ...createParams(prefix, Model),
@@ -71,12 +66,9 @@ const generatePatch = (
           "Could not alter item because it would change a path id"
         ),
         httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
-        httpErrorSchema(403, "You don't have the rights to retrieve this."),
       ],
     },
-    async (req, me) => {
-      await checkAuth(authF, req, me);
-
+    async (req, res, me) => {
       const { dbs, params } = req;
       let { body } = req;
 

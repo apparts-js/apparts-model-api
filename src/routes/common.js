@@ -1,16 +1,6 @@
 const { traverseType } = require("@apparts/types");
 const { HttpError } = require("@apparts/prep");
 
-const checkAuth = async (authF, res, me) => {
-  if (!authF) {
-    throw new Error("Route without auth func found!");
-  }
-  const allowed = await authF(res, me);
-  if (!allowed) {
-    throw new HttpError(403, "You don't have the rights to retrieve this.");
-  }
-};
-
 const typeFromModeltype = (tipe) => {
   const res = {};
 
@@ -176,7 +166,6 @@ module.exports = {
   makeSchema,
   createParams,
   createBody,
-  checkAuth,
   nameFromPrefix,
   createReturns,
   reverseMap,

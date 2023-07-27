@@ -3,22 +3,16 @@ const {
   createBody,
   nameFromPrefix,
   reverseMap,
-  checkAuth,
   createIdParam,
   makeSchema,
 } = require("./common");
-const {
-  HttpError,
-  prepauthTokenJWT,
-  httpErrorSchema,
-} = require("@apparts/prep");
+const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
 const { NotUnique } = require("@apparts/model");
 
 const generatePost = (
   prefix,
   Model,
-  { access: authF, title, description },
-  webtokenkey,
+  { hasAccess: authF, title, description },
   trackChanges,
   idField
 ) => {
@@ -26,11 +20,11 @@ const generatePost = (
     throw new Error(`Route (post) ${prefix} has no access control function.`);
   }
 
-  const postF = prepauthTokenJWT(webtokenkey)(
+  const postF = prepare(
     {
       title: title || "Create " + nameFromPrefix(prefix),
       description,
-
+      hasAccess: authF,
       receives: {
         params: makeSchema({
           ...createParams(prefix, Model),
@@ -48,12 +42,9 @@ const generatePost = (
           "Could not create item because your request had too many parameters"
         ),
         httpErrorSchema(412, "Could not create item because it exists"),
-        httpErrorSchema(403, "You don't have the rights to retrieve this."),
       ],
     },
-    async (req, me) => {
-      await checkAuth(authF, req, me);
-
+    async (req, res, me) => {
       const { dbs, params } = req;
       let { body } = req;
 

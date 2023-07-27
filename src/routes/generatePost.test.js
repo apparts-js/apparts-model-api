@@ -1,16 +1,14 @@
 import { Models } from "../tests/model";
 const generatePost = require("./generatePost");
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "";
 const path = "/v/1/model",
-  auth = { post: { access: anybody } };
+  auth = { post: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
-const methods = generateMethods(path, Models, auth, "", undefined, "id");
+const methods = generateMethods(path, Models, auth, undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "post",
@@ -79,7 +77,6 @@ describe("Post", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -89,9 +86,9 @@ describe("Post", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() =>
-      generatePost("model", Models, {}, "", undefined, "id")
-    ).toThrow("Route (post) model has no access control function.");
+    expect(() => generatePost("model", Models, {}, undefined, "id")).toThrow(
+      "Route (post) model has no access control function."
+    );
   });
 
   test("Post with too few values", async () => {
@@ -242,7 +239,6 @@ describe("Post", () => {
     app,
     model: ModelsWithDefault,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -295,8 +291,7 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { post: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: { post: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -308,8 +303,6 @@ describe("Check authorization", () => {
     expect(responsePost.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
-
-    checkType(responsePost, fName);
   });
 });
 
@@ -320,7 +313,6 @@ describe("Post multikey", () => {
     app,
     model: MultiModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Post with multi key", async () => {
@@ -364,7 +356,6 @@ describe("Post subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Post a subresouce", async () => {
@@ -392,7 +383,6 @@ describe("Post subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should post a subresouce", async () => {
@@ -422,7 +412,6 @@ describe("post advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should create model", async () => {
@@ -452,16 +441,18 @@ describe("Title and description", () => {
     const options1 = generatePost(
       "model",
       Models,
-      { access: anybody },
-      "",
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       undefined,
       "id"
     ).options;
     const options2 = generatePost(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
-      "",
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       undefined,
       "id"
     ).options;
@@ -479,13 +470,11 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -517,14 +506,12 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

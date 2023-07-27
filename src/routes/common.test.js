@@ -2,22 +2,26 @@ import * as types from "@apparts/types";
 const { createBody } = require("./common");
 import { Models } from "../tests/model";
 const { useModel } = require("@apparts/model");
+const { useChecks } = require("@apparts/prep");
 const {
   addCrud,
-  accessLogic: { anybody, and, andS, or, orS },
+  anybody,
+  rejectAccess,
+  accessFn,
+  jwtAnd: _jwtAnd,
 } = require("../");
+const jwtAnd = _jwtAnd("rsoaietn0932lyrstenoie3nrst");
 const { generateMethods } = require("./");
 const methods = generateMethods(
   "/v/1/model",
   Models,
   {
-    get: { access: anybody },
-    getByIds: { access: anybody },
-    post: { access: anybody },
-    put: { access: anybody },
-    delete: { access: anybody },
+    get: { hasAccess: anybody },
+    getByIds: { hasAccess: anybody },
+    post: { hasAccess: anybody },
+    put: { hasAccess: anybody },
+    delete: { hasAccess: anybody },
   },
-  "",
   undefined,
   "id"
 );
@@ -99,11 +103,11 @@ describe("Anybody", () => {
     app,
     model: Models,
     routes: {
-      get: { access: anybody },
-      getByIds: { access: anybody },
-      post: { access: anybody },
-      put: { access: anybody },
-      delete: { access: anybody },
+      get: { hasAccess: anybody },
+      getByIds: { hasAccess: anybody },
+      post: { hasAccess: anybody },
+      put: { hasAccess: anybody },
+      delete: { hasAccess: anybody },
     },
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
@@ -145,21 +149,27 @@ describe("Anybody", () => {
 
 describe("accessFunc return values", () => {
   const path = "/v/1/model3";
+  const routes = {
+    get: {
+      hasAccess: jwtAnd(
+        () => new Promise((res) => setTimeout(() => res(), 100))
+      ),
+    },
+    getByIds: {
+      hasAccess: jwtAnd(rejectAccess),
+    },
+  };
   addCrud({
     prefix: path,
     app,
     model: Models,
-    routes: {
-      get: {
-        access: async () =>
-          new Promise((res) => setTimeout(() => res(true), 100)),
-      },
-      getByIds: {
-        access: async () =>
-          new Promise((res) => setTimeout(() => res(false), 100)),
-      },
-    },
+    routes,
     webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+  });
+  const methods = generateMethods("/", Models, routes, undefined, "id");
+  const { checkType } = useChecks({
+    get: methods.get[""],
+    getByIds: methods.get["/:ids"],
   });
 
   test("Should accpet with Promise", async () => {
@@ -183,19 +193,31 @@ describe("accessFunc return values", () => {
 
 describe("accessFunc should have request, dbs, me", () => {
   const path = "/v/1/model4";
+  const routes = {
+    get: {
+      hasAccess: jwtAnd(
+        accessFn({
+          fn: async ({ dbs }, me) => {
+            await dbs.raw("SELECT 3");
+            if (me.name !== "Norris") {
+              rejectAccess();
+            }
+          },
+          description: "is Chuck Norris",
+          returns: rejectAccess.returns,
+        })
+      ),
+    },
+  };
   addCrud({
     prefix: path,
     app,
     model: Models,
-    routes: {
-      get: {
-        access: async ({ dbs }, me) => {
-          await dbs.raw("SELECT 3");
-          return me.name === "Norris";
-        },
-      },
-    },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes,
+  });
+  const methods = generateMethods("/", Models, routes, undefined, "id");
+  const { checkType } = useChecks({
+    get: methods.get[""],
   });
 
   test("Should accpet with correct name", async () => {
@@ -214,244 +236,6 @@ describe("accessFunc should have request, dbs, me", () => {
   });
 });
 
-describe("and", () => {
-  test("Should give true", async () => {
-    const res = await and(
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      },
-      () => true,
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      }
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res).toBe(true);
-  });
-
-  test("Should give false", async () => {
-    const res = await and(
-      () => false,
-      () => true,
-      () => true
-    )();
-    expect(res).toBe(false);
-    const res2 = await and(
-      () => true,
-      () => false,
-      () => true
-    )();
-    expect(res2).toBe(false);
-    const res3 = await and(
-      () => true,
-      () => true,
-      () => false
-    )();
-    expect(res3).toBe(false);
-    const res4 = await and(
-      () => false,
-      () => false,
-      () => false
-    )();
-    expect(res4).toBe(false);
-  });
-
-  test("Should be true with promise", async () => {
-    const res = await and(
-      async () => new Promise((res) => setTimeout(() => res(true), 10))
-    )();
-    expect(res).toBe(true);
-  });
-  test("Should be false with promise", async () => {
-    const res = await and(
-      async () => new Promise((res) => setTimeout(() => res(true), 10)),
-      async () => new Promise((res) => setTimeout(() => res(false), 20))
-    )();
-    expect(res).toBe(false);
-  });
-});
-
-describe("andS", () => {
-  test("Should give true", async () => {
-    const res = await andS(
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      },
-      () => true,
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      }
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res).toBe(true);
-  });
-
-  test("Should give false", async () => {
-    const res = await andS(
-      () => false,
-      () => true,
-      () => true
-    )();
-    expect(res).toBe(false);
-    const res2 = await andS(
-      () => true,
-      () => false,
-      () => true
-    )();
-    expect(res2).toBe(false);
-    const res3 = await andS(
-      () => true,
-      () => true,
-      () => false
-    )();
-    expect(res3).toBe(false);
-    const res4 = await andS(
-      () => false,
-      () => false,
-      () => false
-    )();
-    expect(res4).toBe(false);
-  });
-
-  test("Should be true with promise", async () => {
-    const res = await andS(
-      async () => new Promise((res) => setTimeout(() => res(true), 10))
-    )();
-    expect(res).toBe(true);
-  });
-  test("Should be false with promise", async () => {
-    const res = await andS(
-      async () => new Promise((res) => setTimeout(() => res(true), 10)),
-      async () => new Promise((res) => setTimeout(() => res(false), 20))
-    )();
-    expect(res).toBe(false);
-  });
-});
-
-describe("or", () => {
-  test("Should pass on parameters", async () => {
-    const res = await or(
-      () => false,
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      }
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res).toBe(true);
-    const res2 = await or(
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      },
-      () => false
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res2).toBe(true);
-  });
-
-  test("Should give true", async () => {
-    const res = await or(
-      () => false,
-      () => true,
-      () => true
-    )();
-    expect(res).toBe(true);
-    const res2 = await or(
-      () => true,
-      () => false,
-      () => true
-    )();
-    expect(res2).toBe(true);
-    const res3 = await or(
-      () => true,
-      () => true,
-      () => false
-    )();
-    expect(res3).toBe(true);
-  });
-
-  test("Should give false", async () => {
-    const res = await or(
-      () => false,
-      () => false,
-      () => false
-    )();
-    expect(res).toBe(false);
-  });
-
-  test("Should be true with promise", async () => {
-    const res = await or(
-      async () => new Promise((res) => setTimeout(() => res(false), 10)),
-      async () => new Promise((res) => setTimeout(() => res(true), 20))
-    )();
-    expect(res).toBe(true);
-  });
-  test("Should be false with promise", async () => {
-    const res = await or(
-      async () => new Promise((res) => setTimeout(() => res(false), 10))
-    )();
-    expect(res).toBe(false);
-  });
-});
-
-describe("orS", () => {
-  test("Should pass on parameters", async () => {
-    const res = await orS(
-      () => false,
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      }
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res).toBe(true);
-    const res2 = await orS(
-      (a, b) => {
-        return a.iAmHere && b.iAmHereToo;
-      },
-      () => false
-    )({ iAmHere: true }, { iAmHereToo: true });
-    expect(res2).toBe(true);
-  });
-
-  test("Should give true", async () => {
-    const res = await orS(
-      () => false,
-      () => true,
-      () => true
-    )();
-    expect(res).toBe(true);
-    const res2 = await orS(
-      () => true,
-      () => false,
-      () => true
-    )();
-    expect(res2).toBe(true);
-    const res3 = await orS(
-      () => true,
-      () => true,
-      () => false
-    )();
-    expect(res3).toBe(true);
-  });
-
-  test("Should give false", async () => {
-    const res = await orS(
-      () => false,
-      () => false,
-      () => false
-    )();
-    expect(res).toBe(false);
-  });
-
-  test("Should be true with promise", async () => {
-    const res = await orS(
-      async () => new Promise((res) => setTimeout(() => res(false), 10)),
-      async () => new Promise((res) => setTimeout(() => res(true), 20))
-    )();
-    expect(res).toBe(true);
-  });
-  test("Should be false with promise", async () => {
-    const res = await orS(
-      async () => new Promise((res) => setTimeout(() => res(false), 10))
-    )();
-    expect(res).toBe(false);
-  });
-});
-
 describe("createBody", () => {
   test("Should not produce derived values in body", async () => {
     expect(createBody("", Models)).toStrictEqual({
@@ -464,7 +248,6 @@ describe("createBody", () => {
       },
     });
   });
-
   test("Should not produce readOnly values in body", async () => {
     const Models = useModel({
       collection: "modelWithReadOnly",

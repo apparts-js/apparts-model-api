@@ -7,18 +7,17 @@ import generateDelete from "./generateDelete";
 import { Application } from "express";
 import { useModel } from "@apparts/model";
 
-type RouteConfig = {
-  access: (request: unknown, me: unknown) => boolean;
+type RouteConfig<AccessType> = {
+  hasAccess: (request: unknown) => Promise<AccessType>;
   title: string;
   description: string;
 };
 
-const addCrud = ({
+const addCrud = <AccessType>({
   prefix,
   app,
   model,
   routes,
-  webtokenkey,
   trackChanges,
   idField = "id",
 }: {
@@ -26,29 +25,21 @@ const addCrud = ({
   app: Application;
   model: ReturnType<typeof useModel>;
   routes: {
-    get?: RouteConfig;
-    getByIds?: RouteConfig;
-    post?: RouteConfig;
-    put?: RouteConfig;
-    patch?: RouteConfig;
-    delete?: RouteConfig;
+    get?: RouteConfig<AccessType>;
+    getByIds?: RouteConfig<AccessType>;
+    post?: RouteConfig<AccessType>;
+    put?: RouteConfig<AccessType>;
+    patch?: RouteConfig<AccessType>;
+    delete?: RouteConfig<AccessType>;
   };
-  webtokenkey: string;
   trackChanges?: (
-    me: unknown,
+    me: AccessType,
     contentBefore: unknown,
     contentAfter: unknown
   ) => Promise<void>;
   idField?: string;
 }) => {
-  const methods = generateMethods(
-    prefix,
-    model,
-    routes,
-    webtokenkey,
-    trackChanges,
-    idField
-  );
+  const methods = generateMethods(prefix, model, routes, trackChanges, idField);
 
   Object.keys(methods).forEach((method) =>
     Object.keys(methods[method]).forEach((route) =>
@@ -57,24 +48,16 @@ const addCrud = ({
   );
 };
 
-const generateMethods = (
-  prefix,
-  useModel,
-  routes,
-  webtokenkey,
-  trackChanges,
-  idField
-) => {
+const generateMethods = (prefix, useModel, routes, trackChanges, idField) => {
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
-    res.get[""] = generateGet(prefix, useModel, routes.get, webtokenkey);
+    res.get[""] = generateGet(prefix, useModel, routes.get);
   }
   if (routes.getByIds) {
     res.get[`/:${idField}s`] = generateGetByIds(
       prefix,
       useModel,
       routes.getByIds,
-      webtokenkey,
       idField
     );
   }
@@ -83,7 +66,6 @@ const generateMethods = (
       prefix,
       useModel,
       routes.post,
-      webtokenkey,
       trackChanges,
       idField
     );
@@ -93,7 +75,6 @@ const generateMethods = (
       prefix,
       useModel,
       routes.put,
-      webtokenkey,
       trackChanges,
       idField
     );
@@ -103,7 +84,6 @@ const generateMethods = (
       prefix,
       useModel,
       routes.patch,
-      webtokenkey,
       trackChanges,
       idField
     );
@@ -113,7 +93,6 @@ const generateMethods = (
       prefix,
       useModel,
       routes.delete,
-      webtokenkey,
       trackChanges,
       idField
     );

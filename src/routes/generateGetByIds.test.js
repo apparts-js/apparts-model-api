@@ -1,21 +1,12 @@
 import { Models } from "../tests/model";
 const generateGetByIds = require("./generateGetByIds");
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "/:ids",
-  auth = { getByIds: { access: anybody } };
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  "",
-  undefined,
-  "id"
-);
+  auth = { getByIds: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
 const { app, url, getPool, checkType, allChecked, error } =
   require("@apparts/backend-test")({
@@ -70,13 +61,12 @@ describe("getByIds", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(() => request(app).get(url("model/[]")), "/:ids", checkType);
 
   it("should reject without access function", async () => {
-    expect(() => generateGetByIds("model", Models, {}, "", "id")).toThrow(
+    expect(() => generateGetByIds("model", Models, {}, "id")).toThrow(
       "Route (getByIds) model has no access control function."
     );
   });
@@ -121,8 +111,7 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { getByIds: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: { getByIds: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -133,7 +122,6 @@ describe("Check authorization", () => {
     expect(responseGetById.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
-    checkType(responseGetById, fName);
   });
 });
 
@@ -145,9 +133,8 @@ describe("getByIds subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, SubModels, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, SubModels, auth, undefined, "id");
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -227,9 +214,8 @@ describe("getByIds subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should getByIds a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -268,16 +254,8 @@ describe("getByIds advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(
-    path,
-    AdvancedModels,
-    auth,
-    "",
-    undefined,
-    "id"
-  );
+  const methods2 = generateMethods(path, AdvancedModels, auth, undefined, "id");
 
   test("Should return model", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -309,15 +287,17 @@ describe("Title and description", () => {
     const options1 = generateGetByIds(
       "model",
       Models,
-      { access: anybody },
-      "",
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       "id"
     ).options;
     const options2 = generateGetByIds(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
-      "",
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       "id"
     ).options;
     expect(options1.description).toBeFalsy();
@@ -334,13 +314,11 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -377,14 +355,12 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

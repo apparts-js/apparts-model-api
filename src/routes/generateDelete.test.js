@@ -1,21 +1,12 @@
 import { Models } from "../tests/model";
 const generateDelete = require("./generateDelete");
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "/:ids",
-  auth = { delete: { access: anybody } };
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  "",
-  undefined,
-  "id"
-);
+  auth = { delete: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
@@ -68,7 +59,6 @@ describe("Delete", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -78,9 +68,9 @@ describe("Delete", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() =>
-      generateDelete("model", Models, {}, "", undefined, "id")
-    ).toThrow("Route (delete) model has no access control function.");
+    expect(() => generateDelete("model", Models, {}, undefined, "id")).toThrow(
+      "Route (delete) model has no access control function."
+    );
   });
 
   test("Delete", async () => {
@@ -163,8 +153,7 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { delete: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: { delete: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -175,7 +164,6 @@ describe("Check authorization", () => {
     expect(responseDel.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
-    checkType(responseDel, fName);
   });
 });
 
@@ -186,7 +174,6 @@ describe("Delete subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -272,9 +259,8 @@ describe("delete subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should delete a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -312,7 +298,6 @@ describe("delete advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should delete model", async () => {
@@ -341,16 +326,18 @@ describe("Title and description", () => {
     const options1 = generateDelete(
       "model",
       Models,
-      { access: anybody },
-      "",
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       undefined,
       "id"
     ).options;
     const options2 = generateDelete(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
-      "",
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       undefined,
       "id"
     ).options;
@@ -368,13 +355,11 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -417,14 +402,12 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

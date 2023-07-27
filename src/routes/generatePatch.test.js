@@ -1,21 +1,12 @@
 import { Models } from "../tests/model";
 const generatePatch = require("./generatePatch");
-const {
-  addCrud,
-  accessLogic: { anybody },
-} = require("../");
+const { addCrud, rejectAccess } = require("../");
 const { generateMethods } = require("./");
+const { validJwt } = require("@apparts/prep");
 
 const fName = "/:id",
-  auth = { patch: { access: anybody } };
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  "",
-  undefined,
-  "id"
-);
+  auth = { patch: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 const { app, url, error, getPool, checkType, allChecked } =
   require("@apparts/backend-test")({
     testName: "patch",
@@ -72,7 +63,6 @@ describe("Patch", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   checkJWT(
@@ -82,9 +72,9 @@ describe("Patch", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() =>
-      generatePatch("model", Models, {}, "", undefined, "id")
-    ).toThrow("Route (patch) model has no access control function.");
+    expect(() => generatePatch("model", Models, {}, undefined, "id")).toThrow(
+      "Route (patch) model has no access control function."
+    );
   });
 
   test("Patch with no values", async () => {
@@ -349,8 +339,7 @@ describe("Check authorization", () => {
     prefix: path,
     app,
     model: Models,
-    routes: { patch: { access: () => false } },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
+    routes: { patch: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
@@ -362,7 +351,6 @@ describe("Check authorization", () => {
     expect(responsePatch.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
-    checkType(responsePatch, fName);
   });
 });
 
@@ -373,7 +361,6 @@ describe("Patch subresources", () => {
     app,
     model: SubModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Patch a subresouce", async () => {
@@ -462,9 +449,8 @@ describe("patch subresources with optional relation", () => {
     app,
     model: Models,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
-  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should patch a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -506,7 +492,6 @@ describe("patch advanced model", () => {
     app,
     model: AdvancedModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should update model", async () => {
@@ -569,16 +554,18 @@ describe("Title and description", () => {
     const options1 = generatePatch(
       "model",
       Models,
-      { access: anybody },
-      "",
+      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       undefined,
       "id"
     ).options;
     const options2 = generatePatch(
       "model",
       Models,
-      { title: "My title", description: "yay", access: anybody },
-      "",
+      {
+        title: "My title",
+        description: "yay",
+        hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
+      },
       undefined,
       "id"
     ).options;
@@ -596,13 +583,11 @@ describe("Ids of other format", () => {
     app,
     model: StrangeIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods2 = generateMethods(
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -641,14 +626,12 @@ describe("Ids with different name", () => {
     app,
     model: NamedIdModels,
     routes: auth,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
     idField: "specialId",
   });
   const methods2 = generateMethods(
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

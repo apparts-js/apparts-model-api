@@ -1,4 +1,3 @@
-import accessLogic from "./accessLogic";
 import { addCrud } from "./routes";
-
-export { addCrud, accessLogic };
+export * from "./accessLogic";
+export { addCrud };

@@ -2,17 +2,15 @@ const {
   createParams,
   nameFromPrefix,
   createReturns,
-  checkAuth,
   createIdParam,
   makeSchema,
 } = require("./common");
-const { prepauthTokenJWT, httpErrorSchema } = require("@apparts/prep");
+const { prepare } = require("@apparts/prep");
 
 const generateGetByIds = (
   prefix,
   Model,
-  { access: authF, title, description },
-  webtokenkey,
+  { hasAccess: authF, title, description },
   idField
 ) => {
   if (!authF) {
@@ -20,10 +18,11 @@ const generateGetByIds = (
       `Route (getByIds) ${prefix} has no access control function.`
     );
   }
-  const getF = prepauthTokenJWT(webtokenkey)(
+  const getF = prepare(
     {
       title: title || "Get " + nameFromPrefix(prefix) + " by Ids",
       description,
+      hasAccess: authF,
       receives: {
         params: makeSchema({
           ...createParams(prefix, Model),
@@ -41,12 +40,9 @@ const generateGetByIds = (
             keys: createReturns(Model),
           },
         }),
-        httpErrorSchema(403, "You don't have the rights to retrieve this."),
       ],
     },
-    async (req, me) => {
-      await checkAuth(authF, req, me);
-
+    async (req) => {
       const {
         dbs,
         params: { [idField + "s"]: ids, ...restParams },
