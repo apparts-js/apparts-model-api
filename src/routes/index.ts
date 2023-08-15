@@ -10,8 +10,8 @@ import { Request } from "express";
 
 type RouteConfig<AccessType> = {
   hasAccess: (request: Request) => Promise<AccessType>;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 };
 
 const addCrud = <AccessType>({
