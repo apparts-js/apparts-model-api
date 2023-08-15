@@ -2,7 +2,7 @@
   "name": "@apparts/model-api",
   "version": "4.1.3",
   "description": "Generate CRUDish API-endpoints for a model defined with the @apparts/model package",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
     "build/**/*",
