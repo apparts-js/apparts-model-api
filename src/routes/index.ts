@@ -6,9 +6,10 @@ import generatePatch from "./generatePatch";
 import generateDelete from "./generateDelete";
 import { Application } from "express";
 import { useModel } from "@apparts/model";
+import { Request } from "express";
 
 type RouteConfig<AccessType> = {
-  hasAccess: (request: unknown) => Promise<AccessType>;
+  hasAccess: (request: Request) => Promise<AccessType>;
   title: string;
   description: string;
 };
