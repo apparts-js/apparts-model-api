@@ -4,12 +4,12 @@ import generatePost from "./generatePost";
 import generatePut from "./generatePut";
 import generatePatch from "./generatePatch";
 import generateDelete from "./generateDelete";
-import { Application } from "express";
+import { Application, Response } from "express";
 import { useModel } from "@apparts/model";
 import { Request } from "express";
 
 type RouteConfig<AccessType> = {
-  hasAccess: (request: Request) => Promise<AccessType>;
+  hasAccess: (request: Request, response: Response) => Promise<AccessType>;
   title?: string;
   description?: string;
 };
