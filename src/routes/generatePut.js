@@ -5,6 +5,8 @@ const {
   createBody,
   createIdParam,
   makeSchema,
+  getPathParamKeys,
+  validateModelIsCreatable,
 } = require("./common");
 const {
   HttpError,
@@ -27,14 +29,17 @@ const generatePut = (
   }
 
   const types = Model.getSchema().getModelType();
+  const pathParamKeys = getPathParamKeys(prefix, types);
   const canCreate =
     !types[idField].auto &&
+    pathParamKeys.filter((key) => types[key].auto).length === 0 &&
     Object.keys(types).filter(
       (key) =>
         key !== idField &&
         types[key].key &&
         (types[key].auto || types[key].readOnly || !types[key].public)
     ).length === 0;
+  validateModelIsCreatable([...pathParamKeys, idField], types);
 
   const putF = prepare(
     {

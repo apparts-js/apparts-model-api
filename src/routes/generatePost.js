@@ -5,6 +5,8 @@ const {
   reverseMap,
   createIdParam,
   makeSchema,
+  validateModelIsCreatable,
+  getPathParamKeys,
 } = require("./common");
 const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
 const { NotUnique } = require("@apparts/model");
@@ -19,6 +21,10 @@ const generatePost = (
   if (!authF) {
     throw new Error(`Route (post) ${prefix} has no access control function.`);
   }
+
+  const types = Model.getSchema().getModelType();
+  const pathParamKeys = getPathParamKeys(prefix, types);
+  validateModelIsCreatable([...pathParamKeys, idField], types);
 
   const postF = prepare(
     {
@@ -48,7 +54,6 @@ const generatePost = (
       const { dbs, params } = req;
       let { body } = req;
 
-      const types = Model.getSchema().getModelType();
       try {
         body = reverseMap(body, types);
       } catch (e) {

@@ -32,6 +32,39 @@ const typeFromModeltype = (tipe) => {
   return res;
 };
 
+const validateModelIsCreatable = (pathParams, types) => {
+  for (const key in types) {
+    const tipe = types[key];
+    if (
+      (!tipe.public || tipe.auto || tipe.readOnly) &&
+      !tipe.default &&
+      !tipe.derived &&
+      !tipe.optional &&
+      pathParams.indexOf(key) === -1
+    ) {
+      throw new Error(
+        "Model has key that are not public and not in the path but have to be created: " +
+          key
+      );
+    }
+  }
+};
+
+const getPathParamKeys = (prefix, types) => {
+  const params = prefix
+    .split("/")
+    .filter((part) => part.substr(0, 1) === ":")
+    .map((part) => part.slice(1));
+  for (const pathParam of params) {
+    if (!types[pathParam]) {
+      throw new Error(
+        "Param " + pathParam + " not known in model for path " + prefix
+      );
+    }
+  }
+  return params;
+};
+
 const createIdParam = (Model, idField) => {
   const types = Model.getSchema().getModelType();
   const idType = types[idField];
@@ -40,15 +73,9 @@ const createIdParam = (Model, idField) => {
 
 const createParams = (prefix, Model) => {
   const types = Model.getSchema().getModelType();
-  const pathParams = prefix
-    .split("/")
-    .filter((part) => part.substr(0, 1) === ":")
-    .map((part) => part.slice(1));
+  const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
   for (const pathParam of pathParams) {
-    if (!types[pathParam]) {
-      throw "Param " + pathParam + " not known in model for path " + prefix;
-    }
     paramTypes[pathParam] = {
       type: types[pathParam].type,
     };
@@ -172,4 +199,6 @@ module.exports = {
   typeFromModeltype,
   unmapKey,
   createIdParam,
+  getPathParamKeys,
+  validateModelIsCreatable,
 };
