@@ -105,7 +105,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put non-existing model", async () => {
+  test("Put non-existing model with auto key", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
@@ -127,11 +127,11 @@ describe("Put", () => {
 
   test("Put", async () => {
     const dbs = getPool();
-    const model = await new Models(dbs, [{ mapped: 8 }]).store();
+    const model = await new Models(dbs, [{ mapped: 82 }]).store();
     const response = await request(app)
       .put(url("model/" + model.content.id))
       .send({
-        someNumber: 99,
+        someNumber: 82,
       })
       .set("Authorization", "Bearer " + jwt());
     const modelNew = await new Models(dbs).loadOneByKeys({
@@ -140,7 +140,7 @@ describe("Put", () => {
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(modelNew.content).toMatchObject({
-      mapped: 99,
+      mapped: 82,
       hasDefault: 7,
       optionalVal: null,
     });
@@ -624,8 +624,26 @@ describe("Ids of other format", () => {
     "id"
   );
 
-  it("should put with other id format", async () => {
+  test("Put non-existing model", async () => {
     methods.put[fName] = methods2.put[fName];
+
+    const dbs = getPool();
+    const response = await request(app)
+      .put(url("strangemodel/" + "newId"))
+      .send({
+        val: 44,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(201);
+    const modelNew = await new StrangeIdModels(dbs).loadOneByKeys({
+      id: "newId",
+    });
+    expect(modelNew.content).toMatchObject({ id: "newId", val: 44 });
+    expect(response.body).toBe(modelNew.content.id);
+    checkType(response, fName);
+  });
+
+  it("should put with other id format", async () => {
     const dbs = getPool();
     const model1 = await new StrangeIdModels(dbs, [
       {

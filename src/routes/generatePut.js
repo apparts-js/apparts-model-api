@@ -6,7 +6,13 @@ const {
   createIdParam,
   makeSchema,
 } = require("./common");
-const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
+const {
+  HttpError,
+  HttpCode,
+  httpCodeSchema,
+  prepare,
+  httpErrorSchema,
+} = require("@apparts/prep");
 const { NotFound } = require("@apparts/model");
 
 const generatePut = (
@@ -19,6 +25,17 @@ const generatePut = (
   if (!authF) {
     throw new Error(`Route (put) ${prefix} has no access control function.`);
   }
+
+  const types = Model.getSchema().getModelType();
+  const canCreate =
+    !types[idField].auto &&
+    Object.keys(types).filter(
+      (key) =>
+        key !== idField &&
+        types[key].key &&
+        (types[key].auto || types[key].readOnly || !types[key].public)
+    ).length === 0;
+
   const putF = prepare(
     {
       title: title || "Alter " + nameFromPrefix(prefix),
@@ -37,6 +54,14 @@ const generatePut = (
         makeSchema({
           ...createIdParam(Model, idField),
         }),
+        canCreate
+          ? httpCodeSchema(
+              201,
+              makeSchema({
+                ...createIdParam(Model, idField),
+              })
+            )
+          : httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
         httpErrorSchema(
           400,
           "Could not alter item because your request had too many parameters"
@@ -45,14 +70,11 @@ const generatePut = (
           400,
           "Could not alter item because it would change a path id"
         ),
-        httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
       ],
     },
     async (req, res, me) => {
       const { dbs, params } = req;
       let { body } = req;
-
-      const types = Model.getSchema().getModelType();
 
       try {
         body = reverseMap(body, types);
@@ -101,18 +123,24 @@ const generatePut = (
         );
       }
 
-      let model;
+      let model,
+        creatingNew = false;
       try {
         model = await new Model(dbs).loadOne(params);
       } catch (e) {
         if (e instanceof NotFound) {
-          return new HttpError(404, nameFromPrefix(prefix) + " not found");
+          if (!canCreate) {
+            return new HttpError(404, nameFromPrefix(prefix) + " not found");
+          }
+          creatingNew = true;
+          model = new Model(dbs, [{}]);
+        } else {
+          throw e;
         }
-        throw e;
       }
       const contentBefore = model.content;
       model.content = {
-        ...model.content,
+        ...contentBefore,
         ...body,
         ...optionalsToBeRemoved,
         ...params,
@@ -129,8 +157,17 @@ const generatePut = (
         .forEach((key) => {
           model.content = model.getDefaults([model.content], key)[0];
         });
-      await model.update();
+
+      if (creatingNew) {
+        await model.store();
+      } else {
+        await model.update();
+      }
       trackChanges && (await trackChanges(me, contentBefore, model.content));
+
+      if (creatingNew) {
+        return new HttpCode(201, model.content[idField]);
+      }
       return model.content[idField];
     }
   );
