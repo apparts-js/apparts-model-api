@@ -1,12 +1,10 @@
 import * as types from "@apparts/types";
-import { useModel } from "@apparts/model";
+import { BaseModel, useModel } from "@apparts/model";
 
 const typeSchema = types.obj({
   specialId: types.int().semantic("id").key().auto().public(),
   val: types.int().public(),
 });
 
-export const NamedIdModels = useModel({
-  collection: "namedidmodel",
-  typeSchema,
-});
+export class NamedIdModels extends BaseModel<typeof typeSchema> {}
+useModel(NamedIdModels, { typeSchema, collection: "namedidmodel" });

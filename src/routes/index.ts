@@ -5,7 +5,7 @@ import generatePut from "./generatePut";
 import generatePatch from "./generatePatch";
 import generateDelete from "./generateDelete";
 import { Application, Response } from "express";
-import { useModel } from "@apparts/model";
+import { BaseModel } from "@apparts/model";
 import { Request } from "express";
 
 type RouteConfig<AccessType> = {
@@ -24,7 +24,7 @@ const addCrud = <AccessType>({
 }: {
   prefix?: string;
   app: Application;
-  model: ReturnType<typeof useModel>;
+  model: BaseModel<any>;
   routes: {
     get?: RouteConfig<AccessType>;
     getByIds?: RouteConfig<AccessType>;

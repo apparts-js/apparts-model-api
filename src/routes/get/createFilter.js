@@ -1,3 +1,4 @@
+import { getModelSchema } from "@apparts/model";
 const { createParams, typeFromModeltype } = require("../common");
 
 const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
@@ -82,7 +83,7 @@ const addToFilter = (filter, tipe, name) => {
 
 const createFilter = (prefix, Model) => {
   const filter = { optional: true, type: "object", keys: {} };
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   const params = createParams(prefix, Model);
   for (const key in types) {
     const tipe = types[key];

@@ -1,5 +1,5 @@
 import * as types from "@apparts/types";
-import { useModel } from "@apparts/model";
+import { BaseModel, useModel } from "@apparts/model";
 
 const typeSchema = types.obj({
   id: types.int().semantic("id").key().auto().public(),
@@ -13,7 +13,6 @@ const typeSchema = types.obj({
     .derived(({ id }) => id),
 });
 
-export const Models = useModel({
-  collection: "model",
-  typeSchema,
-});
+export class Models extends BaseModel<typeof typeSchema> {}
+
+useModel(Models, { typeSchema, collection: "model" });

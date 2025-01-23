@@ -1,3 +1,4 @@
+import { getModelSchema } from "@apparts/model";
 const { typeFromModeltype } = require("../common");
 
 const canBeOrdered = ({ type, alternatives, keys }, strict = false) => {
@@ -52,7 +53,7 @@ const createOrder = (Model) => {
       },
     },
   };
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   for (const key in types) {
     const tipe = types[key];
 

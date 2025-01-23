@@ -6,6 +6,7 @@ const { validJwt, rejectAccess } = require("@apparts/prep");
 
 const fName = "/:ids",
   auth = { getByIds: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
 const { app, url, getPool, checkType, allChecked, error } =

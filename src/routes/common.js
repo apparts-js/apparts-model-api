@@ -1,3 +1,4 @@
+import { getModelSchema } from "@apparts/model";
 const { traverseType } = require("@apparts/types");
 const { HttpError } = require("@apparts/prep");
 
@@ -66,13 +67,13 @@ const getPathParamKeys = (prefix, types) => {
 };
 
 const createIdParam = (Model, idField) => {
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   const idType = types[idField];
   return typeFromModeltype(idType);
 };
 
 const createParams = (prefix, Model) => {
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
   for (const pathParam of pathParams) {
@@ -98,7 +99,7 @@ const recursiveCreateBody = (tipe) => {
 
 const createBody = (prefix, Model) => {
   const params = createParams(prefix, Model);
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   const bodyParams = {};
   for (const key in types) {
     const tipe = types[key];
@@ -129,7 +130,7 @@ const nameFromPrefix = (prefix) => {
 };
 
 const createReturns = (Model) => {
-  const types = Model.getSchema().getModelType();
+  const types = getModelSchema(Model).getModelType();
   const returns = {};
 
   for (const key in types) {

@@ -1,4 +1,4 @@
-import { useModel } from "@apparts/model";
+import { BaseModel, useModel } from "@apparts/model";
 import * as types from "@apparts/types";
 
 const typeSchema = types.obj({
@@ -9,7 +9,5 @@ const typeSchema = types.obj({
   mapped: types.int().mapped("someNumber").public(),
 });
 
-export const ModelsWithDefault = useModel({
-  collection: "modelWithDefault",
-  typeSchema,
-});
+export class ModelsWithDefault extends BaseModel<typeof typeSchema> {}
+useModel(ModelsWithDefault, { typeSchema, collection: "modelWithDefault" });

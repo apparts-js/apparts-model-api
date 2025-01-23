@@ -1,7 +1,7 @@
 import * as types from "@apparts/types";
 const { createBody } = require("./common");
 import { Models } from "../tests/model";
-const { useModel } = require("@apparts/model");
+const { useModel, BaseModel } = require("@apparts/model");
 const {
   useChecks,
   anybody,
@@ -249,7 +249,8 @@ describe("createBody", () => {
     });
   });
   test("Should not produce readOnly values in body", async () => {
-    const Models = useModel({
+    class Models extends BaseModel {}
+    useModel(Models, {
       collection: "modelWithReadOnly",
       typeSchema: types.obj({
         id: types.int().semantic("id").key().auto().public(),
@@ -268,7 +269,8 @@ describe("createBody", () => {
   });
 
   test("Should handle optional params when creating body", async () => {
-    const Models = useModel({
+    class Models extends BaseModel {}
+    useModel(Models, {
       collection: "modelWithReadOnly",
       typeSchema: types.obj({
         id: types.int().semantic("id").public(),
