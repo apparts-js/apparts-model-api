@@ -24,7 +24,7 @@ const addCrud = <AccessType>({
 }: {
   prefix?: string;
   app: Application;
-  model: BaseModel<any>;
+  model: typeof BaseModel<any>;
   routes: {
     get?: RouteConfig<AccessType>;
     getByIds?: RouteConfig<AccessType>;
