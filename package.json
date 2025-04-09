@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "@apparts/model": "^6.2.2",
-    "@apparts/prep": "^2.1.3 | ^3.0.0",
+    "@apparts/prep": "^2.1.3 || ^3",
     "@apparts/types": "^9.14.1"
   },
   "devDependencies": {
