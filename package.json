@@ -45,7 +45,7 @@
     "@apparts/config": "^1.1.0",
     "@apparts/db": "^3.7.0",
     "@apparts/model": "^6.2.2",
-    "@apparts/prep": "^3.0.1",
+    "@apparts/prep": "^3.0.3",
     "@apparts/types": "^9.14.1",
     "@tsconfig/node18": "^18.2.0",
     "@types/express": "^4.17.17",

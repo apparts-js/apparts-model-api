@@ -22,7 +22,7 @@ const checkJWT = (request, fname, checkType) => {
   test("Failed login, token wrong", async () => {
     const response = await request().set("Authorization", "Bearer nope");
     expect(response.statusCode).toBe(401);
-    expect(response.body).toMatchObject(error("Unauthorized"));
+    expect(response.body).toMatchObject(error("Token invalid"));
     expect(checkType(response, fname)).toBeTruthy();
   });
 };
