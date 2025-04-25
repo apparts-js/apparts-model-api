@@ -82,19 +82,22 @@ describe("Get", () => {
       .get(url("model"))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      {
-        id: model1.content.id,
-        someNumber: 10,
-        optionalVal: "test",
-        isDerived: model1.content.id,
-      },
-      {
-        id: model2.content.id,
-        someNumber: 11,
-        isDerived: model2.content.id,
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      total: 2,
+      data: [
+        {
+          id: model1.content.id,
+          someNumber: 10,
+          optionalVal: "test",
+          isDerived: model1.content.id,
+        },
+        {
+          id: model2.content.id,
+          someNumber: 11,
+          isDerived: model2.content.id,
+        },
+      ],
+    });
     checkType(response, fName);
   });
 
@@ -106,31 +109,37 @@ describe("Get", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
 
-    expect(response.body).toMatchObject([
-      {
-        someNumber: 10,
-        optionalVal: "test",
-      },
-      {
-        someNumber: 11,
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      total: 3,
+      data: [
+        {
+          someNumber: 10,
+          optionalVal: "test",
+        },
+        {
+          someNumber: 11,
+        },
+      ],
+    });
 
     const response2 = await request(app)
       .get(url("model", { limit: 2, offset: 2 }))
       .set("Authorization", "Bearer " + jwt());
     expect(response2.status).toBe(200);
-    expect(response2.body).toMatchObject([
-      {
-        id: model1.content.id,
-        someNumber: 20,
-      },
-    ]);
+    expect(response2.body).toMatchObject({
+      total: 3,
+      data: [
+        {
+          id: model1.content.id,
+          someNumber: 20,
+        },
+      ],
+    });
     const response3 = await request(app)
       .get(url("model", { limit: 2, offset: 4 }))
       .set("Authorization", "Bearer " + jwt());
     expect(response3.status).toBe(200);
-    expect(response3.body).toMatchObject([]);
+    expect(response3.body).toMatchObject({ data: [] });
 
     checkType(response, fName);
     checkType(response2, fName);
@@ -148,21 +157,23 @@ describe("Get", () => {
       )
       .set("Authorization", "Bearer " + jwt());
 
-    expect(response.body).toMatchObject([
-      {
-        id: 3,
-        someNumber: 20,
-      },
-      {
-        id: 2,
-        someNumber: 11,
-      },
-      {
-        id: 1,
-        someNumber: 10,
-        optionalVal: "test",
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: 3,
+          someNumber: 20,
+        },
+        {
+          id: 2,
+          someNumber: 11,
+        },
+        {
+          id: 1,
+          someNumber: 10,
+          optionalVal: "test",
+        },
+      ],
+    });
     expect(response.status).toBe(200);
 
     const response2 = await request(app)
@@ -174,21 +185,23 @@ describe("Get", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response2.body).toMatchObject([
-      {
-        id: 3,
-        someNumber: 20,
-      },
-      {
-        id: 2,
-        someNumber: 11,
-      },
-      {
-        id: 1,
-        someNumber: 10,
-        optionalVal: "test",
-      },
-    ]);
+    expect(response2.body).toMatchObject({
+      data: [
+        {
+          id: 3,
+          someNumber: 20,
+        },
+        {
+          id: 2,
+          someNumber: 11,
+        },
+        {
+          id: 1,
+          someNumber: 10,
+          optionalVal: "test",
+        },
+      ],
+    });
     expect(response2.status).toBe(200);
 
     checkType(response, fName);
@@ -257,14 +270,16 @@ describe("Filters", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: model1.content.id,
-        someNumber: 30,
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model1.content.id,
+          someNumber: 30,
+        },
+      ],
+    });
     expect(response.status).toBe(200);
-    expect(response.body.length).toBe(1);
+    expect(response.body.data.length).toBe(1);
     checkType(response, fName);
   });
 
@@ -367,13 +382,15 @@ describe("Filters", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: model2.content.id,
-        optionalVal: "dirty",
-      },
-    ]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model2.content.id,
+          optionalVal: "dirty",
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(1);
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
@@ -386,15 +403,17 @@ describe("Filters", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        optionalVal: "dirty",
-      },
-      {
-        optionalVal: "diRty",
-      },
-    ]);
-    expect(response.body.length).toBe(2);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          optionalVal: "dirty",
+        },
+        {
+          optionalVal: "diRty",
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(2);
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
@@ -410,13 +429,15 @@ describe("Filters", () => {
     const response = await request(app)
       .get(url("model", { filter: formatFilter({ someNumber: 13 }) }))
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: model.content.id,
-        someNumber: 13,
-      },
-    ]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model.content.id,
+          someNumber: 13,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(1);
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
@@ -428,7 +449,7 @@ describe("Filters", () => {
     const response = await request(app)
       .get(url("model", { filter: formatFilter({ someNumber: {} }) }))
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body.length).toBe(models.contents.length);
+    expect(response.body.data.length).toBe(models.contents.length);
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
@@ -458,13 +479,15 @@ describe("Filters", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: model2.content.id,
-        someNumber: 104,
-      },
-    ]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model2.content.id,
+          someNumber: 104,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(1);
     expect(response.status).toBe(200);
     checkType(response, fName);
 
@@ -475,13 +498,15 @@ describe("Filters", () => {
         })
       )
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: model2.content.id,
-        someNumber: 104,
-      },
-    ]);
-    expect(response2.body.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model2.content.id,
+          someNumber: 104,
+        },
+      ],
+    });
+    expect(response2.body.data.length).toBe(1);
     expect(response2.status).toBe(200);
     checkType(response2, fName);
   });
@@ -495,12 +520,12 @@ describe("Filters", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(
-      responseExists.body.reduce(
+      responseExists.body.data.reduce(
         (a, { optionalVal }) => a && optionalVal !== null,
         true
       )
     ).toBeTruthy();
-    expect(responseExists.body.length > 0).toBeTruthy();
+    expect(responseExists.body.data.length > 0).toBeTruthy();
     expect(responseExists.status).toBe(200);
     checkType(responseExists, fName);
     const responseDoesNotExist = await request(app)
@@ -511,18 +536,18 @@ describe("Filters", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(
-      responseDoesNotExist.body.reduce(
+      responseDoesNotExist.body.data.reduce(
         (a, { optionalVal }) => a && optionalVal === undefined,
         true
       )
     ).toBeTruthy();
-    expect(responseDoesNotExist.body.length > 0).toBeTruthy();
+    expect(responseDoesNotExist.body.data.length > 0).toBeTruthy();
     expect(responseDoesNotExist.status).toBe(200);
     checkType(responseDoesNotExist, fName);
 
     const { contents } = await new Models(getPool()).load({});
     expect(contents.length).toBe(
-      responseDoesNotExist.body.length + responseExists.body.length
+      responseDoesNotExist.body.data.length + responseExists.body.data.length
     );
   });
 });
@@ -578,21 +603,23 @@ describe("get subresources", () => {
       .get(url(`model/${model1.content.id}/submodel`))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      {
-        id: submodel1.content.id,
-        modelId: model1.content.id,
-      },
-    ]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: submodel1.content.id,
+          modelId: model1.content.id,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(1);
     checkType(response, fName);
 
     const response2 = await request(app)
       .get(url(`model/${model2.content.id}/submodel`))
       .set("Authorization", "Bearer " + jwt());
     expect(response2.status).toBe(200);
-    expect(response2.body).toMatchObject([]);
-    expect(response2.body.length).toBe(0);
+    expect(response2.body).toMatchObject({ data: [] });
+    expect(response2.body.data.length).toBe(0);
     checkType(response2, fName);
 
     await new SubModels(dbs, [
@@ -646,13 +673,15 @@ describe("Get subresources with optional relation", () => {
       .get(url(`test123/model`))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body.length).toBe(1);
-    expect(response.body).toMatchObject([
-      {
-        optionalVal: "test123",
-        id: submodel.content.id,
-      },
-    ]);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          optionalVal: "test123",
+          id: submodel.content.id,
+        },
+      ],
+    });
     checkType(response, fName);
   });
 });
@@ -693,8 +722,8 @@ describe("get advanced model", () => {
       .get(url(`advancedmodel`))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([model1.content]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({ data: [model1.content] });
+    expect(response.body.data.length).toBe(1);
     checkType(response, fName);
   });
   it("should return ordered by object keys", async () => {
@@ -730,12 +759,14 @@ describe("get advanced model", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      { object: { a: 999 } },
-      { object: { a: 22 } },
-      { object: { a: 11 } },
-    ]);
-    expect(response.body.length).toBe(3);
+    expect(response.body).toMatchObject({
+      data: [
+        { object: { a: 999 } },
+        { object: { a: 22 } },
+        { object: { a: 11 } },
+      ],
+    });
+    expect(response.body.data.length).toBe(3);
     checkType(response, fName);
   });
   it("should return ordered by nested object keys", async () => {
@@ -749,12 +780,14 @@ describe("get advanced model", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      { object: { a: 22 } },
-      { object: { nestedObj: { inner: "zzz" } } },
-      { object: { nestedObj: { inner: "def" } } },
-    ]);
-    expect(response.body.length).toBe(3);
+    expect(response.body).toMatchObject({
+      data: [
+        { object: { a: 22 } },
+        { object: { nestedObj: { inner: "zzz" } } },
+        { object: { nestedObj: { inner: "def" } } },
+      ],
+    });
+    expect(response.body.data.length).toBe(3);
     checkType(response, fName);
   });
   test("Should return filtered by object key", async () => {
@@ -770,11 +803,10 @@ describe("get advanced model", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      { object: { a: 22 } },
-      { object: { a: 999 } },
-    ]);
-    expect(response.body.length).toBe(2);
+    expect(response.body).toMatchObject({
+      data: [{ object: { a: 22 } }, { object: { a: 999 } }],
+    });
+    expect(response.body.data.length).toBe(2);
     checkType(response, fName);
   });
   test("Should return filtered by object key, with and", async () => {
@@ -791,8 +823,8 @@ describe("get advanced model", () => {
       )
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([{ object: { a: 22 } }]);
-    expect(response.body.length).toBe(1);
+    expect(response.body).toMatchObject({ data: [{ object: { a: 22 } }] });
+    expect(response.body.data.length).toBe(1);
     checkType(response, fName);
   });
 });
@@ -853,12 +885,14 @@ describe("Ids of other format", () => {
     const response = await request(app)
       .get(url("strangemodel"))
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        id: "test1",
-        val: 1,
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: "test1",
+          val: 1,
+        },
+      ],
+    });
     expect(response.status).toBe(200);
     checkType(response, fName);
   });
@@ -894,12 +928,14 @@ describe("Ids with different name", () => {
     const response = await request(app)
       .get(url("namedid"))
       .set("Authorization", "Bearer " + jwt());
-    expect(response.body).toMatchObject([
-      {
-        specialId: 1,
-        val: 1,
-      },
-    ]);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          specialId: 1,
+          val: 1,
+        },
+      ],
+    });
     expect(response.status).toBe(200);
     checkType(response, fName);
   });

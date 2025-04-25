@@ -57,10 +57,16 @@ const generateGet = (
       },
       returns: [
         makeSchema({
-          type: "array",
-          items: {
-            type: "object",
-            keys: createReturns(Model),
+          type: "object",
+          keys: {
+            data: {
+              type: "array",
+              items: {
+                type: "object",
+                keys: createReturns(Model),
+              },
+            },
+            total: { type: "int" },
           },
         }),
       ],
@@ -138,7 +144,14 @@ const generateGet = (
       }
       const res = new Model(dbs);
       await res.load({ ...filter, ...params }, limit, offset, order);
-      return await res.getPublic();
+      let total = await res.contents.length;
+      if (offset || total === limit) {
+        total = await res.count({ ...filter, ...params });
+      }
+      return {
+        data: await res.getPublic(),
+        total,
+      };
     }
   );
   return getF;
