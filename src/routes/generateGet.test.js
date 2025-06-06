@@ -32,7 +32,7 @@ CREATE TABLE submodel (
 CREATE TABLE advancedmodel (
   id SERIAL PRIMARY KEY,
   textarray text[],
-  object json
+  object jsonb
 );
 CREATE TABLE strangeids (
   id VARCHAR(8) PRIMARY KEY,
@@ -824,6 +824,139 @@ describe("get advanced model", () => {
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ data: [{ object: { a: 22 } }] });
+    expect(response.body.data.length).toBe(1);
+    checkType(response, fName);
+  });
+  test("Should return filtered mixed oneOf", async () => {
+    let response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: JSON.stringify({
+            "object.nestedOneOf": {
+              gt: 11,
+              lt: 111,
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    checkType(response, fName);
+
+    const dbs = getPool();
+    await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 471,
+          bcd: "zzz",
+          nestedOneOf: 12,
+        },
+      },
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 472,
+          bcd: "zzz",
+          nestedOneOf: "test",
+        },
+      },
+    ]).store();
+
+    response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: JSON.stringify({
+            "object.nestedOneOf": {
+              gt: 11,
+              lt: 111,
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ data: [{ object: { a: 471 } }] });
+    expect(response.body.data.length).toBe(1);
+    checkType(response, fName);
+
+    response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: formatFilter({
+            "object.nestedOneOf": {
+              ilike: "%est",
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ data: [{ object: { a: 472 } }] });
+
+    expect(response.body.data.length).toBe(1);
+    checkType(response, fName);
+  });
+  test("Should return filtered nested oneOf with object", async () => {
+    let response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: formatFilter({
+            "object.nestedOneOfWithObj.a": {
+              ilike: "%est",
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    checkType(response, fName);
+
+    const dbs = getPool();
+    await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 473,
+          bcd: "zzz",
+          nestedOneOfWithObj: {
+            a: "test",
+          },
+        },
+      },
+    ]).store();
+
+    response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: formatFilter({
+            "object.nestedOneOfWithObj.a": {
+              ilike: "%est",
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ data: [{ object: { a: 473 } }] });
+    expect(response.body.data.length).toBe(1);
+    checkType(response, fName);
+
+    response = await request(app)
+      .get(
+        url(`advancedmodel`, {
+          filter: formatFilter({
+            "object.nestedOneOfWithObj.a": {
+              exists: true,
+            },
+          }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ data: [{ object: { a: 473 } }] });
     expect(response.body.data.length).toBe(1);
     checkType(response, fName);
   });

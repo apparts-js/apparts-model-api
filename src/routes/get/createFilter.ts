@@ -1,14 +1,14 @@
 import { getModelSchema } from "@apparts/model";
-const { createParams, typeFromModeltype } = require("../common");
+import { createParams, typeFromModeltype } from "../common";
 
 const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
   if (type === "oneOf") {
-    return alternatives.reduce((a, b) => a && canBeFiltered(b, true), true);
+    return alternatives.reduce((a, b) => a && canBeFiltered(b), true);
   }
   if (type === "object") {
     return !!keys && !strict;
   }
-  return type !== "array" && (strict || type !== undefined);
+  return type !== "array";
 };
 
 const addToFilter = (filter, tipe, name) => {
@@ -20,7 +20,7 @@ const addToFilter = (filter, tipe, name) => {
   if (!tipe.optional && !typeCanBeFiltered) {
     return;
   }
-  filter.keys[name] = {
+  filter.keys[name] = filter.keys[name] || {
     type: "oneOf",
     alternatives: [],
     optional: true,
@@ -48,7 +48,9 @@ const addToFilter = (filter, tipe, name) => {
       }
       break;
     case "oneOf":
-      filterList.push(...tipe.alternatives);
+      for (const alternative of tipe.alternatives) {
+        addToFilter(filter, alternative, name);
+      }
       break;
     case "string":
       filterList.push(convertedType, {
@@ -81,7 +83,7 @@ const addToFilter = (filter, tipe, name) => {
   }
 };
 
-const createFilter = (prefix, Model) => {
+export const createFilter = (prefix, Model) => {
   const filter = { optional: true, type: "object", keys: {} };
   const types = getModelSchema(Model).getModelType();
   const params = createParams(prefix, Model);
@@ -104,5 +106,3 @@ const createFilter = (prefix, Model) => {
   }
   return filter;
 };
-
-module.exports = { createFilter };

@@ -1,4 +1,4 @@
-const { createFilter } = require("./createFilter");
+import { createFilter } from "./createFilter";
 import { Models } from "../../tests/model";
 import { AdvancedModels } from "../../tests/advancedmodel";
 
@@ -93,20 +93,23 @@ describe("filter api type", () => {
         "object.nestedObjValues": filterAlts(optionalAlternatives),
         "object.nestedOneOf": filterAlts([
           ...optionalAlternatives,
-          {
-            type: "string",
-          },
-          {
-            type: "int",
-          },
+          ...stringAlternatives,
+          ...numberAlternatives,
         ]),
-        "object.nestedOneOfWithObj": filterAlts(optionalAlternatives),
+        "object.nestedOneOfWithObj": filterAlts([
+          ...optionalAlternatives,
+          ...stringAlternatives,
+        ]),
+        "object.nestedOneOfWithObj.a": filterAlts([
+          ...optionalAlternatives,
+          ...stringAlternatives,
+        ]),
         "object.nestedOneOfValues": filterAlts([
           ...optionalAlternatives,
           { value: 1 },
           { value: 2 },
         ]),
-        "object.value": filterAlts(optionalAlternatives),
+        "object.value": filterAlts([...optionalAlternatives, { value: 2 }]),
         "object.innerWithDef": filterAlts(stringAlternatives),
         "object.deepInner": filterAlts(optionalAlternatives),
       },

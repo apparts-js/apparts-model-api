@@ -17,7 +17,12 @@ const typeSchema = types.obj({
       nestedObjValues: types.objValues(types.string()).optional(),
       nestedOneOf: types.oneOf([types.string(), types.int()]).optional(),
       nestedOneOfWithObj: types
-        .oneOf([types.string(), types.obj({})])
+        .oneOf([
+          types.string(),
+          types.obj({
+            a: types.string().optional(),
+          }),
+        ])
         .optional(),
       nestedOneOfValues: types
         .oneOf([types.value(1), types.value(2)])

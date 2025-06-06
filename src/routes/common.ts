@@ -1,9 +1,19 @@
 import { getModelSchema } from "@apparts/model";
-const { traverseType } = require("@apparts/types");
-const { HttpError } = require("@apparts/prep");
+import { traverseType, Type } from "@apparts/types";
+import { HttpError } from "@apparts/prep";
 
-const typeFromModeltype = (tipe) => {
-  const res = {};
+export const typeFromModeltype = (tipe: Type) => {
+  const res: {
+    type?: string;
+    semantic?: string;
+    items?: Type;
+    keys?: Record<string, Type>;
+    values?: Type;
+    value?: Type;
+    optional?: boolean;
+    alternatives?: Type[];
+    default?: any;
+  } = {};
 
   if ("type" in tipe) {
     res.type = tipe.type;
@@ -33,7 +43,7 @@ const typeFromModeltype = (tipe) => {
   return res;
 };
 
-const validateModelIsCreatable = (pathParams, types) => {
+export const validateModelIsCreatable = (pathParams, types) => {
   for (const key in types) {
     const tipe = types[key];
     if (
@@ -51,7 +61,7 @@ const validateModelIsCreatable = (pathParams, types) => {
   }
 };
 
-const getPathParamKeys = (prefix, types) => {
+export const getPathParamKeys = (prefix, types) => {
   const params = prefix
     .split("/")
     .filter((part) => part.substr(0, 1) === ":")
@@ -66,13 +76,13 @@ const getPathParamKeys = (prefix, types) => {
   return params;
 };
 
-const createIdParam = (Model, idField) => {
+export const createIdParam = (Model, idField) => {
   const types = getModelSchema(Model).getModelType();
   const idType = types[idField];
   return typeFromModeltype(idType);
 };
 
-const createParams = (prefix, Model) => {
+export const createParams = (prefix, Model) => {
   const types = getModelSchema(Model).getModelType();
   const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
@@ -93,11 +103,12 @@ const recursiveCreateBody = (tipe) => {
     if ("default" in tipe) {
       result.default = tipe.default;
     }
-    return result;
+    // hack
+    return result as Type;
   });
 };
 
-const createBody = (prefix, Model) => {
+export const createBody = (prefix, Model) => {
   const params = createParams(prefix, Model);
   const types = getModelSchema(Model).getModelType();
   const bodyParams = {};
@@ -119,7 +130,7 @@ const createBody = (prefix, Model) => {
   return bodyParams;
 };
 
-const nameFromPrefix = (prefix) => {
+export const nameFromPrefix = (prefix) => {
   if (prefix.substr(-1) === "/") {
     prefix = prefix.slice(0, -1);
   }
@@ -129,7 +140,7 @@ const nameFromPrefix = (prefix) => {
     .replace(/^\w/, (c) => c.toUpperCase());
 };
 
-const createReturns = (Model) => {
+export const createReturns = (Model) => {
   const types = getModelSchema(Model).getModelType();
   const returns = {};
 
@@ -149,7 +160,7 @@ const createReturns = (Model) => {
   return returns;
 };
 
-const reverseMap = (collection, types) => {
+export const reverseMap = (collection, types) => {
   const unmappedKeys = Object.keys(collection);
   const mappedCollection = {};
 
@@ -168,7 +179,7 @@ const reverseMap = (collection, types) => {
   return mappedCollection;
 };
 
-const unmapKey = (key, types) => {
+export const unmapKey = (key, types) => {
   const mappedKey = Object.keys(types).filter(
     (t) => types[t].mapped === key
   )[0];
@@ -181,7 +192,7 @@ const unmapKey = (key, types) => {
   }
 };
 
-const makeSchema = (type) => ({
+export const makeSchema = (type) => ({
   getType() {
     return type;
   },
@@ -189,17 +200,3 @@ const makeSchema = (type) => ({
     return type;
   },
 });
-
-module.exports = {
-  makeSchema,
-  createParams,
-  createBody,
-  nameFromPrefix,
-  createReturns,
-  reverseMap,
-  typeFromModeltype,
-  unmapKey,
-  createIdParam,
-  getPathParamKeys,
-  validateModelIsCreatable,
-};

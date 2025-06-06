@@ -11,25 +11,32 @@ const { prepare } = require("@apparts/prep");
 const { createFilter } = require("./get/createFilter");
 const { createOrder } = require("./get/createOrder");
 
-const getTypeOfDottedPath = (path, type) => {
-  if (path.length === 0) {
-    return type.type;
+const typeIsKnownForDottedPath = (path, type) => {
+  if (type.type === "oneOf") {
+    return false;
   }
+  if (path.length === 0) {
+    return true;
+  }
+
   const [first, ...rest] = path;
-  return getTypeOfDottedPath(rest, type.keys[first]);
+  return typeIsKnownForDottedPath(rest, type.keys[first]);
 };
 
-const typeToJSType = (type) => {
-  switch (type) {
-    case "id":
-    case "int":
-    case "float":
-      return "number";
-    case "boolean":
-    case "bool":
-      return "boolean";
-    default:
+const operatorToJSType = (op) => {
+  switch (op) {
+    case "exists":
+      return null;
+    case "like":
+    case "ilike":
       return "string";
+    case "gt":
+    case "gte":
+    case "lt":
+    case "lte":
+      return "number";
+    default:
+      throw new Error(`Unknown operator ${op}`);
   }
 };
 
@@ -97,22 +104,48 @@ const generateGet = (
             let mappedOperants = operants.map((op) => ({
               op,
               val: filter[key][op],
+              valueType: operatorToJSType(op),
             }));
+
             if (path.length > 0) {
               delete filter[key];
               const convertedType = { keys: types };
-              const valType = getTypeOfDottedPath(
+              const typeIsKnown = typeIsKnownForDottedPath(
                 [first, ...path],
                 convertedType
               );
-              mappedOperants = mappedOperants.map((op) => ({
-                op: "of",
-                val: {
-                  path,
-                  cast: typeToJSType(valType),
-                  value: op,
-                },
-              }));
+
+              const checkTypeOperants = [];
+              if (!typeIsKnown) {
+                const castTo = new Set(
+                  mappedOperants
+                    .map((op) => op.valueType)
+                    .filter((v) => v !== null)
+                );
+                if (castTo.size > 0) {
+                  for (const castToElem of castTo) {
+                    checkTypeOperants.push({
+                      op: "oftype",
+                      val: {
+                        path,
+                        value: castToElem,
+                      },
+                    });
+                  }
+                }
+              }
+
+              mappedOperants = [
+                ...checkTypeOperants,
+                ...mappedOperants.map((op) => ({
+                  op: "of",
+                  val: {
+                    path,
+                    cast: op.valueType,
+                    value: op,
+                  },
+                })),
+              ];
             }
             if (operants.length === 0) {
               delete filter[key];
