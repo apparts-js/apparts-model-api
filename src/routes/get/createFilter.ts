@@ -11,7 +11,7 @@ const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
   return type !== "array";
 };
 
-const addToFilter = (filter, tipe, name) => {
+const addToFilter = (filter, tipe, name, noMultiSelect = false) => {
   const convertedType = typeFromModeltype(tipe);
   delete convertedType.optional;
 
@@ -47,12 +47,35 @@ const addToFilter = (filter, tipe, name) => {
         addToFilter(filter, subtype, name + "." + key);
       }
       break;
-    case "oneOf":
+    case "oneOf": {
+      const arrayItems = [] as ReturnType<typeof typeFromModeltype>[];
       for (const alternative of tipe.alternatives) {
-        addToFilter(filter, alternative, name);
+        addToFilter(filter, alternative, name, true);
+        const convertedType = typeFromModeltype(alternative);
+        delete convertedType.optional;
+        if (
+          convertedType.type !== "object" &&
+          convertedType.type !== "oneOf" &&
+          convertedType.type !== "array" &&
+          convertedType.type !== "objValues"
+        ) {
+          arrayItems.push(convertedType);
+        }
       }
+      filterList.push({
+        type: "array",
+        items: {
+          type: "oneOf",
+          alternatives: arrayItems,
+        },
+      });
       break;
+    }
     case "string":
+      if (!noMultiSelect) {
+        filterList.push({ type: "array", items: convertedType });
+      }
+
       filterList.push(convertedType, {
         type: "object",
         keys: {
@@ -64,6 +87,10 @@ const addToFilter = (filter, tipe, name) => {
     case "int":
     case "float":
     case "time":
+      if (!noMultiSelect) {
+        filterList.push({ type: "array", items: convertedType });
+      }
+
       if (tipe.semantic !== "id") {
         filterList.push(convertedType, {
           type: "object",
@@ -78,7 +105,13 @@ const addToFilter = (filter, tipe, name) => {
         filterList.push(convertedType);
       }
       break;
+    case undefined: // value
+      filterList.push(convertedType);
+      break;
     default:
+      if (!noMultiSelect) {
+        filterList.push({ type: "array", items: convertedType });
+      }
       filterList.push(convertedType);
   }
 };

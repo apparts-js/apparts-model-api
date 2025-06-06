@@ -26,6 +26,7 @@ const typeIsKnownForDottedPath = (path, type) => {
 const operatorToJSType = (op) => {
   switch (op) {
     case "exists":
+    case "in":
       return null;
     case "like":
     case "ilike":
@@ -94,11 +95,13 @@ const generateGet = (
             continue;
           }
 
-          if (
-            typeof filter[key] === "object" &&
-            !Array.isArray(filter[key]) &&
-            filter[key] !== null
-          ) {
+          if (Array.isArray(filter[key])) {
+            filter[key] = {
+              in: filter[key],
+            };
+          }
+
+          if (typeof filter[key] === "object" && filter[key] !== null) {
             const operants = Object.keys(filter[key]);
             const [first, ...path] = key.split(".");
             let mappedOperants = operants.map((op) => ({

@@ -424,6 +424,9 @@ describe("Filters", () => {
       {
         mapped: 13,
       },
+      {
+        mapped: 14,
+      },
     ]).store();
 
     const response = await request(app)
@@ -432,7 +435,7 @@ describe("Filters", () => {
     expect(response.body).toMatchObject({
       data: [
         {
-          id: model.content.id,
+          id: model.contents[0].id,
           someNumber: 13,
         },
       ],
@@ -549,6 +552,40 @@ describe("Filters", () => {
     expect(contents.length).toBe(
       responseDoesNotExist.body.data.length + responseExists.body.data.length
     );
+  });
+
+  it("should filter with array", async () => {
+    const dbs = getPool();
+    const model = await new Models(dbs, [
+      {
+        mapped: 140,
+      },
+      {
+        mapped: 141,
+      },
+      {
+        mapped: 142,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(url("model", { filter: formatFilter({ someNumber: [140, 142] }) }))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model.contents[0].id,
+          someNumber: 140,
+        },
+        {
+          id: model.contents[2].id,
+          someNumber: 142,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(2);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
   });
 });
 
@@ -958,6 +995,94 @@ describe("get advanced model", () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ data: [{ object: { a: 473 } }] });
     expect(response.body.data.length).toBe(1);
+    checkType(response, fName);
+  });
+
+  it("should filter with array in object", async () => {
+    const dbs = getPool();
+    const model = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 533,
+          bcd: "zzz",
+        },
+      },
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 534,
+          bcd: "zzy",
+        },
+      },
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 535,
+          bcd: "zzy",
+        },
+      },
+    ]).store();
+    const response = await request(app)
+      .get(
+        url("advancedmodel", {
+          filter: formatFilter({ "object.a": [533, 534] }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model.contents[0].id,
+        },
+        {
+          id: model.contents[1].id,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(2);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
+  });
+  it("should filter with array in oneOf", async () => {
+    const dbs = getPool();
+    const model = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 683,
+          bcd: "zzz",
+          nestedOneOfValues: 1,
+        },
+      },
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 684,
+          nestedOneOfValues: 2,
+          bcd: "zzy",
+        },
+      },
+    ]).store();
+    const response = await request(app)
+      .get(
+        url("advancedmodel", {
+          filter: formatFilter({ "object.nestedOneOfValues": [1, 2] }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model.contents[0].id,
+        },
+        {
+          id: model.contents[1].id,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(2);
+    expect(response.status).toBe(200);
     checkType(response, fName);
   });
 });

@@ -11,6 +11,10 @@ const filterAlts = (alts) => ({
 describe("filter api type", () => {
   const numberAlternatives = [
     {
+      type: "array",
+      items: { type: "int" },
+    },
+    {
       type: "int",
     },
     {
@@ -37,11 +41,24 @@ describe("filter api type", () => {
   ];
   const idAlternatives = [
     {
+      type: "array",
+      items: {
+        type: "int",
+        semantic: "id",
+      },
+    },
+
+    {
       type: "int",
       semantic: "id",
     },
   ];
   const stringAlternatives = [
+    {
+      type: "array",
+      items: { type: "string" },
+    },
+
     {
       type: "string",
     },
@@ -93,12 +110,26 @@ describe("filter api type", () => {
         "object.nestedObjValues": filterAlts(optionalAlternatives),
         "object.nestedOneOf": filterAlts([
           ...optionalAlternatives,
-          ...stringAlternatives,
-          ...numberAlternatives,
+          ...stringAlternatives.slice(1),
+          ...numberAlternatives.slice(1),
+          {
+            type: "array",
+            items: {
+              type: "oneOf",
+              alternatives: [{ type: "string" }, { type: "int" }],
+            },
+          },
         ]),
         "object.nestedOneOfWithObj": filterAlts([
           ...optionalAlternatives,
-          ...stringAlternatives,
+          ...stringAlternatives.slice(1),
+          {
+            type: "array",
+            items: {
+              type: "oneOf",
+              alternatives: [{ type: "string" }],
+            },
+          },
         ]),
         "object.nestedOneOfWithObj.a": filterAlts([
           ...optionalAlternatives,
@@ -108,6 +139,13 @@ describe("filter api type", () => {
           ...optionalAlternatives,
           { value: 1 },
           { value: 2 },
+          {
+            type: "array",
+            items: {
+              type: "oneOf",
+              alternatives: [{ value: 1 }, { value: 2 }],
+            },
+          },
         ]),
         "object.value": filterAlts([...optionalAlternatives, { value: 2 }]),
         "object.innerWithDef": filterAlts(stringAlternatives),
