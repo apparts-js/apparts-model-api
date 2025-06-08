@@ -51,20 +51,6 @@ describe("filter api type", () => {
       lte: types.int().optional(),
     }),
   ].map((t) => t.getType());
-  const idAlternatives = [
-    {
-      type: "array",
-      items: {
-        type: "int",
-        semantic: "id",
-      },
-    },
-
-    {
-      type: "int",
-      semantic: "id",
-    },
-  ];
   const stringAlternatives = [
     types.string(),
     types.array(types.string()),

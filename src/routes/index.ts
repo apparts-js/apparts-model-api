@@ -6,13 +6,6 @@ import { generatePatch } from "./generatePatch";
 import { generatePost } from "./generatePost";
 import { generatePut } from "./generatePut";
 import { EnrichedModel, Model, Routes, TrackChangesFn } from "./types";
-import { Request, Response } from "express";
-
-type Temp<AccessType> = {
-  hasAccess: (request: Request, response: Response) => Promise<AccessType>;
-  title: string;
-  description: string;
-};
 
 const addCrud = <AccessType>({
   prefix,
