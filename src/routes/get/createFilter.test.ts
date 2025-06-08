@@ -134,6 +134,7 @@ describe("filter api type", () => {
         "object.nestedOneOfWithObj.a": filterAlts([
           ...optionalAlternatives,
           ...stringAlternatives,
+          { value: "a" },
         ]),
         "object.nestedOneOfValues": filterAlts([
           ...optionalAlternatives,

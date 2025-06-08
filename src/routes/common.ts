@@ -1,3 +1,4 @@
+import * as types from "@apparts/types";
 import { getModelSchema } from "@apparts/model";
 import { traverseType, Type } from "@apparts/types";
 import { HttpError } from "@apparts/prep";
@@ -61,10 +62,10 @@ export const validateModelIsCreatable = (pathParams, types) => {
   }
 };
 
-export const getPathParamKeys = (prefix, types) => {
+export const getPathParamKeys = (prefix: string, types) => {
   const params = prefix
     .split("/")
-    .filter((part) => part.substr(0, 1) === ":")
+    .filter((part) => part.substring(0, 1) === ":")
     .map((part) => part.slice(1));
   for (const pathParam of params) {
     if (!types[pathParam]) {
@@ -82,7 +83,7 @@ export const createIdParam = (Model, idField) => {
   return typeFromModeltype(idType);
 };
 
-export const createParams = (prefix, Model) => {
+export const createParams = (prefix: string, Model) => {
   const types = getModelSchema(Model).getModelType();
   const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
@@ -160,6 +161,13 @@ export const createReturns = (Model) => {
   return returns;
 };
 
+export class MappingError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "MappingError";
+  }
+}
+
 export const reverseMap = (collection, types) => {
   const unmappedKeys = Object.keys(collection);
   const mappedCollection = {};
@@ -171,7 +179,7 @@ export const reverseMap = (collection, types) => {
     if (mappedKey) {
       mappedCollection[mappedKey] = collection[key];
     } else if (!types[key] || types[key].mapped) {
-      throw new HttpError(400, '"' + key + '" does not exist');
+      throw new MappingError('"' + key + '" does not exist');
     } else {
       mappedCollection[key] = collection[key];
     }
@@ -186,17 +194,18 @@ export const unmapKey = (key, types) => {
   if (mappedKey) {
     return mappedKey;
   } else if (!types[key] || types[key].mapped) {
-    throw new HttpError(400, '"' + key + '" does not exist');
+    throw new MappingError('"' + key + '" does not exist');
   } else {
     return key;
   }
 };
 
-export const makeSchema = (type) => ({
-  getType() {
-    return type;
-  },
-  getModelType() {
-    return type;
-  },
-});
+export const makeSchema = (type) =>
+  ({
+    getType() {
+      return type;
+    },
+    getModelType() {
+      return type;
+    },
+  } as types.Obj<any, any>);

@@ -1,4 +1,4 @@
-const {
+import {
   createParams,
   createBody,
   nameFromPrefix,
@@ -7,17 +7,24 @@ const {
   makeSchema,
   validateModelIsCreatable,
   getPathParamKeys,
-} = require("./common");
-const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
-const { NotUnique } = require("@apparts/model");
+  MappingError,
+} from "./common";
+import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
+import { NotUnique } from "@apparts/model";
+import { GeneratorFnParams } from "./types";
+import { GenericQueriable } from "@apparts/db";
 
-const generatePost = (
-  prefix,
-  Model,
-  { hasAccess: authF, title, description },
-  trackChanges,
-  idField
+export const generatePost = <AccessType>(
+  params: GeneratorFnParams<AccessType>
 ) => {
+  const {
+    prefix,
+    Model,
+    routeConfig: { hasAccess: authF, title, description },
+    trackChanges,
+    idField,
+  } = params;
+
   if (!authF) {
     throw new Error(`Route (post) ${prefix} has no access control function.`);
   }
@@ -50,18 +57,20 @@ const generatePost = (
         httpErrorSchema(412, "Could not create item because it exists"),
       ],
     },
-    async (req, res, me) => {
-      const { dbs, params } = req;
+    async (req, _res, me) => {
+      const { dbs, params } = req as typeof req & {
+        dbs: GenericQueriable;
+      };
       let { body } = req;
 
       try {
         body = reverseMap(body, types);
       } catch (e) {
-        if (e instanceof HttpError) {
+        if (e instanceof MappingError) {
           return new HttpError(
             400,
             "Could not create item because your request had too many parameters",
-            e.message.error
+            e.message
           );
         }
         throw e;
@@ -93,5 +102,3 @@ const generatePost = (
   );
   return postF;
 };
-
-module.exports = generatePost;

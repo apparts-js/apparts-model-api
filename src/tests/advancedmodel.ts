@@ -1,5 +1,6 @@
 import * as types from "@apparts/types";
 import { BaseModel, useModel } from "@apparts/model";
+import { EnrichedModel } from "../routes/types";
 
 const typeSchema = types.obj({
   id: types.int().semantic("id").key().auto().public(),
@@ -22,6 +23,9 @@ const typeSchema = types.obj({
           types.obj({
             a: types.string().optional(),
           }),
+          types.obj({
+            a: types.value("a"),
+          }),
         ])
         .optional(),
       nestedOneOfValues: types
@@ -42,5 +46,8 @@ const typeSchema = types.obj({
     .public(),
 });
 
-export class AdvancedModels extends BaseModel<typeof typeSchema> {}
-useModel(AdvancedModels, { typeSchema, collection: "advancedmodel" });
+export class AdvancedModels_ extends BaseModel<typeof typeSchema> {}
+useModel(AdvancedModels_, { typeSchema, collection: "advancedmodel" });
+export const AdvancedModels = AdvancedModels_ as unknown as EnrichedModel<
+  typeof AdvancedModels_
+>;

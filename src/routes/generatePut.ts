@@ -1,4 +1,4 @@
-const {
+import {
   createParams,
   nameFromPrefix,
   reverseMap,
@@ -7,23 +7,30 @@ const {
   makeSchema,
   getPathParamKeys,
   validateModelIsCreatable,
-} = require("./common");
-const {
+  MappingError,
+} from "./common";
+import {
   HttpError,
   HttpCode,
   httpCodeSchema,
   prepare,
   httpErrorSchema,
-} = require("@apparts/prep");
-const { NotFound } = require("@apparts/model");
+} from "@apparts/prep";
+import { NotFound } from "@apparts/model";
+import { GeneratorFnParams } from "./types";
+import { GenericQueriable } from "@apparts/db";
 
-const generatePut = (
-  prefix,
-  Model,
-  { hasAccess: authF, title, description },
-  trackChanges,
-  idField
+export const generatePut = <AccessType>(
+  params: GeneratorFnParams<AccessType>
 ) => {
+  const {
+    prefix,
+    Model,
+    routeConfig: { hasAccess: authF, title, description },
+    trackChanges,
+    idField,
+  } = params;
+
   if (!authF) {
     throw new Error(`Route (put) ${prefix} has no access control function.`);
   }
@@ -77,18 +84,20 @@ const generatePut = (
         ),
       ],
     },
-    async (req, res, me) => {
-      const { dbs, params } = req;
+    async (req, _res, me) => {
+      const { dbs, params } = req as typeof req & {
+        dbs: GenericQueriable;
+      };
       let { body } = req;
 
       try {
         body = reverseMap(body, types);
       } catch (e) {
-        if (e instanceof HttpError) {
+        if (e instanceof MappingError) {
           return new HttpError(
             400,
             "Could not alter item because your request had too many parameters",
-            e.message.error
+            e.message
           );
         }
         throw e;
@@ -128,10 +137,10 @@ const generatePut = (
         );
       }
 
-      let model,
-        creatingNew = false;
+      let model = new Model(dbs);
+      let creatingNew = false;
       try {
-        model = await new Model(dbs).loadOne(params);
+        await model.loadOne(params);
       } catch (e) {
         if (e instanceof NotFound) {
           if (!canCreate) {
@@ -160,7 +169,7 @@ const generatePut = (
             types[key].default !== undefined
         )
         .forEach((key) => {
-          model.content = model.getDefaults([model.content], key)[0];
+          model.content = model.getWithDefaults([model.content], key)[0];
         });
 
       if (creatingNew) {
@@ -178,5 +187,3 @@ const generatePut = (
   );
   return putF;
 };
-
-module.exports = generatePut;

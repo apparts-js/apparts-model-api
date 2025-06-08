@@ -1,13 +1,16 @@
-const {
+import {
   createParams,
   nameFromPrefix,
   reverseMap,
   createBody,
   createIdParam,
   makeSchema,
-} = require("./common");
-const { HttpError, prepare, httpErrorSchema } = require("@apparts/prep");
-const { NotFound } = require("@apparts/model");
+  MappingError,
+} from "./common";
+import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
+import { NotFound } from "@apparts/model";
+import { GeneratorFnParams } from "./types";
+import { GenericQueriable } from "@apparts/db";
 
 const makePatchBody = (types) => {
   for (const key in types) {
@@ -28,13 +31,17 @@ const makePatchBody = (types) => {
   return types;
 };
 
-const generatePatch = (
-  prefix,
-  Model,
-  { hasAccess: authF, title, description },
-  trackChanges,
-  idField
+export const generatePatch = <AccessType>(
+  params: GeneratorFnParams<AccessType>
 ) => {
+  const {
+    prefix,
+    Model,
+    routeConfig: { hasAccess: authF, title, description },
+    trackChanges,
+    idField,
+  } = params;
+
   if (!authF) {
     throw new Error(`Route (patch) ${prefix} has no access control function.`);
   }
@@ -68,19 +75,21 @@ const generatePatch = (
         httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
       ],
     },
-    async (req, res, me) => {
-      const { dbs, params } = req;
+    async (req, _res, me) => {
+      const { dbs, params } = req as typeof req & {
+        dbs: GenericQueriable;
+      };
       let { body } = req;
 
       const types = Model.getSchema().getModelType();
       try {
         body = reverseMap(body, types);
       } catch (e) {
-        if (e instanceof HttpError) {
+        if (e instanceof MappingError) {
           return new HttpError(
             400,
             "Could not alter item because your request had too many parameters",
-            e.message.error
+            e.message
           );
         }
         throw e;
@@ -117,9 +126,9 @@ const generatePatch = (
         );
       }
 
-      let model;
+      const model = new Model(dbs);
       try {
-        model = await new Model(dbs).loadOne(params);
+        await model.loadOne(params);
       } catch (e) {
         if (e instanceof NotFound) {
           return new HttpError(404, nameFromPrefix(prefix) + " not found");
@@ -135,5 +144,3 @@ const generatePatch = (
   );
   return patchF;
 };
-
-module.exports = generatePatch;

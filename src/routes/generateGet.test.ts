@@ -1,20 +1,20 @@
-const generateGet = require("./generateGet");
+import { generateGet } from "./generateGet";
 import { Models } from "../tests/model";
-const { addCrud } = require("../");
-const { generateMethods } = require("./");
-const { validJwt, rejectAccess } = require("@apparts/prep");
+import { addCrud } from "../";
+import { generateMethods } from "./";
+import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "",
   auth = { get: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-const { app, url, error, getPool, checkType, allChecked } =
-  require("@apparts/backend-test")({
-    testName: "get",
-    apiContainer: methods.get,
-    apiVersion: 1,
-    schemas: [
-      `
+import setupTest from "@apparts/backend-test";
+const { app, url, error, getPool, checkType, allChecked } = setupTest({
+  testName: "get",
+  apiContainer: methods.get,
+  apiVersion: 1,
+  schemas: [
+    `
 CREATE TABLE model (
   id SERIAL PRIMARY KEY,
   "optionalVal" TEXT,
@@ -42,14 +42,14 @@ CREATE TABLE namedidmodel (
   "specialId" SERIAL PRIMARY KEY,
   val INT NOT NULL
 );`,
-    ],
-  });
-const request = require("supertest");
-const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModels } = require("../tests/submodel");
-const { AdvancedModels } = require("../tests/advancedmodel");
-const { StrangeIdModels } = require("../tests/strangeids");
-const { NamedIdModels } = require("../tests/namedIdModel");
+  ],
+});
+import request from "supertest";
+import { checkJWT, jwt } from "../tests/checkJWT";
+import { SubModels } from "../tests/submodel";
+import { AdvancedModels } from "../tests/advancedmodel";
+import { StrangeIdModels } from "../tests/strangeids";
+import { NamedIdModels } from "../tests/namedIdModel";
 
 const formatFilter = (a) => encodeURIComponent(JSON.stringify(a));
 
@@ -64,9 +64,14 @@ describe("Get", () => {
   checkJWT(() => request(app).get(url("model")), "", checkType);
 
   it("should reject without access function", async () => {
-    expect(() => generateGet("model", Models, {}, "", "id")).toThrow(
-      "Route (get) model has no access control function."
-    );
+    expect(() =>
+      generateGet({
+        prefix: "model",
+        Model: Models,
+        routeConfig: {} as any,
+        idField: "id",
+      })
+    ).toThrow("Route (get) model has no access control function.");
   });
 
   test("Get all", async () => {
@@ -618,7 +623,7 @@ describe("get subresources", () => {
     model: SubModels,
     routes: auth,
   });
-  const methods2 = generateMethods(path, SubModels, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, SubModels, auth, undefined, "id");
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -689,7 +694,7 @@ describe("Get subresources with optional relation", () => {
     model: Models,
     routes: auth,
   });
-  const methods2 = generateMethods(path, Models, auth, "", undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should get a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -731,14 +736,7 @@ describe("get advanced model", () => {
     model: AdvancedModels,
     routes: auth,
   });
-  const methods2 = generateMethods(
-    path,
-    AdvancedModels,
-    auth,
-    "",
-    undefined,
-    "id"
-  );
+  const methods2 = generateMethods(path, AdvancedModels, auth, undefined, "id");
 
   test("Should return model", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -998,6 +996,36 @@ describe("get advanced model", () => {
     checkType(response, fName);
   });
 
+  it("should filter with value in object", async () => {
+    const dbs = getPool();
+    const model = await new AdvancedModels(dbs, [
+      {
+        textarray: ["erster", "zweiter"],
+        object: {
+          a: 9935,
+          bcd: "zzy",
+        },
+      },
+    ]).store();
+    const response = await request(app)
+      .get(
+        url("advancedmodel", {
+          filter: formatFilter({ "object.a": 9935 }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: model.contents[0].id,
+        },
+      ],
+    });
+    expect(response.body.data.length).toBe(1);
+    expect(response.status).toBe(200);
+    checkType(response, fName);
+  });
+
   it("should filter with array in object", async () => {
     const dbs = getPool();
     const model = await new AdvancedModels(dbs, [
@@ -1089,24 +1117,22 @@ describe("get advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateGet(
-      "model",
-      Models,
-      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
-      "",
-      "id"
-    ).options;
-    const options2 = generateGet(
-      "model",
-      Models,
-      {
+    const options1 = generateGet({
+      prefix: "model",
+      Model: Models,
+      routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
+      idField: "id",
+    }).options;
+    const options2 = generateGet({
+      prefix: "model",
+      Model: Models,
+      routeConfig: {
         title: "My title",
         description: "yay",
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
-      "",
-      "id"
-    ).options;
+      idField: "id",
+    }).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Get Model");
     expect(options2.title).toBe("My title");
@@ -1126,7 +1152,6 @@ describe("Ids of other format", () => {
     path,
     StrangeIdModels,
     auth,
-    "",
     undefined,
     "id"
   );
@@ -1169,7 +1194,6 @@ describe("Ids with different name", () => {
     path,
     NamedIdModels,
     auth,
-    "",
     undefined,
     "specialId"
   );

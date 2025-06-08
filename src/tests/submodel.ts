@@ -1,5 +1,6 @@
 import * as types from "@apparts/types";
 import { BaseModel, useModel } from "@apparts/model";
+import { EnrichedModel } from "../routes/types";
 
 const typeSchema = types.obj({
   id: types.int().semantic("id").key().auto().public(),
@@ -7,5 +8,8 @@ const typeSchema = types.obj({
   opt: types.string().public().optional(),
 });
 
-export class SubModels extends BaseModel<typeof typeSchema> {}
-useModel(SubModels, { typeSchema, collection: "submodel" });
+class SubModels_ extends BaseModel<typeof typeSchema> {}
+useModel(SubModels_, { typeSchema, collection: "submodel" });
+export const SubModels = SubModels_ as unknown as EnrichedModel<
+  typeof SubModels_
+>;

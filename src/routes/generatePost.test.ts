@@ -1,21 +1,22 @@
 import { Models } from "../tests/model";
-const generatePost = require("./generatePost");
-const { addCrud } = require("../");
-const { generateMethods } = require("./");
-const { validJwt, rejectAccess } = require("@apparts/prep");
+import { generatePost } from "./generatePost";
+import { addCrud } from "../";
+import { generateMethods } from "./";
+import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "";
 const path = "/v/1/model",
   auth = { post: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
 const methods = generateMethods(path, Models, auth, undefined, "id");
-const { app, url, error, getPool, checkType, allChecked } =
-  require("@apparts/backend-test")({
-    testName: "post",
-    apiContainer: methods.post,
-    apiVersion: 1,
-    schemas: [
-      `
+
+import setupTest from "@apparts/backend-test";
+const { app, url, error, getPool, checkType, allChecked } = setupTest({
+  testName: "post",
+  apiContainer: methods.post,
+  apiVersion: 1,
+  schemas: [
+    `
 CREATE TABLE model (
   id SERIAL PRIMARY KEY,
   "optionalVal" TEXT,
@@ -58,17 +59,17 @@ CREATE TABLE namedidmodel (
   "specialId" SERIAL PRIMARY KEY,
   val INT NOT NULL
 );`,
-    ],
-  });
-const request = require("supertest");
-const { checkJWT, jwt } = require("../tests/checkJWT");
+  ],
+});
+import request from "supertest";
+import { checkJWT, jwt } from "../tests/checkJWT";
 
-const { SubModels } = require("../tests/submodel");
-const { AdvancedModels } = require("../tests/advancedmodel");
-const { ModelsWithDefault } = require("../tests/modelWithDefault");
-const { StrangeIdModels } = require("../tests/strangeids");
-const { NamedIdModels } = require("../tests/namedIdModel");
-const { MultiModels } = require("../tests/multiKeyModel");
+import { SubModels } from "../tests/submodel";
+import { AdvancedModels } from "../tests/advancedmodel";
+import { ModelsWithDefault } from "../tests/modelWithDefault";
+import { StrangeIdModels } from "../tests/strangeids";
+import { NamedIdModels } from "../tests/namedIdModel";
+import { MultiModels } from "../tests/multiKeyModel";
 
 describe("Post", () => {
   const path = "/v/1/model";
@@ -86,9 +87,14 @@ describe("Post", () => {
   );
 
   it("should reject without access function", async () => {
-    expect(() => generatePost("model", Models, {}, undefined, "id")).toThrow(
-      "Route (post) model has no access control function."
-    );
+    expect(() =>
+      generatePost({
+        prefix: "model",
+        Model: Models,
+        routeConfig: {} as any,
+        idField: "id",
+      })
+    ).toThrow("Route (post) model has no access control function.");
   });
 
   test("Post with too few values", async () => {
@@ -438,24 +444,22 @@ describe("post advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generatePost(
-      "model",
-      Models,
-      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
-      undefined,
-      "id"
-    ).options;
-    const options2 = generatePost(
-      "model",
-      Models,
-      {
+    const options1 = generatePost({
+      prefix: "model",
+      Model: Models,
+      routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
+      idField: "id",
+    }).options;
+    const options2 = generatePost({
+      prefix: "model",
+      Model: Models,
+      routeConfig: {
         title: "My title",
         description: "yay",
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
-      undefined,
-      "id"
-    ).options;
+      idField: "id",
+    }).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Create Model");
     expect(options2.title).toBe("My title");

@@ -1,5 +1,5 @@
 import { getModelSchema } from "@apparts/model";
-const { typeFromModeltype } = require("../common");
+import { typeFromModeltype } from "../common";
 
 const canBeOrdered = ({ type, alternatives, keys }, strict = false) => {
   if (type === "oneOf") {
@@ -35,7 +35,7 @@ const addToOrder = (order, tipe, name) => {
   }
 };
 
-const createOrder = (Model) => {
+export const createOrder = (Model) => {
   const order = {
     optional: true,
     type: "array",
@@ -71,5 +71,3 @@ const createOrder = (Model) => {
   }
   return order;
 };
-
-module.exports = { createOrder };

@@ -1,18 +1,24 @@
-const {
+import {
   createParams,
   nameFromPrefix,
   createReturns,
   createIdParam,
   makeSchema,
-} = require("./common");
-const { prepare } = require("@apparts/prep");
+} from "./common";
+import { prepare } from "@apparts/prep";
+import { GeneratorFnParams } from "./types";
+import { GenericQueriable } from "@apparts/db";
 
-const generateGetByIds = (
-  prefix,
-  Model,
-  { hasAccess: authF, title, description },
-  idField
+export const generateGetByIds = <AccessType>(
+  params: GeneratorFnParams<AccessType>
 ) => {
+  const {
+    prefix,
+    Model,
+    routeConfig: { hasAccess: authF, title, description },
+    idField,
+  } = params;
+
   if (!authF) {
     throw new Error(
       `Route (getByIds) ${prefix} has no access control function.`
@@ -46,7 +52,10 @@ const generateGetByIds = (
       const {
         dbs,
         params: { [idField + "s"]: ids, ...restParams },
-      } = req;
+      } = req as typeof req & {
+        dbs: GenericQueriable;
+        params: Record<string, string[]>;
+      };
 
       if (ids.length === 0) {
         return [];
@@ -59,5 +68,3 @@ const generateGetByIds = (
   );
   return getF;
 };
-
-module.exports = generateGetByIds;

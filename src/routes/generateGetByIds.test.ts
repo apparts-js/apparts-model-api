@@ -1,21 +1,21 @@
 import { Models } from "../tests/model";
-const generateGetByIds = require("./generateGetByIds");
-const { addCrud } = require("../");
-const { generateMethods } = require("./");
-const { validJwt, rejectAccess } = require("@apparts/prep");
+import { generateGetByIds } from "./generateGetByIds";
+import { addCrud } from "../";
+import { generateMethods } from "./";
+import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "/:ids",
   auth = { getByIds: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-const { app, url, getPool, checkType, allChecked, error } =
-  require("@apparts/backend-test")({
-    testName: "getByIds",
-    apiContainer: methods.get,
-    apiVersion: 1,
-    schemas: [
-      `
+import setupTest from "@apparts/backend-test";
+const { app, url, getPool, checkType, allChecked, error } = setupTest({
+  testName: "getByIds",
+  apiContainer: methods.get,
+  apiVersion: 1,
+  schemas: [
+    `
 CREATE TABLE model (
   id SERIAL PRIMARY KEY,
   "optionalVal" TEXT,
@@ -45,15 +45,15 @@ CREATE TABLE namedidmodel (
   "specialId" SERIAL PRIMARY KEY,
   val INT NOT NULL
 );`,
-    ],
-  });
+  ],
+});
 
-const request = require("supertest");
-const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModels } = require("../tests/submodel");
-const { AdvancedModels } = require("../tests/advancedmodel");
-const { StrangeIdModels } = require("../tests/strangeids");
-const { NamedIdModels } = require("../tests/namedIdModel");
+import request from "supertest";
+import { checkJWT, jwt } from "../tests/checkJWT";
+import { SubModels } from "../tests/submodel";
+import { AdvancedModels } from "../tests/advancedmodel";
+import { StrangeIdModels } from "../tests/strangeids";
+import { NamedIdModels } from "../tests/namedIdModel";
 
 describe("getByIds", () => {
   const path = "/v/1/model";
@@ -67,9 +67,14 @@ describe("getByIds", () => {
   checkJWT(() => request(app).get(url("model/[]")), "/:ids", checkType);
 
   it("should reject without access function", async () => {
-    expect(() => generateGetByIds("model", Models, {}, "id")).toThrow(
-      "Route (getByIds) model has no access control function."
-    );
+    expect(() =>
+      generateGetByIds({
+        prefix: "model",
+        Model: Models,
+        routeConfig: {} as any,
+        idField: "id",
+      })
+    ).toThrow("Route (getByIds) model has no access control function.");
   });
 
   test("Get all", async () => {
@@ -285,22 +290,22 @@ describe("getByIds advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generateGetByIds(
-      "model",
-      Models,
-      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
-      "id"
-    ).options;
-    const options2 = generateGetByIds(
-      "model",
-      Models,
-      {
+    const options1 = generateGetByIds({
+      prefix: "model",
+      Model: Models,
+      routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
+      idField: "id",
+    }).options;
+    const options2 = generateGetByIds({
+      prefix: "model",
+      Model: Models,
+      routeConfig: {
         title: "My title",
         description: "yay",
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
-      "id"
-    ).options;
+      idField: "id",
+    }).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Get Model by Ids");
     expect(options2.title).toBe("My title");

@@ -1,20 +1,26 @@
-const { value } = require("@apparts/types");
-const {
+import { value } from "@apparts/types";
+import {
   createParams,
   nameFromPrefix,
   createIdParam,
   makeSchema,
-} = require("./common");
-const { IsReference } = require("@apparts/model");
-const { prepare, HttpError, httpErrorSchema } = require("@apparts/prep");
+} from "./common";
+import { IsReference } from "@apparts/model";
+import { prepare, HttpError, httpErrorSchema } from "@apparts/prep";
+import { GenericQueriable } from "@apparts/db";
+import { GeneratorFnParams } from "./types";
 
-const generateDelete = (
-  prefix,
-  Model,
-  { hasAccess: authF, title, description },
-  trackChanges,
-  idField
+export const generateDelete = <AccessType>(
+  params: GeneratorFnParams<AccessType>
 ) => {
+  const {
+    prefix,
+    Model,
+    routeConfig: { hasAccess: authF, title, description },
+    trackChanges,
+    idField,
+  } = params;
+
   if (!authF) {
     throw new Error(`Route (delete) ${prefix} has no access control function.`);
   }
@@ -44,7 +50,10 @@ const generateDelete = (
       const {
         dbs,
         params: { [idField + "s"]: ids, ...restParams },
-      } = req;
+      } = req as typeof req & {
+        dbs: GenericQueriable;
+        params: Record<string, string[]>;
+      };
 
       if (ids.length === 0) {
         return "ok";
@@ -69,5 +78,3 @@ const generateDelete = (
   );
   return deleteF;
 };
-
-module.exports = generateDelete;

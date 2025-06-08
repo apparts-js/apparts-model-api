@@ -1,30 +1,22 @@
 import { Models } from "../tests/model";
-const generatePut = require("./generatePut");
-const { addCrud } = require("../");
-const { generateMethods } = require("./");
-const { validJwt, rejectAccess } = require("@apparts/prep");
+import { generatePatch } from "./generatePatch";
+import { addCrud } from "../";
+import { generateMethods } from "./";
+import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "/:id",
-  auth = { put: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
+  auth = { patch: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
-const { app, url, error, getPool, checkType, allChecked } =
-  require("@apparts/backend-test")({
-    testName: "put",
-    apiContainer: methods.put,
-    schemas: [
-      `
+import setupTest from "@apparts/backend-test";
+const { app, url, error, getPool, checkType, allChecked } = setupTest({
+  testName: "patch",
+  apiContainer: methods.patch,
+  schemas: [
+    `
 CREATE TABLE model (
   id SERIAL PRIMARY KEY,
   "optionalVal" TEXT,
   "hasDefault" INT NOT NULL,
-  mapped INT NOT NULL
-);
-
-CREATE TABLE "modelWithDefault" (
-  id SERIAL PRIMARY KEY,
-  "optionalVal" TEXT,
-  "hasDefault" INT NOT NULL,
-  "hasReadOnlyWithDefault" INT,
   mapped INT NOT NULL
 );
 
@@ -50,23 +42,21 @@ CREATE TABLE strangeids (
   id VARCHAR(8) PRIMARY KEY,
   val INT NOT NULL
 );
-
 CREATE TABLE namedidmodel (
   "specialId" SERIAL PRIMARY KEY,
   val INT NOT NULL
 );`,
-    ],
-    apiVersion: 1,
-  });
-const request = require("supertest");
-const { checkJWT, jwt } = require("../tests/checkJWT");
-const { SubModels } = require("../tests/submodel");
-const { AdvancedModels } = require("../tests/advancedmodel");
-const { ModelsWithDefault } = require("../tests/modelWithDefault");
-const { StrangeIdModels } = require("../tests/strangeids");
-const { NamedIdModels } = require("../tests/namedIdModel");
+  ],
+  apiVersion: 1,
+});
+import request from "supertest";
+import { checkJWT, jwt } from "../tests/checkJWT";
+import { SubModels } from "../tests/submodel";
+import { AdvancedModels } from "../tests/advancedmodel";
+import { StrangeIdModels } from "../tests/strangeids";
+import { NamedIdModels } from "../tests/namedIdModel";
 
-describe("Put", () => {
+describe("Patch", () => {
   const path = "/v/1/model";
   addCrud({
     prefix: path,
@@ -76,22 +66,27 @@ describe("Put", () => {
   });
 
   checkJWT(
-    () => request(app).put(url("model/1")).send({ someNumber: 3 }),
+    () => request(app).patch(url("model/1")).send({ someNumber: 3 }),
     "/:id",
     checkType
   );
 
   it("should reject without access function", async () => {
-    expect(() => generatePut("model", Models, {}, undefined, "id")).toThrow(
-      "Route (put) model has no access control function."
-    );
+    expect(() =>
+      generatePatch({
+        prefix: "model",
+        Model: Models,
+        routeConfig: {} as any,
+        idField: "id",
+      })
+    ).toThrow("Route (patch) model has no access control function.");
   });
 
-  test("Put with too few values", async () => {
+  test("Patch with no values", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({})
       .set("Authorization", "Bearer " + jwt());
     const modelNew = await new Models(dbs).loadOneByKeys({
@@ -100,16 +95,19 @@ describe("Put", () => {
     expect({ ...model.content, optionalVal: null }).toMatchObject(
       modelNew.content
     );
-    expect(response.status).toBe(400);
-    expect(response.body).toMatchObject(error("Fieldmissmatch"));
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(model.content.id);
     checkType(response, fName);
+
+    const model1 = await new Models(dbs).loadOne({ mapped: 7 });
+    expect(model1.content).toStrictEqual(modelNew.content);
   });
 
-  test("Put non-existing model with auto key", async () => {
+  test("Patch non-existing model", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .put(url("model/" + (model.content.id + 1)))
+      .patch(url("model/" + (model.content.id + 1)))
       .send({
         someNumber: 99,
       })
@@ -125,13 +123,13 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put", async () => {
+  test("Patch", async () => {
     const dbs = getPool();
-    const model = await new Models(dbs, [{ mapped: 82 }]).store();
+    const model = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
-        someNumber: 82,
+        someNumber: 99,
       })
       .set("Authorization", "Bearer " + jwt());
     const modelNew = await new Models(dbs).loadOneByKeys({
@@ -140,18 +138,17 @@ describe("Put", () => {
     expect(response.body).toBe(model.content.id);
     expect(response.status).toBe(200);
     expect(modelNew.content).toMatchObject({
-      mapped: 82,
+      mapped: 99,
       hasDefault: 7,
-      optionalVal: null,
     });
     checkType(response, fName);
   });
 
-  test("Put, set optional value", async () => {
+  test("Patch, set optional value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 9 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         someNumber: 91,
         optionalVal: "testYes",
@@ -169,16 +166,16 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put, remove optional value", async () => {
+  test("Patch, should leave optional value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
         mapped: 10,
-        optionalVal: "shouldBeGone",
+        optionalVal: "shouldStay",
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         someNumber: 10,
       })
@@ -191,21 +188,49 @@ describe("Put", () => {
     expect(modelNew.content).toMatchObject({
       mapped: 10,
       hasDefault: 7,
+      optionalVal: "shouldStay",
+    });
+    checkType(response, fName);
+  });
+
+  test("Patch, remove optional value", async () => {
+    const dbs = getPool();
+    const model = await new Models(dbs, [
+      {
+        mapped: 10,
+        optionalVal: "shouldBeGone",
+      },
+    ]).store();
+    const response = await request(app)
+      .patch(url("model/" + model.content.id))
+      .send({
+        someNumber: 10,
+        optionalVal: null,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    const modelNew = await new Models(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(model.content.id);
+
+    expect(modelNew.content).toMatchObject({
+      mapped: 10,
+      hasDefault: 7,
     });
     expect(modelNew.content.optionalVal).toBeFalsy();
     checkType(response, fName);
   });
 
-  test("Put with non-public value", async () => {
+  test("Patch with non-public value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
         mapped: 10,
-        optionalVal: null,
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         someNumber: 100,
         hasDefault: 10,
@@ -225,16 +250,15 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put with non existing value", async () => {
+  test("Patch with non existing value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
         mapped: 11,
-        optionalVal: null,
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         someNumber: 100,
         rubbish: true,
@@ -254,16 +278,15 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put with unmapped value", async () => {
+  test("Patch with unmapped value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
         mapped: 12,
-        optionalVal: null,
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         mapped: 100,
         someNumber: 100,
@@ -281,30 +304,16 @@ describe("Put", () => {
       )
     );
     checkType(response, fName);
-    const response2 = await request(app)
-      .put(url("model/" + model.content.id))
-      .send({
-        mapped: 100,
-      })
-      .set("Authorization", "Bearer " + jwt());
-    const modelNew2 = await new Models(dbs).loadOneByKeys({
-      id: model.content.id,
-    });
-    expect(model.content).toMatchObject(modelNew2.content);
-    expect(response2.status).toBe(400);
-    expect(response2.body).toMatchObject(error("Fieldmissmatch"));
-    checkType(response2, fName);
   });
-  test("Put with id", async () => {
+  test("Patch with id", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
         mapped: 14,
-        optionalVal: null,
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .patch(url("model/" + model.content.id))
       .send({
         id: 1000,
         someNumber: 100,
@@ -325,93 +334,28 @@ describe("Put", () => {
   });
 });
 
-describe("Check removal of default value", () => {
-  const path = "/v/1/modelWithDefault";
-  addCrud({
-    prefix: path,
-    app,
-    model: ModelsWithDefault,
-    routes: auth,
-  });
-
-  test("Put with non-public value with default", async () => {
-    const dbs = getPool();
-    const model = await new ModelsWithDefault(dbs, [
-      {
-        mapped: 10,
-        optionalVal: null,
-        hasReadOnlyWithDefault: 99,
-      },
-    ]).store();
-    const response = await request(app)
-      .put(url("modelWithDefault/" + model.content.id))
-      .send({
-        someNumber: 100,
-        hasDefault: 10,
-      })
-      .set("Authorization", "Bearer " + jwt());
-    expect(response.status).toBe(200);
-    checkType(response, fName);
-    const modelNew = await new ModelsWithDefault(dbs).loadOneByKeys({
-      id: model.content.id,
-    });
-    expect(modelNew.content).toStrictEqual({
-      ...model.content,
-      mapped: 100,
-      hasDefault: 10,
-    });
-  });
-
-  test("Put, remove optional value with default", async () => {
-    const dbs = getPool();
-    const model = await new ModelsWithDefault(dbs, [
-      {
-        mapped: 10,
-        hasDefault: 33,
-      },
-    ]).store();
-    const response = await request(app)
-      .put(url("modelWithDefault/" + model.content.id))
-      .send({
-        someNumber: 10,
-      })
-      .set("Authorization", "Bearer " + jwt());
-    const modelNew = await new ModelsWithDefault(dbs).loadOneByKeys({
-      id: model.content.id,
-    });
-    expect(response.status).toBe(200);
-    expect(response.body).toBe(model.content.id);
-    expect(modelNew.content).toMatchObject({
-      mapped: 10,
-      hasDefault: 7,
-    });
-    expect(modelNew.content.optionalVal).toBeFalsy();
-    checkType(response, fName);
-  });
-});
-
 describe("Check authorization", () => {
   const path = "/v/1/modelauth";
   addCrud({
     prefix: path,
     app,
     model: Models,
-    routes: { put: { hasAccess: rejectAccess } },
+    routes: { patch: { hasAccess: rejectAccess } },
   });
 
   test("Should not grant access on no permission", async () => {
-    const responsePut = await request(app)
-      .put(path + "/4")
+    const responsePatch = await request(app)
+      .patch(path + "/4")
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
-    expect(responsePut.status).toBe(403);
-    expect(responsePut.body).toMatchObject(
+    expect(responsePatch.status).toBe(403);
+    expect(responsePatch.body).toMatchObject(
       error("You don't have the rights to retrieve this.")
     );
   });
 });
 
-describe("Put subresources", () => {
+describe("Patch subresources", () => {
   const path = "/v/1/model/:modelId/submodel";
   addCrud({
     prefix: path,
@@ -420,7 +364,7 @@ describe("Put subresources", () => {
     routes: auth,
   });
 
-  test("Put a subresouce", async () => {
+  test("Patch a subresouce", async () => {
     const dbs = getPool();
     const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
     await new Models(dbs, [{ mapped: 101 }]).store();
@@ -430,7 +374,7 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists now" })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOne({});
@@ -444,7 +388,7 @@ describe("Put subresources", () => {
     checkType(response, fName);
   });
 
-  test("Put a subresouce with correct id", async () => {
+  test("Patch a subresouce with correct id", async () => {
     const dbs = getPool();
     const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
     const submodel = await new SubModels(dbs, [
@@ -453,7 +397,7 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists", modelId: model1.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -470,7 +414,7 @@ describe("Put subresources", () => {
     checkType(response, fName);
   });
 
-  test("Put a subresouce with wrong id", async () => {
+  test("Patch a subresouce with wrong id", async () => {
     const dbs = getPool();
     const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
     const model2 = await new Models(dbs, [{ mapped: 101 }]).store();
@@ -480,7 +424,7 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
       .send({ opt: "exists now", modelId: model2.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -499,7 +443,7 @@ describe("Put subresources", () => {
   });
 });
 
-describe("put subresources with optional relation", () => {
+describe("patch subresources with optional relation", () => {
   const path = "/v/1/:optionalVal/model";
   addCrud({
     prefix: path,
@@ -509,7 +453,7 @@ describe("put subresources with optional relation", () => {
   });
   const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
-  test("Should put a subresouce", async () => {
+  test("Should patch a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
     // on the same function as the ones from above. I can't let them
     // run on the same function as the returns are slightly different.
@@ -525,7 +469,7 @@ describe("put subresources with optional relation", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url(`test123/model/${submodel.content.id}`))
+      .patch(url(`test123/model/${submodel.content.id}`))
       .send({ someNumber: 1222 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
@@ -541,7 +485,7 @@ describe("put subresources with optional relation", () => {
   });
 });
 
-describe("put advanced model", () => {
+describe("patch advanced model", () => {
   const path = "/v/1/advancedmodel";
 
   addCrud({
@@ -561,7 +505,7 @@ describe("put advanced model", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url(`advancedmodel/` + model1.content.id))
+      .patch(url(`advancedmodel/` + model1.content.id))
       .send({
         textarray: ["dritter", "vierter"],
         object: { a: 23, bcd: "nope" },
@@ -572,10 +516,35 @@ describe("put advanced model", () => {
     const modelNew = await new AdvancedModels(dbs).loadOneByKeys({
       id: model1.content.id,
     });
-    expect(modelNew.content).toStrictEqual({
-      id: 1,
+    expect(modelNew.content).toMatchObject({
       textarray: ["dritter", "vierter"],
       object: { a: 23, bcd: "nope", innerWithDef: "the default" },
+    });
+    checkType(response, fName);
+  });
+
+  test("Patch, leave other values in tact", async () => {
+    const dbs = getPool();
+    const model = await new AdvancedModels(dbs, [
+      {
+        textarray: ["a", "b"],
+        object: { a: 2, bcd: "test", innerWithDef: "bla" },
+      },
+    ]).store();
+    const response = await request(app)
+      .patch(url("advancedmodel/" + model.content.id))
+      .send({
+        textarray: ["c"],
+      })
+      .set("Authorization", "Bearer " + jwt());
+    const modelNew = await new AdvancedModels(dbs).loadOneByKeys({
+      id: model.content.id,
+    });
+    expect(response.body).toBe(model.content.id);
+    expect(response.status).toBe(200);
+    expect(modelNew.content).toMatchObject({
+      ...model.content,
+      textarray: ["c"],
     });
     checkType(response, fName);
   });
@@ -583,26 +552,24 @@ describe("put advanced model", () => {
 
 describe("Title and description", () => {
   test("Should set default title", async () => {
-    const options1 = generatePut(
-      "model",
-      Models,
-      { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
-      undefined,
-      "id"
-    ).options;
-    const options2 = generatePut(
-      "model",
-      Models,
-      {
+    const options1 = generatePatch({
+      prefix: "model",
+      Model: Models,
+      routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
+      idField: "id",
+    }).options;
+    const options2 = generatePatch({
+      prefix: "model",
+      Model: Models,
+      routeConfig: {
         title: "My title",
         description: "yay",
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
-      undefined,
-      "id"
-    ).options;
+      idField: "id",
+    }).options;
     expect(options1.description).toBeFalsy();
-    expect(options1.title).toBe("Alter Model");
+    expect(options1.title).toBe("Patch Model");
     expect(options2.title).toBe("My title");
     expect(options2.description).toBe("yay");
   });
@@ -624,26 +591,8 @@ describe("Ids of other format", () => {
     "id"
   );
 
-  test("Put non-existing model", async () => {
-    methods.put[fName] = methods2.put[fName];
-
-    const dbs = getPool();
-    const response = await request(app)
-      .put(url("strangemodel/" + "newId"))
-      .send({
-        val: 44,
-      })
-      .set("Authorization", "Bearer " + jwt());
-    expect(response.status).toBe(201);
-    const modelNew = await new StrangeIdModels(dbs).loadOneByKeys({
-      id: "newId",
-    });
-    expect(modelNew.content).toMatchObject({ id: "newId", val: 44 });
-    expect(response.body).toBe(modelNew.content.id);
-    checkType(response, fName);
-  });
-
-  it("should put with other id format", async () => {
+  it("should patch with other id format", async () => {
+    methods.patch[fName] = methods2.patch[fName];
     const dbs = getPool();
     const model1 = await new StrangeIdModels(dbs, [
       {
@@ -652,7 +601,7 @@ describe("Ids of other format", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("strangemodel/" + model1.content.id))
+      .patch(url("strangemodel/" + model1.content.id))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe("test1");
@@ -686,8 +635,8 @@ describe("Ids with different name", () => {
     "specialId"
   );
 
-  it("should put with named id", async () => {
-    methods.put[fName] = methods2.put[fName];
+  it("should patch with named id", async () => {
+    methods.patch[fName] = methods2.patch[fName];
     const dbs = getPool();
     const model1 = await new NamedIdModels(dbs, [
       {
@@ -696,7 +645,7 @@ describe("Ids with different name", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("namedid/" + model1.content.specialId))
+      .patch(url("namedid/" + model1.content.specialId))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe(1);

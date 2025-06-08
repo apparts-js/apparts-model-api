@@ -11,7 +11,7 @@ const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
   return type !== "array";
 };
 
-const addToFilter = (filter, tipe, name, noMultiSelect = false) => {
+const addToFilter = (filter, tipe, name: string, noMultiSelect = false) => {
   const convertedType = typeFromModeltype(tipe);
   delete convertedType.optional;
 
@@ -116,7 +116,7 @@ const addToFilter = (filter, tipe, name, noMultiSelect = false) => {
   }
 };
 
-export const createFilter = (prefix, Model) => {
+export const createFilter = (prefix: string, Model) => {
   const filter = { optional: true, type: "object", keys: {} };
   const types = getModelSchema(Model).getModelType();
   const params = createParams(prefix, Model);

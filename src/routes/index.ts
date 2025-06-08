@@ -1,17 +1,17 @@
-import generateGet from "./generateGet";
-import generateGetByIds from "./generateGetByIds";
-import generatePost from "./generatePost";
-import generatePut from "./generatePut";
-import generatePatch from "./generatePatch";
-import generateDelete from "./generateDelete";
-import { Application, Response } from "express";
-import { BaseModel } from "@apparts/model";
-import { Request } from "express";
+import { Application } from "express";
+import { generateDelete } from "./generateDelete";
+import { generateGet } from "./generateGet";
+import { generateGetByIds } from "./generateGetByIds";
+import { generatePatch } from "./generatePatch";
+import { generatePost } from "./generatePost";
+import { generatePut } from "./generatePut";
+import { EnrichedModel, Model, Routes, TrackChangesFn } from "./types";
+import { Request, Response } from "express";
 
-type RouteConfig<AccessType> = {
+type Temp<AccessType> = {
   hasAccess: (request: Request, response: Response) => Promise<AccessType>;
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
 };
 
 const addCrud = <AccessType>({
@@ -22,25 +22,20 @@ const addCrud = <AccessType>({
   trackChanges,
   idField = "id",
 }: {
-  prefix?: string;
+  prefix: string;
   app: Application;
-  model: typeof BaseModel<any>;
-  routes: {
-    get?: RouteConfig<AccessType>;
-    getByIds?: RouteConfig<AccessType>;
-    post?: RouteConfig<AccessType>;
-    put?: RouteConfig<AccessType>;
-    patch?: RouteConfig<AccessType>;
-    delete?: RouteConfig<AccessType>;
-  };
-  trackChanges?: (
-    me: AccessType,
-    contentBefore: unknown,
-    contentAfter: unknown
-  ) => Promise<void>;
+  model: Model;
+  routes: Routes<AccessType>;
+  trackChanges?: TrackChangesFn<AccessType>;
   idField?: string;
 }) => {
-  const methods = generateMethods(prefix, model, routes, trackChanges, idField);
+  const methods = generateMethods(
+    prefix,
+    model as EnrichedModel<Model>,
+    routes,
+    trackChanges,
+    idField
+  );
 
   Object.keys(methods).forEach((method) =>
     Object.keys(methods[method]).forEach((route) =>
@@ -49,54 +44,67 @@ const addCrud = <AccessType>({
   );
 };
 
-const generateMethods = (prefix, useModel, routes, trackChanges, idField) => {
+const generateMethods = <AccessType>(
+  prefix: string,
+  useModel: EnrichedModel<Model>,
+  routes: Routes<AccessType>,
+  trackChanges: TrackChangesFn<AccessType> | undefined,
+  idField: string
+) => {
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
-    res.get[""] = generateGet(prefix, useModel, routes.get);
+    res.get[""] = generateGet({
+      prefix,
+      Model: useModel,
+      routeConfig: routes.get,
+      trackChanges,
+      idField,
+    });
   }
   if (routes.getByIds) {
-    res.get[`/:${idField}s`] = generateGetByIds(
+    res.get[`/:${idField}s`] = generateGetByIds<AccessType>({
       prefix,
-      useModel,
-      routes.getByIds,
-      idField
-    );
+      Model: useModel,
+      routeConfig: routes.getByIds,
+      trackChanges,
+      idField,
+    });
   }
   if (routes.post) {
-    res.post[""] = generatePost(
+    res.post[""] = generatePost<AccessType>({
       prefix,
-      useModel,
-      routes.post,
+      Model: useModel,
+      routeConfig: routes.post,
       trackChanges,
-      idField
-    );
+      idField,
+    });
   }
   if (routes.put) {
-    res.put["/:" + idField] = generatePut(
+    res.put["/:" + idField] = generatePut<AccessType>({
       prefix,
-      useModel,
-      routes.put,
+      Model: useModel,
+      routeConfig: routes.put,
       trackChanges,
-      idField
-    );
+      idField,
+    });
   }
   if (routes.patch) {
-    res.patch["/:" + idField] = generatePatch(
+    res.patch["/:" + idField] = generatePatch<AccessType>({
       prefix,
-      useModel,
-      routes.patch,
+      Model: useModel,
+      routeConfig: routes.patch,
       trackChanges,
-      idField
-    );
+      idField,
+    });
   }
   if (routes.delete) {
-    res.delete["/:" + idField + "s"] = generateDelete(
+    res.delete["/:" + idField + "s"] = generateDelete({
       prefix,
-      useModel,
-      routes.delete,
+      Model: useModel,
+      routeConfig: routes.delete,
       trackChanges,
-      idField
-    );
+      idField,
+    });
   }
   return res;
 };
