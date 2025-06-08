@@ -1,7 +1,6 @@
 import * as types from "@apparts/types";
 import { getModelSchema } from "@apparts/model";
 import { traverseType, Type } from "@apparts/types";
-import { HttpError } from "@apparts/prep";
 
 export const typeFromModeltype = (tipe: Type) => {
   const res: {
@@ -41,7 +40,7 @@ export const typeFromModeltype = (tipe: Type) => {
     res.alternatives = tipe.alternatives;
   }
 
-  return res;
+  return res as Type;
 };
 
 export const validateModelIsCreatable = (pathParams, types) => {
@@ -83,14 +82,18 @@ export const createIdParam = (Model, idField) => {
   return typeFromModeltype(idType);
 };
 
-export const createParams = (prefix: string, Model) => {
-  const types = getModelSchema(Model).getModelType();
+export const createParams = (prefix: string, schema: types.Obj<any, any>) => {
+  const types = schema.getModelType();
   const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
   for (const pathParam of pathParams) {
-    paramTypes[pathParam] = {
-      type: types[pathParam].type,
-    };
+    const type = types[pathParam];
+    if (!("type" in type)) {
+      throw new Error(
+        `Path parameter "${pathParam}" in prefix "${prefix}" is a value type. This is not allowed.`
+      );
+    }
+    paramTypes[pathParam] = { type: type.type };
   }
   return paramTypes;
 };
@@ -110,7 +113,7 @@ const recursiveCreateBody = (tipe) => {
 };
 
 export const createBody = (prefix, Model) => {
-  const params = createParams(prefix, Model);
+  const params = createParams(prefix, getModelSchema(Model));
   const types = getModelSchema(Model).getModelType();
   const bodyParams = {};
   for (const key in types) {

@@ -48,6 +48,7 @@ export const generatePut = <AccessType>(
     ).length === 0;
   validateModelIsCreatable([...pathParamKeys, idField], types);
 
+  const schema = Model.getSchema();
   const putF = prepare(
     {
       title: title || "Alter " + nameFromPrefix(prefix),
@@ -55,7 +56,7 @@ export const generatePut = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, Model),
+          ...createParams(prefix, schema),
           [idField]: createIdParam(Model, idField),
         }),
         body: makeSchema({

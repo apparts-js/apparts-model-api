@@ -33,6 +33,7 @@ export const generatePost = <AccessType>(
   const pathParamKeys = getPathParamKeys(prefix, types);
   validateModelIsCreatable([...pathParamKeys, idField], types);
 
+  const schema = Model.getSchema();
   const postF = prepare(
     {
       title: title || "Create " + nameFromPrefix(prefix),
@@ -40,7 +41,7 @@ export const generatePost = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, Model),
+          ...createParams(prefix, schema),
         }),
         body: makeSchema({
           ...createBody(prefix, Model),

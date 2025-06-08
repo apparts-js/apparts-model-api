@@ -24,6 +24,8 @@ export const generateDelete = <AccessType>(
   if (!authF) {
     throw new Error(`Route (delete) ${prefix} has no access control function.`);
   }
+
+  const schema = Model.getSchema();
   const deleteF = prepare(
     {
       title: title || "Delete " + nameFromPrefix(prefix),
@@ -31,7 +33,7 @@ export const generateDelete = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, Model),
+          ...createParams(prefix, schema),
           [idField + "s"]: {
             type: "array",
             items: createIdParam(Model, idField),

@@ -24,6 +24,7 @@ export const generateGet = <AccessType>(
   if (!authF) {
     throw new Error(`Route (get) ${prefix} has no access control function.`);
   }
+  const schema = Model.getSchema();
   const getF = prepare(
     {
       title: title || "Get " + nameFromPrefix(prefix),
@@ -34,9 +35,9 @@ export const generateGet = <AccessType>(
           limit: { type: "int", default: 50 },
           offset: { type: "int", default: 0 },
           order: createOrder(Model),
-          filter: createFilter(prefix, Model),
+          filter: createFilter(prefix, schema),
         }),
-        params: makeSchema(createParams(prefix, Model)),
+        params: makeSchema(createParams(prefix, schema)),
       },
       returns: [
         makeSchema({

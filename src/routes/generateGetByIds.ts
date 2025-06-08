@@ -24,6 +24,7 @@ export const generateGetByIds = <AccessType>(
       `Route (getByIds) ${prefix} has no access control function.`
     );
   }
+  const schema = Model.getSchema();
   const getF = prepare(
     {
       title: title || "Get " + nameFromPrefix(prefix) + " by Ids",
@@ -31,7 +32,7 @@ export const generateGetByIds = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, Model),
+          ...createParams(prefix, schema),
           [idField + "s"]: {
             type: "array",
             items: createIdParam(Model, idField),

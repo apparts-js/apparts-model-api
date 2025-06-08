@@ -46,6 +46,7 @@ export const generatePatch = <AccessType>(
     throw new Error(`Route (patch) ${prefix} has no access control function.`);
   }
 
+  const schema = Model.getSchema();
   const patchF = prepare(
     {
       title: title || "Patch " + nameFromPrefix(prefix),
@@ -53,7 +54,7 @@ export const generatePatch = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, Model),
+          ...createParams(prefix, schema),
           [idField]: createIdParam(Model, idField),
         }),
         body: makeSchema({

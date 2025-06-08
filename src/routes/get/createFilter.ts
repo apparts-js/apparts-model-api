@@ -1,125 +1,152 @@
-import { getModelSchema } from "@apparts/model";
-import { createParams, typeFromModeltype } from "../common";
+import * as types from "@apparts/types";
+import { createParams } from "../common";
 
-const canBeFiltered = ({ type, alternatives, keys }, strict = false) => {
-  if (type === "oneOf") {
-    return alternatives.reduce((a, b) => a && canBeFiltered(b), true);
+export const collectTypes = (tipe: Record<string, types.Type>) => {
+  const types = {} as Record<string, types.Type[]>;
+
+  for (const key in tipe) {
+    const name = tipe[key].mapped || key;
+    types[name] = [] as types.Type[];
+    const subType = tipe[key];
+    if ("value" in subType) {
+      types[name].push(subType);
+      continue;
+    }
+    switch (subType.type) {
+      case "object":
+        if ("keys" in subType) {
+          const subTypes = collectTypes(subType.keys);
+          for (const subKey in subTypes) {
+            types[name + "." + subKey] = types[name + "." + subKey] || [];
+            types[name + "." + subKey].push(...subTypes[subKey]);
+          }
+        }
+        break;
+      case "oneOf": {
+        const alternatives = subType.alternatives;
+        for (const alternative of alternatives) {
+          const subTypes = collectTypes({ "": alternative });
+          for (const subKey in subTypes) {
+            types[name + subKey] = types[name + subKey] || [];
+            types[name + subKey].push(...subTypes[subKey]);
+          }
+        }
+        break;
+      }
+      case "array":
+        break;
+      default:
+        types[name].push(subType);
+        break;
+    }
+    if (types[name].length === 0) {
+      delete types[name];
+    }
   }
-  if (type === "object") {
-    return !!keys && !strict;
-  }
-  return type !== "array";
+  return types;
 };
 
-const addToFilter = (filter, tipe, name: string, noMultiSelect = false) => {
-  const convertedType = typeFromModeltype(tipe);
-  delete convertedType.optional;
-
-  const typeCanBeFiltered = canBeFiltered(tipe);
-
-  if (!tipe.optional && !typeCanBeFiltered) {
-    return;
+const getFilterTypeFromType = (type: types.Type) => {
+  if ("value" in type) {
+    return "value" as const;
   }
-  filter.keys[name] = filter.keys[name] || {
-    type: "oneOf",
-    alternatives: [],
-    optional: true,
-  };
-  const filterList = filter.keys[name].alternatives;
-
-  if (tipe.optional) {
-    filterList.push({
-      type: "object",
-      keys: {
-        exists: { type: "boolean" },
-      },
-    });
-  }
-
-  if (!typeCanBeFiltered) {
-    return;
-  }
-
-  switch (tipe.type) {
-    case "object":
-      for (const key in tipe.keys) {
-        const subtype = tipe.keys[key];
-        addToFilter(filter, subtype, name + "." + key);
-      }
-      break;
-    case "oneOf": {
-      const arrayItems = [] as ReturnType<typeof typeFromModeltype>[];
-      for (const alternative of tipe.alternatives) {
-        addToFilter(filter, alternative, name, true);
-        const convertedType = typeFromModeltype(alternative);
-        delete convertedType.optional;
-        if (
-          convertedType.type !== "object" &&
-          convertedType.type !== "oneOf" &&
-          convertedType.type !== "array" &&
-          convertedType.type !== "objValues"
-        ) {
-          arrayItems.push(convertedType);
-        }
-      }
-      filterList.push({
-        type: "array",
-        items: {
-          type: "oneOf",
-          alternatives: arrayItems,
-        },
-      });
-      break;
-    }
-    case "string":
-      if (!noMultiSelect) {
-        filterList.push({ type: "array", items: convertedType });
-      }
-
-      filterList.push(convertedType, {
-        type: "object",
-        keys: {
-          like: { type: "string", optional: true },
-          ilike: { type: "string", optional: true },
-        },
-      });
-      break;
+  switch (type.type) {
     case "int":
     case "float":
     case "time":
-      if (!noMultiSelect) {
-        filterList.push({ type: "array", items: convertedType });
-      }
-
-      if (tipe.semantic !== "id") {
-        filterList.push(convertedType, {
-          type: "object",
-          keys: {
-            gt: { type: tipe.type, optional: true },
-            gte: { type: tipe.type, optional: true },
-            lt: { type: tipe.type, optional: true },
-            lte: { type: tipe.type, optional: true },
-          },
-        });
-      } else {
-        filterList.push(convertedType);
-      }
-      break;
-    case undefined: // value
-      filterList.push(convertedType);
-      break;
+    case "date":
+    case "daytime":
+      return "number" as const;
+    case "boolean":
+      return "boolean" as const;
     default:
-      if (!noMultiSelect) {
-        filterList.push({ type: "array", items: convertedType });
-      }
-      filterList.push(convertedType);
+      return "string" as const;
   }
 };
 
-export const createFilter = (prefix: string, Model) => {
-  const filter = { optional: true, type: "object", keys: {} };
-  const types = getModelSchema(Model).getModelType();
-  const params = createParams(prefix, Model);
+const addToFilter = (
+  filter: types.ObjType,
+  collectedTypes: Record<string, types.Type[]>,
+  name: string
+) => {
+  const filterList = [] as types.Type[];
+  for (const key in collectedTypes) {
+    if (key !== name && !key.startsWith(name + ".")) {
+      continue;
+    }
+
+    const filterTypes = collectedTypes[key].map(getFilterTypeFromType);
+    const hasStringType = filterTypes.includes("string");
+    const hasNumberType = filterTypes.includes("number");
+    const hasBooleanType = filterTypes.includes("boolean");
+    const hasValueTypes = filterTypes.filter((t) => t === "value").length > 1;
+    const isOptionalType =
+      collectedTypes[key].filter((t) => t.optional).length > 0;
+
+    if (isOptionalType) {
+      filterList.push(
+        types
+          .obj({
+            exists: types.boolean(),
+          })
+          .getType()
+      );
+    }
+    if (hasStringType) {
+      filterList.push(
+        types.string().getType(),
+        types.array(types.string()).getType(),
+        types
+          .obj({
+            like: types.string().optional(),
+            ilike: types.string().optional(),
+          })
+          .getType()
+      );
+    }
+    if (hasNumberType) {
+      filterList.push(
+        types.float().getType(),
+        types.array(types.float()).getType(),
+        types
+          .obj({
+            gt: types.int().optional(),
+            gte: types.int().optional(),
+            lt: types.int().optional(),
+            lte: types.int().optional(),
+          })
+          .getType()
+      );
+    }
+    if (hasBooleanType) {
+      filterList.push(types.boolean().getType());
+    }
+    if (hasValueTypes) {
+      const oneOf = types.array(types.oneOf([])).getType();
+      ((oneOf as types.ArrayType).items as types.OneOfType).alternatives =
+        collectedTypes[key].filter((t) => "value" in t);
+      filterList.push(oneOf);
+    }
+
+    if (filterList.length === 0) {
+      return;
+    }
+    filter.keys[key] = filter.keys[key] || {
+      type: "oneOf",
+      alternatives: [],
+      optional: true,
+    };
+
+    (filter.keys[key] as types.OneOfType).alternatives.push(...filterList);
+    filterList.length = 0; // Clear the filterList for the next iteration
+  }
+};
+
+export const createFilter = (prefix: string, schema: types.Obj<any, any>) => {
+  const filter = { optional: true as const, type: "object" as const, keys: {} };
+  const types = schema.getModelType();
+  const params = createParams(prefix, schema);
+  const collectedTypes = collectTypes(schema.getModelType());
   for (const key in types) {
     const tipe = types[key];
     let name = key;
@@ -128,7 +155,7 @@ export const createFilter = (prefix: string, Model) => {
         name = tipe.mapped;
       }
       if (!params[key]) {
-        addToFilter(filter, tipe, name);
+        addToFilter(filter, collectedTypes, name);
       }
     }
   }
