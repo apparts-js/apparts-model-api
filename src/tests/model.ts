@@ -20,4 +20,4 @@ export class Models_ extends BaseModel<typeof typeSchema> {
 }
 
 useModel(Models_, { typeSchema, collection: "model" });
-export const Models = Models_ as unknown as EnrichedModel<typeof Models_>;
+export const Models = Models_ as unknown as EnrichedModel<typeof typeSchema>;

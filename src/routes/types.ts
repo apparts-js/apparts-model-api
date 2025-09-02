@@ -22,18 +22,22 @@ export type TrackChangesFn<AccessType> = (
   contentAfter: unknown
 ) => Promise<void>;
 
-export type Model = new (...ps: any[]) => BaseModel<
-  types.Obj<types.Required, any>
->;
+export type Model<T extends types.Obj<types.Required, any>> = new (
+  ...ps: any[]
+) => BaseModel<T>;
 
-export type EnrichedModel<Model> = Model & {
-  getCollection: () => string;
-  getSchema: () => types.Obj<any, any>;
-};
+export type EnrichedModel<T extends types.Obj<types.Required, any>> =
+  Model<T> & {
+    getCollection: () => string;
+    getSchema: () => types.Obj<any, any>;
+  };
 
-export type GeneratorFnParams<AccessType> = {
+export type GeneratorFnParams<
+  AccessType,
+  T extends types.Obj<types.Required, any>
+> = {
   prefix: string;
-  Model: EnrichedModel<Model>;
+  Model: EnrichedModel<T>;
   routeConfig: RouteConfig<AccessType>;
   trackChanges?: TrackChangesFn<AccessType> | undefined;
   idField: string;

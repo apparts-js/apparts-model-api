@@ -21,7 +21,7 @@ import { GeneratorFnParams } from "./types";
 import { GenericQueriable } from "@apparts/db";
 
 export const generatePut = <AccessType>(
-  params: GeneratorFnParams<AccessType>
+  params: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,

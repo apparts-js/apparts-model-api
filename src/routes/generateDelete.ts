@@ -11,7 +11,7 @@ import { GenericQueriable } from "@apparts/db";
 import { GeneratorFnParams } from "./types";
 
 export const generateDelete = <AccessType>(
-  params: GeneratorFnParams<AccessType>
+  params: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,

@@ -13,5 +13,5 @@ const typeSchema = types.obj({
 export class ModelsWithDefault_ extends BaseModel<typeof typeSchema> {}
 useModel(ModelsWithDefault_, { typeSchema, collection: "modelWithDefault" });
 export const ModelsWithDefault = ModelsWithDefault_ as unknown as EnrichedModel<
-  typeof ModelsWithDefault_
+  typeof typeSchema
 >;

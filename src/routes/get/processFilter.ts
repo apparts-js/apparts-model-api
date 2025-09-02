@@ -114,7 +114,7 @@ const pathFilterChecked = <T extends DbFilter | string | number | boolean>(
 };
 
 export const processFilter = (
-  Model: EnrichedModel<Model>,
+  Model: EnrichedModel<any>,
   filters: Filter = {}
 ): DbParams => {
   const dbFilters: Record<string, DbFilter | number | string | boolean> = {};

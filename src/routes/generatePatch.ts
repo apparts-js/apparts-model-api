@@ -32,7 +32,7 @@ const makePatchBody = (types) => {
 };
 
 export const generatePatch = <AccessType>(
-  params: GeneratorFnParams<AccessType>
+  params: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,

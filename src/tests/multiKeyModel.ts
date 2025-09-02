@@ -10,5 +10,5 @@ const typeSchema = types.obj({
 export class MultiModels_ extends BaseModel<typeof typeSchema> {}
 useModel(MultiModels_, { typeSchema, collection: "multikey" });
 export const MultiModels = MultiModels_ as unknown as EnrichedModel<
-  typeof MultiModels_
+  typeof typeSchema
 >;

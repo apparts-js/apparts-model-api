@@ -10,5 +10,5 @@ const typeSchema = types.obj({
 export class StrangeIdModels_ extends BaseModel<typeof typeSchema> {}
 useModel(StrangeIdModels_, { typeSchema, collection: "strangeids" });
 export const StrangeIdModels = StrangeIdModels_ as unknown as EnrichedModel<
-  typeof StrangeIdModels_
+  typeof typeSchema
 >;

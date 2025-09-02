@@ -14,7 +14,7 @@ import { Filter, processFilter } from "./get/processFilter";
 import { GeneratorFnParams } from "./types";
 
 export const generateGet = <AccessType>(
-  params: GeneratorFnParams<AccessType>
+  params: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,

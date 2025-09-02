@@ -6,8 +6,9 @@ import { generatePatch } from "./generatePatch";
 import { generatePost } from "./generatePost";
 import { generatePut } from "./generatePut";
 import { EnrichedModel, Model, Routes, TrackChangesFn } from "./types";
+import * as types from "@apparts/types";
 
-const addCrud = <AccessType>({
+const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   prefix,
   app,
   model,
@@ -17,14 +18,14 @@ const addCrud = <AccessType>({
 }: {
   prefix: string;
   app: Application;
-  model: Model;
+  model: Model<T>;
   routes: Routes<AccessType>;
   trackChanges?: TrackChangesFn<AccessType>;
   idField?: string;
 }) => {
   const methods = generateMethods(
     prefix,
-    model as EnrichedModel<Model>,
+    model as EnrichedModel<T>,
     routes,
     trackChanges,
     idField
@@ -37,9 +38,9 @@ const addCrud = <AccessType>({
   );
 };
 
-const generateMethods = <AccessType>(
+const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   prefix: string,
-  useModel: EnrichedModel<Model>,
+  useModel: EnrichedModel<T>,
   routes: Routes<AccessType>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
   idField: string
