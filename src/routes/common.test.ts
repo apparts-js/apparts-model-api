@@ -1,17 +1,22 @@
+import request from "supertest";
+import { jwt } from "../tests/checkJWT";
+
 import * as types from "@apparts/types";
-const { createBody } = require("./common");
+import { createBody } from "./common";
 import { Models } from "../tests/model";
-const { useModel, BaseModel } = require("@apparts/model");
-const {
+import { useModel, BaseModel } from "@apparts/model";
+import {
   useChecks,
   anybody,
   rejectAccess,
   accessFn,
-  jwtAnd: _jwtAnd,
-} = require("@apparts/prep");
-const { addCrud } = require("../");
+  jwtAnd as _jwtAnd,
+} from "@apparts/prep";
+import setupTest from "@apparts/backend-test";
+import { addCrud } from "../";
 const jwtAnd = _jwtAnd("rsoaietn0932lyrstenoie3nrst");
-const { generateMethods } = require("./");
+import { generateMethods } from "./";
+import { GenericQueriable } from "@apparts/db";
 const methods = generateMethods(
   "/v/1/model",
   Models,
@@ -26,7 +31,7 @@ const methods = generateMethods(
   "id"
 );
 
-const { app, error, checkType } = require("@apparts/backend-test")({
+const { app, error, checkType } = setupTest({
   testName: "common",
   apiContainer: {
     get: methods.get[""],
@@ -46,8 +51,6 @@ const { app, error, checkType } = require("@apparts/backend-test")({
     );`,
   ],
 });
-const request = require("supertest");
-const { jwt } = require("../tests/checkJWT");
 
 describe("No functions", () => {
   const path = "/v/1/model1";
@@ -56,7 +59,6 @@ describe("No functions", () => {
     app,
     model: Models,
     routes: {},
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should not generate any function", async () => {
@@ -109,7 +111,6 @@ describe("Anybody", () => {
       put: { hasAccess: anybody },
       delete: { hasAccess: anybody },
     },
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
 
   test("Should grant access to anybody on all functions", async () => {
@@ -164,7 +165,6 @@ describe("accessFunc return values", () => {
     app,
     model: Models,
     routes,
-    webtokenkey: "rsoaietn0932lyrstenoie3nrst",
   });
   const methods = generateMethods("/", Models, routes, undefined, "id");
   const { checkType } = useChecks({
@@ -197,9 +197,12 @@ describe("accessFunc should have request, dbs, me", () => {
     get: {
       hasAccess: jwtAnd(
         accessFn({
-          fn: async ({ dbs }, me) => {
+          fn: async (req, me) => {
+            const { dbs } = req as typeof req & {
+              dbs: GenericQueriable;
+            };
             await dbs.raw("SELECT 3");
-            if (me.name !== "Norris") {
+            if ((me as { name: string }).name !== "Norris") {
               rejectAccess();
             }
           },
@@ -249,7 +252,7 @@ describe("createBody", () => {
     });
   });
   test("Should not produce readOnly values in body", async () => {
-    class Models extends BaseModel {}
+    class Models extends BaseModel<any> {}
     useModel(Models, {
       collection: "modelWithReadOnly",
       typeSchema: types.obj({
@@ -269,7 +272,7 @@ describe("createBody", () => {
   });
 
   test("Should handle optional params when creating body", async () => {
-    class Models extends BaseModel {}
+    class Models extends BaseModel<any> {}
     useModel(Models, {
       collection: "modelWithReadOnly",
       typeSchema: types.obj({

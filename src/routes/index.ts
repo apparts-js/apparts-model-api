@@ -19,7 +19,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   prefix: string;
   app: Application;
   model: Model<T>;
-  routes: Routes<AccessType>;
+  routes: Routes<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType>;
   idField?: string;
 }) => {
@@ -41,7 +41,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
 const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   prefix: string,
   useModel: EnrichedModel<T>,
-  routes: Routes<AccessType>,
+  routes: Routes<AccessType, T>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
   idField: string
 ) => {

@@ -2,19 +2,22 @@ import { BaseModel } from "@apparts/model";
 import { Request, Response } from "express";
 import * as types from "@apparts/types";
 
-export type RouteConfig<AccessType> = {
+export type RouteConfig<
+  AccessType,
+  T extends types.Obj<types.Required, any>
+> = {
   hasAccess: (request: Request, response: Response) => Promise<AccessType>;
   title?: string;
   description?: string;
 };
 
-export type Routes<AccessType> = {
-  get?: RouteConfig<AccessType>;
-  getByIds?: RouteConfig<AccessType>;
-  post?: RouteConfig<AccessType>;
-  put?: RouteConfig<AccessType>;
-  patch?: RouteConfig<AccessType>;
-  delete?: RouteConfig<AccessType>;
+export type Routes<AccessType, T extends types.Obj<types.Required, any>> = {
+  get?: RouteConfig<AccessType, T>;
+  getByIds?: RouteConfig<AccessType, T>;
+  post?: RouteConfig<AccessType, T>;
+  put?: RouteConfig<AccessType, T>;
+  patch?: RouteConfig<AccessType, T>;
+  delete?: RouteConfig<AccessType, T>;
 };
 export type TrackChangesFn<AccessType> = (
   me: AccessType,
@@ -38,7 +41,7 @@ export type GeneratorFnParams<
 > = {
   prefix: string;
   Model: EnrichedModel<T>;
-  routeConfig: RouteConfig<AccessType>;
+  routeConfig: RouteConfig<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType> | undefined;
   idField: string;
 };
