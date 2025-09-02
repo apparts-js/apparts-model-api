@@ -2,11 +2,19 @@ import { BaseModel } from "@apparts/model";
 import { Request, Response } from "express";
 import * as types from "@apparts/types";
 
+export type InjectedParameters<T extends types.Obj<types.Required, any>> =
+  Partial<{
+    [key in keyof types.InferType<T>]: (
+      request: Request
+    ) => Promise<types.InferType<T>[key]> | types.InferType<T>[key];
+  }>;
+
 export type RouteConfig<
   AccessType,
   T extends types.Obj<types.Required, any>
 > = {
   hasAccess: (request: Request, response: Response) => Promise<AccessType>;
+  injectParameters?: InjectedParameters<T>;
   title?: string;
   description?: string;
 };
@@ -43,5 +51,5 @@ export type GeneratorFnParams<
   Model: EnrichedModel<T>;
   routeConfig: RouteConfig<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType> | undefined;
-  idField: string;
+  idField: keyof types.InferType<T>;
 };

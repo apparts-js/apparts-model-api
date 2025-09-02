@@ -6,6 +6,7 @@ import {
   createIdParam,
   makeSchema,
   MappingError,
+  getInjectedParamValues,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotFound } from "@apparts/model";
@@ -37,7 +38,12 @@ export const generatePatch = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
     trackChanges,
     idField,
   } = params;
@@ -45,6 +51,8 @@ export const generatePatch = <AccessType>(
   if (!authF) {
     throw new Error(`Route (patch) ${prefix} has no access control function.`);
   }
+
+  const injectedParamKeys = Object.keys(injectParameters);
 
   const schema = Model.getSchema();
   const patchF = prepare(
@@ -55,15 +63,15 @@ export const generatePatch = <AccessType>(
       receives: {
         params: makeSchema({
           ...createParams(prefix, schema),
-          [idField]: createIdParam(Model, idField),
+          [String(idField)]: createIdParam(Model, String(idField)),
         }),
         body: makeSchema({
-          ...makePatchBody(createBody(prefix, Model)),
+          ...makePatchBody(createBody(prefix, Model, injectedParamKeys)),
         }),
       },
       returns: [
         makeSchema({
-          ...createIdParam(Model, idField),
+          ...createIdParam(Model, String(idField)),
         }),
         httpErrorSchema(
           400,
@@ -82,9 +90,15 @@ export const generatePatch = <AccessType>(
       };
       let { body } = req;
 
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+      const fullParams = { ...params, ...injectedParamValues };
+
       const types = Model.getSchema().getModelType();
       try {
-        body = reverseMap(body, types);
+        body = reverseMap(body, types, injectedParamKeys);
       } catch (e) {
         if (e instanceof MappingError) {
           return new HttpError(
@@ -117,8 +131,8 @@ export const generatePatch = <AccessType>(
         });
 
       const paramOverlap = Object.keys(body)
-        .filter((key) => params[key])
-        .filter((key) => body[key] !== params[key]);
+        .filter((key) => fullParams[key])
+        .filter((key) => body[key] !== fullParams[key]);
       if (paramOverlap.length > 0) {
         return new HttpError(
           400,
@@ -129,7 +143,7 @@ export const generatePatch = <AccessType>(
 
       const model = new Model(dbs);
       try {
-        await model.loadOne(params);
+        await model.loadOne(fullParams);
       } catch (e) {
         if (e instanceof NotFound) {
           return new HttpError(404, nameFromPrefix(prefix) + " not found");
@@ -140,7 +154,7 @@ export const generatePatch = <AccessType>(
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
       await model.update();
       trackChanges && (await trackChanges(me, contentBefore, model.content));
-      return model.content[idField];
+      return model.content[String(idField)];
     }
   );
   return patchF;

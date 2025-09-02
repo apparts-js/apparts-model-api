@@ -1,6 +1,8 @@
 import * as types from "@apparts/types";
 import { getModelSchema } from "@apparts/model";
 import { traverseType, Type } from "@apparts/types";
+import { Request } from "express";
+import { InjectedParameters } from "./types";
 
 export const typeFromModeltype = (tipe: Type) => {
   const res: {
@@ -112,13 +114,13 @@ const recursiveCreateBody = (tipe) => {
   });
 };
 
-export const createBody = (prefix, Model) => {
+export const createBody = (prefix: string, Model, ignoreKeys: string[]) => {
   const params = createParams(prefix, getModelSchema(Model));
   const types = getModelSchema(Model).getModelType();
   const bodyParams = {};
   for (const key in types) {
     const tipe = types[key];
-    if (tipe.derived) {
+    if (tipe.derived || ignoreKeys.includes(key)) {
       continue;
     }
     let name = key;
@@ -171,7 +173,7 @@ export class MappingError extends Error {
   }
 }
 
-export const reverseMap = (collection, types) => {
+export const reverseMap = (collection, types, ignoreKeys: string[]) => {
   const unmappedKeys = Object.keys(collection);
   const mappedCollection = {};
 
@@ -180,8 +182,11 @@ export const reverseMap = (collection, types) => {
       (t) => types[t].mapped === key
     )[0];
     if (mappedKey) {
+      if (ignoreKeys.includes(mappedKey)) {
+        throw new MappingError('"' + key + '" does not exist');
+      }
       mappedCollection[mappedKey] = collection[key];
-    } else if (!types[key] || types[key].mapped) {
+    } else if (!types[key] || types[key].mapped || ignoreKeys.includes(key)) {
       throw new MappingError('"' + key + '" does not exist');
     } else {
       mappedCollection[key] = collection[key];
@@ -212,3 +217,17 @@ export const makeSchema = (type) =>
       return type;
     },
   } as types.Obj<any, any>);
+
+export const getInjectedParamValues = async (
+  injectParameters: InjectedParameters<any>,
+  req: Request
+) => {
+  const injectedParamValues = {} as Record<string, any>;
+  for (const key in injectParameters) {
+    const fn = injectParameters[key];
+    if (fn) {
+      injectedParamValues[key] = await fn(req);
+    }
+  }
+  return injectedParamValues;
+};

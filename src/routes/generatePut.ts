@@ -8,6 +8,7 @@ import {
   getPathParamKeys,
   validateModelIsCreatable,
   MappingError,
+  getInjectedParamValues,
 } from "./common";
 import {
   HttpError,
@@ -26,7 +27,12 @@ export const generatePut = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
     trackChanges,
     idField,
   } = params;
@@ -35,18 +41,20 @@ export const generatePut = <AccessType>(
     throw new Error(`Route (put) ${prefix} has no access control function.`);
   }
 
+  const injectedParamKeys = Object.keys(injectParameters);
+
   const types = Model.getSchema().getModelType();
   const pathParamKeys = getPathParamKeys(prefix, types);
   const canCreate =
-    !types[idField].auto &&
+    !types[String(idField)].auto &&
     pathParamKeys.filter((key) => types[key].auto).length === 0 &&
     Object.keys(types).filter(
       (key) =>
-        key !== idField &&
+        key !== String(idField) &&
         types[key].key &&
         (types[key].auto || types[key].readOnly || !types[key].public)
     ).length === 0;
-  validateModelIsCreatable([...pathParamKeys, idField], types);
+  validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 
   const schema = Model.getSchema();
   const putF = prepare(
@@ -57,21 +65,21 @@ export const generatePut = <AccessType>(
       receives: {
         params: makeSchema({
           ...createParams(prefix, schema),
-          [idField]: createIdParam(Model, idField),
+          [String(idField)]: createIdParam(Model, String(idField)),
         }),
         body: makeSchema({
-          ...createBody(prefix, Model),
+          ...createBody(prefix, Model, injectedParamKeys),
         }),
       },
       returns: [
         makeSchema({
-          ...createIdParam(Model, idField),
+          ...createIdParam(Model, String(idField)),
         }),
         canCreate
           ? httpCodeSchema(
               201,
               makeSchema({
-                ...createIdParam(Model, idField),
+                ...createIdParam(Model, String(idField)),
               })
             )
           : httpErrorSchema(404, nameFromPrefix(prefix) + " not found"),
@@ -91,8 +99,14 @@ export const generatePut = <AccessType>(
       };
       let { body } = req;
 
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+      const fullParams = { ...params, ...injectedParamValues };
+
       try {
-        body = reverseMap(body, types);
+        body = reverseMap(body, types, injectedParamKeys);
       } catch (e) {
         if (e instanceof MappingError) {
           return new HttpError(
@@ -128,8 +142,8 @@ export const generatePut = <AccessType>(
         });
 
       const paramOverlap = Object.keys(body)
-        .filter((key) => params[key])
-        .filter((key) => body[key] !== params[key]);
+        .filter((key) => fullParams[key])
+        .filter((key) => body[key] !== fullParams[key]);
       if (paramOverlap.length > 0) {
         return new HttpError(
           400,
@@ -141,7 +155,7 @@ export const generatePut = <AccessType>(
       let model = new Model(dbs);
       let creatingNew = false;
       try {
-        await model.loadOne(params);
+        await model.loadOne(fullParams);
       } catch (e) {
         if (e instanceof NotFound) {
           if (!canCreate) {
@@ -158,7 +172,7 @@ export const generatePut = <AccessType>(
         ...contentBefore,
         ...body,
         ...optionalsToBeRemoved,
-        ...params,
+        ...fullParams,
       };
 
       Object.keys(types)
@@ -181,9 +195,9 @@ export const generatePut = <AccessType>(
       trackChanges && (await trackChanges(me, contentBefore, model.content));
 
       if (creatingNew) {
-        return new HttpCode(201, model.content[idField]);
+        return new HttpCode(201, model.content[String(idField)]);
       }
-      return model.content[idField];
+      return model.content[String(idField)];
     }
   );
   return putF;

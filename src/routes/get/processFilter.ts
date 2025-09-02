@@ -115,7 +115,8 @@ const pathFilterChecked = <T extends DbFilter | string | number | boolean>(
 
 export const processFilter = (
   Model: EnrichedModel<any>,
-  filters: Filter = {}
+  filters: Filter = {},
+  ignoreKeys: string[]
 ): DbParams => {
   const dbFilters: Record<string, DbFilter | number | string | boolean> = {};
 
@@ -176,5 +177,5 @@ export const processFilter = (
       );
     }
   }
-  return reverseMap(dbFilters, Model.getSchema().getModelType());
+  return reverseMap(dbFilters, Model.getSchema().getModelType(), ignoreKeys);
 };

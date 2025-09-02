@@ -142,7 +142,11 @@ const addToFilter = (
   }
 };
 
-export const createFilter = (prefix: string, schema: types.Obj<any, any>) => {
+export const createFilter = (
+  prefix: string,
+  schema: types.Obj<any, any>,
+  ignoreKeys: string[]
+) => {
   const filter = { optional: true as const, type: "object" as const, keys: {} };
   const types = schema.getModelType();
   const params = createParams(prefix, schema);
@@ -150,7 +154,7 @@ export const createFilter = (prefix: string, schema: types.Obj<any, any>) => {
   for (const key in types) {
     const tipe = types[key];
     let name = key;
-    if (tipe.public && !tipe.derived) {
+    if (tipe.public && !tipe.derived && !ignoreKeys.includes(key)) {
       if (tipe.mapped) {
         name = tipe.mapped;
       }

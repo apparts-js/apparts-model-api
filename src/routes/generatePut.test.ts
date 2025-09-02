@@ -712,6 +712,117 @@ describe("Ids with different name", () => {
   });
 });
 
+describe("Injected Params", () => {
+  const path = "/v/1/modelInjected";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: {
+      put: {
+        ...auth.put,
+        injectParameters: {
+          hasDefault: async () => Promise.resolve(12),
+        },
+      },
+    },
+  });
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+
+  beforeAll(() => {
+    methods.put[fName] = methods2.put[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Put if param matches", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .put(url("modelInjected/" + model1.contents[0].id))
+      .send({ someNumber: 99 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(model1.contents[0].id);
+
+    await new Models(dbs).loadOne({
+      mapped: 99,
+    });
+    checkType(response, fName);
+  });
+
+  test("Do not put if param does not match", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .put(url("modelInjected/" + model1.contents[1].id))
+      .send({ someNumber: 99 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject(error("ModelInjected not found"));
+
+    await new Models(dbs).loadNone({
+      mapped: 99,
+    });
+    checkType(response, fName);
+  });
+
+  test("Refuse request with injected param in body", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 13,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .put(url("modelInjected/" + model1.contents[0].id))
+      .send({ someNumber: 123, hasDefault: 99 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject(
+      error("Could not alter item because your request had too many parameters")
+    );
+
+    await new Models(dbs).loadNone({
+      hasDefault: 99,
+    });
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

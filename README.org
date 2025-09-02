@@ -42,6 +42,13 @@ function.
     - =title : string= :: A custom title for the documentation
     - =description : string= :: A custom description for the
       documentation
+    - injectParameters : { [key of model]: (request) => Promise<typeof model[key]> } :: 
+      An object that takes keys of the models' data for keys and
+      functions that return a value for said models' key. This can be
+      usefull if a certain parameter should be defined based on the
+      request. Every key that is injected will not be available in the
+      body or query parameters of the endpoints.
+      
   - =idField?: string= :: (optional, default value is =id=) When using a
     field for identifying, named different than =id=, you must specify
     the fields name using this parameter. This also changes the routes

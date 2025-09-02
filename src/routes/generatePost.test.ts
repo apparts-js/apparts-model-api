@@ -540,6 +540,115 @@ describe("Ids with different name", () => {
   });
 });
 
+describe("Injected Params", () => {
+  const path = "/v/1/modelInjected";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: {
+      post: {
+        ...auth.post,
+        injectParameters: {
+          optionalVal: async () => Promise.resolve("12"),
+        },
+      },
+    },
+  });
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+
+  beforeAll(() => {
+    methods.post[fName] = methods2.post[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Post with injected param", async () => {
+    const dbs = getPool();
+
+    const response = await request(app)
+      .post(url("modelInjected"))
+      .send({
+        someNumber: 111,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+
+    await new Models(dbs).loadOne({
+      mapped: 111,
+      hasDefault: 7,
+      optionalVal: "12",
+      id: response.body,
+    });
+    checkType(response, fName);
+  });
+
+  test("Post rejects when injected param was passed in body", async () => {
+    const dbs = getPool();
+
+    const response = await request(app)
+      .post(url("modelInjected"))
+      .send({
+        optionalVal: "99",
+        someNumber: 123,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject(
+      error(
+        "Could not create item because your request had too many parameters",
+        '"optionalVal" does not exist'
+      )
+    );
+    expect(response.status).toBe(400);
+    checkType(response, fName);
+
+    await new Models(dbs).loadNone({
+      optionalVal: "99",
+    });
+  });
+
+  test("Post rejects when injected param was passed in body as mapped", async () => {
+    const dbs = getPool();
+
+    const path = "/v/1/modelInjectedMapped";
+    addCrud({
+      prefix: path,
+      app,
+      model: Models,
+      routes: {
+        post: {
+          ...auth.post,
+          injectParameters: {
+            mapped: async () => Promise.resolve(12),
+          },
+        },
+      },
+    });
+
+    const response = await request(app)
+      .post(url("modelInjectedMapped"))
+      .send({
+        someNumber: 99,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.body).toMatchObject(
+      error(
+        "Could not create item because your request had too many parameters",
+        '"someNumber" does not exist'
+      )
+    );
+    expect(response.status).toBe(400);
+    checkType(response, fName);
+
+    await new Models(dbs).loadNone({
+      mapped: 99,
+    });
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

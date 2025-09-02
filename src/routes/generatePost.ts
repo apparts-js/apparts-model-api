@@ -8,6 +8,7 @@ import {
   validateModelIsCreatable,
   getPathParamKeys,
   MappingError,
+  getInjectedParamValues,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotUnique } from "@apparts/model";
@@ -20,7 +21,12 @@ export const generatePost = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
     trackChanges,
     idField,
   } = params;
@@ -29,9 +35,11 @@ export const generatePost = <AccessType>(
     throw new Error(`Route (post) ${prefix} has no access control function.`);
   }
 
+  const injectedParamKeys = Object.keys(injectParameters);
+
   const types = Model.getSchema().getModelType();
   const pathParamKeys = getPathParamKeys(prefix, types);
-  validateModelIsCreatable([...pathParamKeys, idField], types);
+  validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 
   const schema = Model.getSchema();
   const postF = prepare(
@@ -44,12 +52,12 @@ export const generatePost = <AccessType>(
           ...createParams(prefix, schema),
         }),
         body: makeSchema({
-          ...createBody(prefix, Model),
+          ...createBody(prefix, Model, injectedParamKeys),
         }),
       },
       returns: [
         makeSchema({
-          ...createIdParam(Model, idField),
+          ...createIdParam(Model, String(idField)),
         }),
         httpErrorSchema(
           400,
@@ -65,7 +73,7 @@ export const generatePost = <AccessType>(
       let { body } = req;
 
       try {
-        body = reverseMap(body, types);
+        body = reverseMap(body, types, injectedParamKeys);
       } catch (e) {
         if (e instanceof MappingError) {
           return new HttpError(
@@ -87,7 +95,14 @@ export const generatePost = <AccessType>(
         }
       }
 
-      const model = new Model(dbs, [{ ...body, ...params }]);
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+
+      const model = new Model(dbs, [
+        { ...body, ...params, ...injectedParamValues },
+      ]);
       try {
         await model.store();
       } catch (e) {
@@ -98,7 +113,7 @@ export const generatePost = <AccessType>(
       }
 
       trackChanges && (await trackChanges(me, null, model.content));
-      return model.content[idField];
+      return model.content[String(idField)];
     }
   );
   return postF;

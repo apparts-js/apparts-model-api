@@ -407,6 +407,68 @@ describe("empty id array", () => {
   });
 });
 
+describe("Injected Params", () => {
+  const path = "/v/1/modelInjected";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: {
+      getByIds: {
+        ...auth.getByIds,
+        injectParameters: {
+          hasDefault: async () => Promise.resolve(12),
+        },
+      },
+    },
+  });
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+
+  beforeAll(() => {
+    methods.get[fName] = methods2.get[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Get all", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(
+        url(
+          "modelInjected/" +
+            JSON.stringify([model1.contents[0].id, model1.contents[1].id])
+        )
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body).toMatchObject([
+      {
+        id: model1.contents[0].id,
+      },
+    ]);
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

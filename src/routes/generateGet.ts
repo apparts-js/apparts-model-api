@@ -2,6 +2,7 @@ import { prepare } from "@apparts/prep";
 import {
   createParams,
   createReturns,
+  getInjectedParamValues,
   makeSchema,
   nameFromPrefix,
   unmapKey,
@@ -19,11 +20,19 @@ export const generateGet = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
   } = params;
   if (!authF) {
     throw new Error(`Route (get) ${prefix} has no access control function.`);
   }
+
+  const injectedParamKeys = Object.keys(injectParameters);
+
   const schema = Model.getSchema();
   const getF = prepare(
     {
@@ -35,7 +44,7 @@ export const generateGet = <AccessType>(
           limit: { type: "int", default: 50 },
           offset: { type: "int", default: 0 },
           order: createOrder(Model),
-          filter: createFilter(prefix, schema),
+          filter: createFilter(prefix, schema, injectedParamKeys),
         }),
         params: makeSchema(createParams(prefix, schema)),
       },
@@ -71,7 +80,12 @@ export const generateGet = <AccessType>(
         }[];
       };
 
-      const dbFilter = processFilter(Model, filter);
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+
+      const dbFilter = processFilter(Model, filter, injectedParamKeys);
 
       if (order) {
         const types = Model.getSchema().getModelType();
@@ -85,7 +99,12 @@ export const generateGet = <AccessType>(
         });
       }
       const res = new Model(dbs);
-      await res.load({ ...dbFilter, ...params }, limit, offset, order);
+      await res.load(
+        { ...dbFilter, ...params, ...injectedParamValues },
+        limit,
+        offset,
+        order
+      );
       let total = res.contents.length;
       if (offset || total === limit) {
         total = await res.count({ ...dbFilter, ...params });

@@ -14,21 +14,21 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   model,
   routes,
   trackChanges,
-  idField = "id",
+  idField,
 }: {
   prefix: string;
   app: Application;
   model: Model<T>;
   routes: Routes<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType>;
-  idField?: string;
+  idField?: keyof types.InferType<T>;
 }) => {
   const methods = generateMethods(
     prefix,
     model as EnrichedModel<T>,
     routes,
     trackChanges,
-    idField
+    idField || ("id" as keyof types.InferType<T>)
   );
 
   Object.keys(methods).forEach((method) =>
@@ -43,7 +43,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   useModel: EnrichedModel<T>,
   routes: Routes<AccessType, T>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
-  idField: string
+  idField: keyof types.InferType<T>
 ) => {
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
@@ -56,7 +56,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
     });
   }
   if (routes.getByIds) {
-    res.get[`/:${idField}s`] = generateGetByIds<AccessType>({
+    res.get[`/:${String(idField)}s`] = generateGetByIds<AccessType>({
       prefix,
       Model: useModel,
       routeConfig: routes.getByIds,
@@ -74,7 +74,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
     });
   }
   if (routes.put) {
-    res.put["/:" + idField] = generatePut<AccessType>({
+    res.put["/:" + String(idField)] = generatePut<AccessType>({
       prefix,
       Model: useModel,
       routeConfig: routes.put,
@@ -83,7 +83,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
     });
   }
   if (routes.patch) {
-    res.patch["/:" + idField] = generatePatch<AccessType>({
+    res.patch["/:" + String(idField)] = generatePatch<AccessType>({
       prefix,
       Model: useModel,
       routeConfig: routes.patch,
@@ -92,7 +92,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
     });
   }
   if (routes.delete) {
-    res.delete["/:" + idField + "s"] = generateDelete({
+    res.delete["/:" + String(idField) + "s"] = generateDelete({
       prefix,
       Model: useModel,
       routeConfig: routes.delete,

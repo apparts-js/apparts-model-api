@@ -4,6 +4,7 @@ import {
   createReturns,
   createIdParam,
   makeSchema,
+  getInjectedParamValues,
 } from "./common";
 import { prepare } from "@apparts/prep";
 import { GeneratorFnParams } from "./types";
@@ -15,7 +16,12 @@ export const generateGetByIds = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
     idField,
   } = params;
 
@@ -33,9 +39,9 @@ export const generateGetByIds = <AccessType>(
       receives: {
         params: makeSchema({
           ...createParams(prefix, schema),
-          [idField + "s"]: {
+          [String(idField) + "s"]: {
             type: "array",
-            items: createIdParam(Model, idField),
+            items: createIdParam(Model, String(idField)),
           },
         }),
       },
@@ -52,7 +58,7 @@ export const generateGetByIds = <AccessType>(
     async (req) => {
       const {
         dbs,
-        params: { [idField + "s"]: ids, ...restParams },
+        params: { [String(idField) + "s"]: ids, ...restParams },
       } = req as typeof req & {
         dbs: GenericQueriable;
         params: Record<string, string[]>;
@@ -62,8 +68,17 @@ export const generateGetByIds = <AccessType>(
         return [];
       }
 
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+
       const res = new Model(dbs);
-      await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
+      await res.load({
+        [String(idField)]: { op: "in", val: ids },
+        ...restParams,
+        ...injectedParamValues,
+      });
       return await res.getPublic();
     }
   );

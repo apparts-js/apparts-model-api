@@ -241,7 +241,7 @@ describe("accessFunc should have request, dbs, me", () => {
 
 describe("createBody", () => {
   test("Should not produce derived values in body", async () => {
-    expect(createBody("", Models)).toStrictEqual({
+    expect(createBody("", Models, [])).toStrictEqual({
       optionalVal: {
         optional: true,
         type: "string",
@@ -266,7 +266,7 @@ describe("createBody", () => {
           .readOnly(),
       }),
     });
-    expect(createBody("", Models)).toStrictEqual({
+    expect(createBody("", Models, [])).toStrictEqual({
       val: { type: "string" },
     });
   });
@@ -280,7 +280,7 @@ describe("createBody", () => {
         val: types.string().public(),
       }),
     });
-    expect(createBody(":val", Models)).toStrictEqual({
+    expect(createBody(":val", Models, [])).toStrictEqual({
       id: { type: "int", semantic: "id" },
     });
   });

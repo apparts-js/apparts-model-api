@@ -444,6 +444,71 @@ describe("Ids with different name", () => {
   });
 });
 
+describe("Injected Params", () => {
+  const path = "/v/1/modelInjected";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: {
+      delete: {
+        ...auth.delete,
+        injectParameters: {
+          hasDefault: async () => Promise.resolve(12),
+        },
+      },
+    },
+  });
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+
+  beforeAll(() => {
+    methods.delete[fName] = methods2.delete[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Delete only when mapped matches", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .delete(
+        url(
+          "modelInjected/" +
+            JSON.stringify([model1.contents[0].id, model1.contents[1].id])
+        )
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe("ok");
+
+    const modelNew = await new Models(dbs).load({});
+    expect(modelNew.contents.length).toBe(2);
+    expect(modelNew.contents).toMatchObject([
+      { id: model1.contents[1].id },
+      { id: model1.contents[2].id },
+    ]);
+
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked("/:ids");
 });

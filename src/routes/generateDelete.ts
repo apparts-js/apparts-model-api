@@ -4,6 +4,7 @@ import {
   nameFromPrefix,
   createIdParam,
   makeSchema,
+  getInjectedParamValues,
 } from "./common";
 import { IsReference } from "@apparts/model";
 import { prepare, HttpError, httpErrorSchema } from "@apparts/prep";
@@ -16,7 +17,12 @@ export const generateDelete = <AccessType>(
   const {
     prefix,
     Model,
-    routeConfig: { hasAccess: authF, title, description },
+    routeConfig: {
+      hasAccess: authF,
+      title,
+      description,
+      injectParameters = {},
+    },
     trackChanges,
     idField,
   } = params;
@@ -34,7 +40,7 @@ export const generateDelete = <AccessType>(
       receives: {
         params: makeSchema({
           ...createParams(prefix, schema),
-          [idField + "s"]: {
+          [String(idField) + "s"]: {
             type: "array",
             items: createIdParam(Model, idField),
           },
@@ -51,7 +57,7 @@ export const generateDelete = <AccessType>(
     async (req, _, me) => {
       const {
         dbs,
-        params: { [idField + "s"]: ids, ...restParams },
+        params: { [String(idField) + "s"]: ids, ...restParams },
       } = req as typeof req & {
         dbs: GenericQueriable;
         params: Record<string, string[]>;
@@ -61,8 +67,17 @@ export const generateDelete = <AccessType>(
         return "ok";
       }
 
+      const injectedParamValues = await getInjectedParamValues(
+        injectParameters,
+        req
+      );
+
       const res = new Model(dbs);
-      await res.load({ [idField]: { op: "in", val: ids }, ...restParams });
+      await res.load({
+        [idField]: { op: "in", val: ids },
+        ...restParams,
+        ...injectedParamValues,
+      });
       try {
         await res.deleteAll();
       } catch (e) {

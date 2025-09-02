@@ -1223,6 +1223,126 @@ describe("Ids with different name", () => {
   });
 });
 
+describe("Injected Params", () => {
+  const path = "/v/1/modelInjected";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: {
+      get: {
+        ...auth.get,
+        injectParameters: {
+          hasDefault: async () => Promise.resolve(12),
+        },
+      },
+    },
+  });
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+
+  beforeAll(() => {
+    methods.get[fName] = methods2.get[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Get all", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(url("modelInjected"))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      total: 2,
+      data: [
+        {
+          id: model1.contents[0].id,
+        },
+        {
+          id: model1.contents[2].id,
+        },
+      ],
+    });
+    checkType(response, fName);
+  });
+
+  test("Get with mapped", async () => {
+    const path = "/v/1/modelInjectedMapped";
+    addCrud({
+      prefix: path,
+      app,
+      model: Models,
+      routes: {
+        get: {
+          ...auth.get,
+          injectParameters: {
+            mapped: async () => Promise.resolve(10),
+          },
+        },
+      },
+    });
+
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(url("modelInjectedMapped"))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      total: 1,
+      data: [
+        {
+          id: model1.contents[0].id,
+        },
+      ],
+    });
+    checkType(response, fName);
+  });
+
+  test("Try to filter by injected", async () => {
+    const response = await request(app)
+      .get(
+        url("modelInjected", {
+          filter: JSON.stringify({ hasDefault: 33 }),
+        })
+      )
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject(
+      error("Fieldmissmatch", 'expected object for field "filter" in query')
+    );
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

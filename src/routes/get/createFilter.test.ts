@@ -71,7 +71,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           isDerived: types.int().public().derived(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {},
@@ -86,7 +87,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           a: types.int(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {},
@@ -101,7 +103,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           b: types.string().mapped("mapped").public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -118,7 +121,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           c: types.string().optional().public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -135,7 +139,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           a: types.string().public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -153,7 +158,8 @@ describe("filter api type", () => {
         types.obj({
           a: types.int().public(),
           b: types.float().public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -170,7 +176,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           a: types.boolean().public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -186,7 +193,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           a: types.value("a").public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {},
@@ -209,7 +217,8 @@ describe("filter api type", () => {
               c: types.string().optional(),
             })
             .public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -240,7 +249,8 @@ describe("filter api type", () => {
               }),
             ])
             .public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -264,7 +274,8 @@ describe("filter api type", () => {
           oneOf: types
             .oneOf([types.string(), types.int(), types.uuid()])
             .public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {
@@ -281,7 +292,8 @@ describe("filter api type", () => {
         "",
         types.obj({
           array: types.array(types.string()).public(),
-        })
+        }),
+        []
       )
     ).toStrictEqual({
       keys: {},
