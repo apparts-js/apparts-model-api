@@ -6,7 +6,14 @@ import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "/:id",
   auth = { patch: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
-const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
+const methods = generateMethods(
+  "/v/1/model",
+  Models,
+  auth,
+  undefined,
+  "id",
+  []
+);
 import setupTest from "@apparts/backend-test";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "patch",
@@ -451,7 +458,7 @@ describe("patch subresources with optional relation", () => {
     model: Models,
     routes: auth,
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
 
   test("Should patch a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -588,7 +595,8 @@ describe("Ids of other format", () => {
     StrangeIdModels,
     auth,
     undefined,
-    "id"
+    "id",
+    []
   );
 
   it("should patch with other id format", async () => {
@@ -632,7 +640,8 @@ describe("Ids with different name", () => {
     NamedIdModels,
     auth,
     undefined,
-    "specialId"
+    "specialId",
+    []
   );
 
   it("should patch with named id", async () => {
@@ -676,7 +685,7 @@ describe("Injected Params", () => {
       },
     },
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
 
   beforeAll(() => {
     methods.patch[fName] = methods2.patch[fName];

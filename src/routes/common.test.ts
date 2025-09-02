@@ -28,7 +28,8 @@ const methods = generateMethods(
     delete: { hasAccess: anybody },
   },
   undefined,
-  "id"
+  "id",
+  []
 );
 
 const { app, error, checkType } = setupTest({
@@ -166,7 +167,7 @@ describe("accessFunc return values", () => {
     model: Models,
     routes,
   });
-  const methods = generateMethods("/", Models, routes, undefined, "id");
+  const methods = generateMethods("/", Models, routes, undefined, "id", []);
   const { checkType } = useChecks({
     get: methods.get[""],
     getByIds: methods.get["/:ids"],
@@ -218,7 +219,7 @@ describe("accessFunc should have request, dbs, me", () => {
     model: Models,
     routes,
   });
-  const methods = generateMethods("/", Models, routes, undefined, "id");
+  const methods = generateMethods("/", Models, routes, undefined, "id", []);
   const { checkType } = useChecks({
     get: methods.get[""],
   });
@@ -283,5 +284,64 @@ describe("createBody", () => {
     expect(createBody(":val", Models, [])).toStrictEqual({
       id: { type: "int", semantic: "id" },
     });
+  });
+
+  test("Should throw on unknown path fields", async () => {
+    expect(() =>
+      generateMethods(
+        "/v/1/abc/:custom/model",
+        Models,
+        {
+          get: { hasAccess: anybody },
+          getByIds: { hasAccess: anybody },
+          post: { hasAccess: anybody },
+          put: { hasAccess: anybody },
+          delete: { hasAccess: anybody },
+        },
+        undefined,
+        "id",
+        []
+      )
+    ).toThrowError(
+      `Param custom not known in model for path /v/1/abc/:custom/model`
+    );
+  });
+
+  test("Should ignore ignored path fields", async () => {
+    generateMethods(
+      "/v/1/abc/:custom/model",
+      Models,
+      {
+        get: { hasAccess: anybody },
+        getByIds: { hasAccess: anybody },
+        post: { hasAccess: anybody },
+        put: { hasAccess: anybody },
+        delete: { hasAccess: anybody },
+      },
+      undefined,
+      "id",
+      ["custom"]
+    );
+  });
+
+  test("Should throw on unknown ignored path field", async () => {
+    expect(() =>
+      generateMethods(
+        "/v/1/model",
+        Models,
+        {
+          get: { hasAccess: anybody },
+          getByIds: { hasAccess: anybody },
+          post: { hasAccess: anybody },
+          put: { hasAccess: anybody },
+          delete: { hasAccess: anybody },
+        },
+        undefined,
+        "id",
+        ["custom"]
+      )
+    ).toThrowError(
+      `Cannot ignore field "custom" in path "/v/1/model" because it does not exist in the path.`
+    );
   });
 });

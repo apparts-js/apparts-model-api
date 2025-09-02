@@ -15,6 +15,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   routes,
   trackChanges,
   idField,
+  ignorePathFields,
 }: {
   prefix: string;
   app: Application;
@@ -22,13 +23,15 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   routes: Routes<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType>;
   idField?: keyof types.InferType<T>;
+  ignorePathFields?: string[];
 }) => {
   const methods = generateMethods(
     prefix,
     model as EnrichedModel<T>,
     routes,
     trackChanges,
-    idField || ("id" as keyof types.InferType<T>)
+    idField || ("id" as keyof types.InferType<T>),
+    ignorePathFields || []
   );
 
   Object.keys(methods).forEach((method) =>
@@ -43,8 +46,19 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   useModel: EnrichedModel<T>,
   routes: Routes<AccessType, T>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
-  idField: keyof types.InferType<T>
+  idField: keyof types.InferType<T>,
+  ignorePathFields: string[]
 ) => {
+  for (const toIgnore of ignorePathFields) {
+    const prefixBefore = prefix;
+    prefix = prefix.replace(new RegExp(`/:${toIgnore}/`), "/");
+    if (prefixBefore === prefix) {
+      throw new Error(
+        `Cannot ignore field "${toIgnore}" in path "${prefixBefore}" because it does not exist in the path.`
+      );
+    }
+  }
+
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
     res.get[""] = generateGet({

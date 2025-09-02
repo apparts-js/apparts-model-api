@@ -6,7 +6,14 @@ import { validJwt, rejectAccess } from "@apparts/prep";
 
 const fName = "/:ids",
   auth = { delete: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
-const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
+const methods = generateMethods(
+  "/v/1/model",
+  Models,
+  auth,
+  undefined,
+  "id",
+  []
+);
 
 import setupTest from "@apparts/backend-test";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
@@ -264,7 +271,7 @@ describe("delete subresources with optional relation", () => {
     model: Models,
     routes: auth,
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
 
   test("Should delete a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -363,7 +370,8 @@ describe("Ids of other format", () => {
     StrangeIdModels,
     auth,
     undefined,
-    "id"
+    "id",
+    []
   );
 
   it("should delete with other id format", async () => {
@@ -411,7 +419,8 @@ describe("Ids with different name", () => {
     NamedIdModels,
     auth,
     undefined,
-    "specialId"
+    "specialId",
+    []
   );
 
   it("should delete with named id", async () => {
@@ -459,7 +468,7 @@ describe("Injected Params", () => {
       },
     },
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
 
   beforeAll(() => {
     methods.delete[fName] = methods2.delete[fName];

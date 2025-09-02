@@ -8,7 +8,7 @@ const fName = "";
 const path = "/v/1/model",
   auth = { post: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
-const methods = generateMethods(path, Models, auth, undefined, "id");
+const methods = generateMethods(path, Models, auth, undefined, "id", []);
 
 import setupTest from "@apparts/backend-test";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
@@ -480,7 +480,8 @@ describe("Ids of other format", () => {
     StrangeIdModels,
     auth,
     undefined,
-    "id"
+    "id",
+    []
   );
 
   it("should post with other id format", async () => {
@@ -517,7 +518,8 @@ describe("Ids with different name", () => {
     NamedIdModels,
     auth,
     undefined,
-    "specialId"
+    "specialId",
+    []
   );
 
   it("should put with named id", async () => {
@@ -555,7 +557,7 @@ describe("Injected Params", () => {
       },
     },
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id");
+  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
 
   beforeAll(() => {
     methods.post[fName] = methods2.post[fName];
