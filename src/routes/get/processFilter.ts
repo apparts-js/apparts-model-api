@@ -1,7 +1,7 @@
+import { Filter as DbFilter, Params as DbParams } from "@apparts/db";
 import * as types from "@apparts/types";
-import { Params as DbParams, Filter as DbFilter } from "@apparts/db";
 import { reverseMap, unmapKey } from "../common";
-import { EnrichedModel, Model } from "../types";
+import { EnrichedModel } from "../types";
 export type Filter = {
   [key: string]:
     | string
