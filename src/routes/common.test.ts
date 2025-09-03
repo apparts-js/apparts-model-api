@@ -312,22 +312,23 @@ describe("createBody", () => {
 
   test("Should ignore ignored path fields", async () => {
     const customParams = types.obj({ custom: types.string() });
-    expect(() =>
-      generateMethods(
-        "/v/1/abc/:custom/model",
-        Models,
-        {
-          get: { hasAccess: anybody },
-          getByIds: { hasAccess: anybody },
-          post: { hasAccess: anybody },
-          put: { hasAccess: anybody },
-          delete: { hasAccess: anybody },
-        },
-        undefined,
-        "id",
-        customParams
-      )
-    ).not.toThrow();
+    const methods = generateMethods(
+      "/v/1/abc/:custom/model",
+      Models,
+      {
+        get: { hasAccess: anybody },
+        getByIds: { hasAccess: anybody },
+        post: { hasAccess: anybody },
+        put: { hasAccess: anybody },
+        delete: { hasAccess: anybody },
+      },
+      undefined,
+      "id",
+      customParams
+    );
+    expect(methods.get[""].assertions).toMatchObject({
+      params: { custom: { type: "string" } },
+    });
 
     expect(
       createParams(

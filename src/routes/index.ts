@@ -49,17 +49,6 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   idField: keyof types.InferType<T>,
   extraPathFields?: types.Obj<types.Required, any>
 ) => {
-  if (extraPathFields) {
-    for (const key in extraPathFields.getKeys()) {
-      const prefixBefore = prefix;
-      prefix = prefix.replace(new RegExp(`/:${key}/`), "/");
-      if (prefixBefore === prefix) {
-        throw new Error(
-          `Cannot ignore field "${key}" in path "${prefixBefore}" because it does not exist in the path.`
-        );
-      }
-    }
-  }
   extraPathFields = extraPathFields || types.obj({});
 
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };

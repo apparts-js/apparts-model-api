@@ -45,7 +45,11 @@ export const generatePut = <AccessType>(
   const injectedParamKeys = Object.keys(injectParameters);
 
   const types = Model.getSchema().getModelType();
-  const pathParamKeys = getPathParamKeys(prefix, types);
+  const pathParamKeys = getPathParamKeys(
+    prefix,
+    Model.getSchema(),
+    extraPathFields
+  );
   const canCreate =
     !types[String(idField)].auto &&
     pathParamKeys.filter((key) => types[key].auto).length === 0 &&

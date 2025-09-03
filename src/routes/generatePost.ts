@@ -39,7 +39,11 @@ export const generatePost = <AccessType>(
   const injectedParamKeys = Object.keys(injectParameters);
 
   const types = Model.getSchema().getModelType();
-  const pathParamKeys = getPathParamKeys(prefix, types);
+  const pathParamKeys = getPathParamKeys(
+    prefix,
+    Model.getSchema(),
+    extraPathFields
+  );
   validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 
   const schema = Model.getSchema();

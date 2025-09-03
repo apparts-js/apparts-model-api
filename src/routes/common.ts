@@ -45,7 +45,10 @@ export const typeFromModeltype = (tipe: Type) => {
   return res as Type;
 };
 
-export const validateModelIsCreatable = (pathParams, types) => {
+export const validateModelIsCreatable = (
+  pathParams: string[],
+  types: Record<string, Type>
+) => {
   for (const key in types) {
     const tipe = types[key];
     if (
@@ -63,11 +66,18 @@ export const validateModelIsCreatable = (pathParams, types) => {
   }
 };
 
-export const getPathParamKeys = (prefix: string, types) => {
+export const getPathParamKeys = (
+  prefix: string,
+  schema: types.Obj<any, any>,
+  secondSchema: types.Obj<any, any>,
+  includeBoth = false
+) => {
+  const types = { ...schema.getModelType(), ...secondSchema.getModelType() };
   const params = prefix
     .split("/")
     .filter((part) => part.substring(0, 1) === ":")
-    .map((part) => part.slice(1));
+    .map((part) => part.slice(1))
+    .filter((part) => !secondSchema.getModelType()[part] || includeBoth);
   for (const pathParam of params) {
     if (!types[pathParam]) {
       throw new Error(
@@ -89,17 +99,24 @@ export const createParams = (
   schema: types.Obj<any, any>,
   secondSchema: types.Obj<any, any>
 ) => {
-  const types = { ...schema.getModelType(), ...secondSchema.getModelType() };
-  const pathParams = getPathParamKeys(prefix, types);
+  const typesObj = { ...schema.getModelType(), ...secondSchema.getModelType() };
+  const pathParams = getPathParamKeys(prefix, schema, secondSchema, true);
   const paramTypes = {};
   for (const pathParam of pathParams) {
-    const type = types[pathParam];
+    const type = typesObj[pathParam];
     if (!("type" in type)) {
       throw new Error(
         `Path parameter "${pathParam}" in prefix "${prefix}" is a value type. This is not allowed.`
       );
     }
     paramTypes[pathParam] = { type: type.type };
+  }
+  for (const key in secondSchema.getModelType()) {
+    if (!paramTypes[key]) {
+      throw new Error(
+        `Cannot ignore field "${key}" in path "${prefix}" because it does not exist in the path.`
+      );
+    }
   }
   return paramTypes;
 };
