@@ -274,6 +274,7 @@ export const prepareParams = (
     ...injectedParameters,
   };
   for (const key of extraPathFieldKeys) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete processedParams[key];
   }
   return processedParams;
