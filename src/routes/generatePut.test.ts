@@ -9,7 +9,7 @@ const fName = "/:id",
   auth = { put: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "put",
   apiContainer: methods.put,
@@ -99,7 +99,7 @@ describe("Put", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({})
       .set("Authorization", "Bearer " + jwt());
     const modelNew = await new Models(dbs).loadOneByKeys({
@@ -117,7 +117,7 @@ describe("Put", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .put(url("model/" + (model.content.id + 1)))
+      .put(url("model/" + String(model.content.id + 1)))
       .send({
         someNumber: 99,
       })
@@ -137,7 +137,7 @@ describe("Put", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 82 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         someNumber: 82,
       })
@@ -159,7 +159,7 @@ describe("Put", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 9 }]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         someNumber: 91,
         optionalVal: "testYes",
@@ -186,7 +186,7 @@ describe("Put", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         someNumber: 10,
       })
@@ -212,7 +212,7 @@ describe("Put", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         someNumber: 100,
         hasDefault: 10,
@@ -240,7 +240,7 @@ describe("Put", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         someNumber: 100,
         rubbish: true,
@@ -268,7 +268,7 @@ describe("Put", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         mapped: 100,
         someNumber: 100,
@@ -287,7 +287,7 @@ describe("Put", () => {
     );
     checkType(response, fName);
     const response2 = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         mapped: 100,
       })
@@ -308,7 +308,7 @@ describe("Put", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("model/" + model.content.id))
+      .put(url("model/" + String(model.content.id)))
       .send({
         id: 1000,
         someNumber: 100,
@@ -348,7 +348,7 @@ describe("Check removal of default value", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("modelWithDefault/" + model.content.id))
+      .put(url("modelWithDefault/" + String(model.content.id)))
       .send({
         someNumber: 100,
         hasDefault: 10,
@@ -375,7 +375,7 @@ describe("Check removal of default value", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("modelWithDefault/" + model.content.id))
+      .put(url("modelWithDefault/" + String(model.content.id)))
       .send({
         someNumber: 10,
       })
@@ -434,7 +434,13 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .put(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists now" })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOne({});
@@ -457,7 +463,13 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .put(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists", modelId: model1.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -484,7 +496,13 @@ describe("Put subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .put(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists now", modelId: model2.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -529,7 +547,7 @@ describe("put subresources with optional relation", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url(`test123/model/${submodel.content.id}`))
+      .put(url(`test123/model/${String(submodel.content.id)}`))
       .send({ someNumber: 1222 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
@@ -565,7 +583,7 @@ describe("put advanced model", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url(`advancedmodel/` + model1.content.id))
+      .put(url(`advancedmodel/` + String(model1.content.id)))
       .send({
         textarray: ["dritter", "vierter"],
         object: { a: 23, bcd: "nope" },
@@ -700,7 +718,7 @@ describe("Ids with different name", () => {
       },
     ]).store();
     const response = await request(app)
-      .put(url("namedid/" + model1.content.specialId))
+      .put(url("namedid/" + String(model1.content.specialId)))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe(1);
@@ -760,7 +778,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url("modelInjected/" + model1.contents[0].id))
+      .put(url("modelInjected/" + String(model1.contents[0].id)))
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
@@ -790,7 +808,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url("modelInjected/" + model1.contents[1].id))
+      .put(url("modelInjected/" + String(model1.contents[1].id)))
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(404);
@@ -812,7 +830,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .put(url("modelInjected/" + model1.contents[0].id))
+      .put(url("modelInjected/" + String(model1.contents[0].id)))
       .send({ someNumber: 123, hasDefault: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(400);

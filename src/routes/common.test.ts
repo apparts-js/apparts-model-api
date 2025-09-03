@@ -12,7 +12,7 @@ import {
   accessFn,
   jwtAnd as _jwtAnd,
 } from "@apparts/prep";
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 import { addCrud } from "../";
 const jwtAnd = _jwtAnd("rsoaietn0932lyrstenoie3nrst");
 import { generateMethods } from "./";
@@ -134,7 +134,7 @@ describe("Anybody", () => {
     checkType(responseGetById, "getByIds");
 
     const responsePut = await request(app)
-      .put(path + "/" + responsePost.body)
+      .put(path + "/" + String(responsePost.body))
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(responsePut.status).toBe(200);

@@ -1,12 +1,12 @@
 import {
   createParams,
-  nameFromPrefix,
   reverseMap,
   createBody,
   createIdParam,
   makeSchema,
   MappingError,
   getInjectedParamValues,
+  nameFromPrefix,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotFound } from "@apparts/model";
@@ -154,7 +154,9 @@ export const generatePatch = <AccessType>(
       const contentBefore = model.content;
       model.content = { ...model.content, ...body, ...optionalsToBeRemoved };
       await model.update();
-      trackChanges && (await trackChanges(me, contentBefore, model.content));
+      if (trackChanges) {
+        await trackChanges(me, contentBefore, model.content);
+      }
       return model.content[String(idField)];
     }
   );

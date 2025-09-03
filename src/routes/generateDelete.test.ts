@@ -9,7 +9,7 @@ const fName = "/:ids",
   auth = { delete: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "delete",
   apiContainer: methods.delete,
@@ -44,7 +44,6 @@ CREATE TABLE namedidmodel (
   val INT NOT NULL
 );`,
   ],
-  apiVersion: 1,
 });
 import request from "supertest";
 import { checkJWT, jwt } from "../tests/checkJWT";
@@ -205,7 +204,11 @@ describe("Delete subresources", () => {
     ]).store();
     const response = await request(app)
       .delete(
-        url(`model/${model1.content.id}/submodel/[${submodel.content.id}]`)
+        url(
+          `model/${String(model1.content.id)}/submodel/[${String(
+            submodel.content.id
+          )}]`
+        )
       )
       .set("Authorization", "Bearer " + jwt());
     await new SubModels(dbs).loadNone({ modelId: model1.content.id });
@@ -232,7 +235,7 @@ describe("Delete subresources", () => {
     await new SubModels(dbs).loadOneByKeys({ id: submodel.content.id });
     await new Models(dbs).loadOneByKeys({ id: model.content.id });
     const response = await request(app)
-      .delete(url(`model/[${model.content.id}]`))
+      .delete(url(`model/[${String(model.content.id)}]`))
       .set("Authorization", "Bearer " + jwt());
 
     expect(response.status).toBe(412);

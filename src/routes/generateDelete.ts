@@ -1,10 +1,10 @@
 import { value } from "@apparts/types";
 import {
   createParams,
-  nameFromPrefix,
   createIdParam,
   makeSchema,
   getInjectedParamValues,
+  nameFromPrefix,
 } from "./common";
 import { IsReference } from "@apparts/model";
 import { prepare, HttpError, httpErrorSchema } from "@apparts/prep";
@@ -90,7 +90,9 @@ export const generateDelete = <AccessType>(
         }
         throw e;
       }
-      trackChanges && (await trackChanges(me, res.contents, null));
+      if (trackChanges) {
+        await trackChanges(me, res.contents, null);
+      }
       return "ok";
     }
   );

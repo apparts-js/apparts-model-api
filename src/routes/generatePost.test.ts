@@ -11,7 +11,7 @@ const path = "/v/1/model",
 
 const methods = generateMethods(path, Models, auth, undefined, "id");
 
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "post",
   apiContainer: methods.post,
@@ -371,7 +371,7 @@ describe("Post subresources", () => {
     const model1 = await new Models(dbs, [{ mapped: 100 }]).store();
     await new Models(dbs, [{ mapped: 101 }]).store();
     const response = await request(app)
-      .post(url(`model/${model1.content.id}/submodel`))
+      .post(url(`model/${String(model1.content.id)}/submodel`))
       .set("Authorization", "Bearer " + jwt());
     const submodel = await new SubModels(dbs).loadOne({});
     expect(response.status).toBe(200);

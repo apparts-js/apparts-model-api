@@ -1,7 +1,6 @@
 import {
   createParams,
   createBody,
-  nameFromPrefix,
   reverseMap,
   createIdParam,
   makeSchema,
@@ -9,6 +8,7 @@ import {
   getPathParamKeys,
   MappingError,
   getInjectedParamValues,
+  nameFromPrefix,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotUnique } from "@apparts/model";
@@ -112,7 +112,9 @@ export const generatePost = <AccessType>(
         throw e;
       }
 
-      trackChanges && (await trackChanges(me, null, model.content));
+      if (trackChanges) {
+        await trackChanges(me, null, model.content);
+      }
       return model.content[String(idField)];
     }
   );

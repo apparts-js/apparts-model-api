@@ -1,11 +1,12 @@
 import {
   createParams,
-  nameFromPrefix,
   createReturns,
   createIdParam,
   makeSchema,
   getInjectedParamValues,
+  nameFromPrefix,
 } from "./common";
+
 import { prepare } from "@apparts/prep";
 import { GeneratorFnParams } from "./types";
 import { GenericQueriable } from "@apparts/db";

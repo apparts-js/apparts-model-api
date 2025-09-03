@@ -8,7 +8,7 @@ import { validJwt, rejectAccess } from "@apparts/prep";
 const fName = "/:id",
   auth = { patch: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "patch",
   apiContainer: methods.patch,
@@ -88,7 +88,7 @@ describe("Patch", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({})
       .set("Authorization", "Bearer " + jwt());
     const modelNew = await new Models(dbs).loadOneByKeys({
@@ -109,7 +109,7 @@ describe("Patch", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
-      .patch(url("model/" + (model.content.id + 1)))
+      .patch(url("model/" + String(model.content.id + 1)))
       .send({
         someNumber: 99,
       })
@@ -129,7 +129,7 @@ describe("Patch", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 8 }]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 99,
       })
@@ -150,7 +150,7 @@ describe("Patch", () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 9 }]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 91,
         optionalVal: "testYes",
@@ -177,7 +177,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 10,
       })
@@ -204,7 +204,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 10,
         optionalVal: null,
@@ -232,7 +232,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 100,
         hasDefault: 10,
@@ -260,7 +260,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         someNumber: 100,
         rubbish: true,
@@ -288,7 +288,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         mapped: 100,
         someNumber: 100,
@@ -315,7 +315,7 @@ describe("Patch", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("model/" + model.content.id))
+      .patch(url("model/" + String(model.content.id)))
       .send({
         id: 1000,
         someNumber: 100,
@@ -376,7 +376,13 @@ describe("Patch subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists now" })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOne({});
@@ -399,7 +405,13 @@ describe("Patch subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists", modelId: model1.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -426,7 +438,13 @@ describe("Patch subresources", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url(`model/${model1.content.id}/submodel/${submodel.content.id}`))
+      .patch(
+        url(
+          `model/${String(model1.content.id)}/submodel/${String(
+            submodel.content.id
+          )}`
+        )
+      )
       .send({ opt: "exists now", modelId: model2.content.id })
       .set("Authorization", "Bearer " + jwt());
     const submodelNew = await new SubModels(dbs).loadOneByKeys({
@@ -471,7 +489,7 @@ describe("patch subresources with optional relation", () => {
     ]).store();
 
     const response = await request(app)
-      .patch(url(`test123/model/${submodel.content.id}`))
+      .patch(url(`test123/model/${String(submodel.content.id)}`))
       .send({ someNumber: 1222 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
@@ -507,7 +525,7 @@ describe("patch advanced model", () => {
     ]).store();
 
     const response = await request(app)
-      .patch(url(`advancedmodel/` + model1.content.id))
+      .patch(url(`advancedmodel/` + String(model1.content.id)))
       .send({
         textarray: ["dritter", "vierter"],
         object: { a: 23, bcd: "nope" },
@@ -534,7 +552,7 @@ describe("patch advanced model", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("advancedmodel/" + model.content.id))
+      .patch(url("advancedmodel/" + String(model.content.id)))
       .send({
         textarray: ["c"],
       })
@@ -649,7 +667,7 @@ describe("Ids with different name", () => {
       },
     ]).store();
     const response = await request(app)
-      .patch(url("namedid/" + model1.content.specialId))
+      .patch(url("namedid/" + String(model1.content.specialId)))
       .send({ val: 2 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.body).toBe(1);
@@ -709,7 +727,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .patch(url("modelInjected/" + model1.contents[0].id))
+      .patch(url("modelInjected/" + String(model1.contents[0].id)))
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
@@ -739,7 +757,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .patch(url("modelInjected/" + model1.contents[1].id))
+      .patch(url("modelInjected/" + String(model1.contents[1].id)))
       .send({ someNumber: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(404);
@@ -761,7 +779,7 @@ describe("Injected Params", () => {
     ]).store();
 
     const response = await request(app)
-      .patch(url("modelInjected/" + model1.contents[0].id))
+      .patch(url("modelInjected/" + String(model1.contents[0].id)))
       .send({ hasDefault: 99 })
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(400);

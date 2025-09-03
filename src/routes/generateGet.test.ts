@@ -9,7 +9,7 @@ const fName = "",
   auth = { get: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
   testName: "get",
   apiContainer: methods.get,
@@ -557,7 +557,8 @@ describe("Filters", () => {
 
     const { contents } = await new Models(getPool()).load({});
     expect(contents.length).toBe(
-      responseDoesNotExist.body.data.length + responseExists.body.data.length
+      Number(responseDoesNotExist.body.data.length) +
+        Number(responseExists.body.data.length)
     );
   });
 
@@ -644,7 +645,7 @@ describe("get subresources", () => {
     ]).store();
 
     const response = await request(app)
-      .get(url(`model/${model1.content.id}/submodel`))
+      .get(url(`model/${String(model1.content.id)}/submodel`))
       .set("Authorization", "Bearer " + jwt());
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -659,7 +660,7 @@ describe("get subresources", () => {
     checkType(response, fName);
 
     const response2 = await request(app)
-      .get(url(`model/${model2.content.id}/submodel`))
+      .get(url(`model/${String(model2.content.id)}/submodel`))
       .set("Authorization", "Bearer " + jwt());
     expect(response2.status).toBe(200);
     expect(response2.body).toMatchObject({ data: [] });
@@ -673,7 +674,7 @@ describe("get subresources", () => {
     ]).store();
     const response3 = await request(app)
       .get(
-        url(`model/${model1.content.id}/submodel`, {
+        url(`model/${String(model1.content.id)}/submodel`, {
           filter: JSON.stringify({
             modelId: model2.content.id,
           }),

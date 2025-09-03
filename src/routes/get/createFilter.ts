@@ -34,11 +34,29 @@ export const collectTypes = (tipe: Record<string, types.Type>) => {
       }
       case "array":
         break;
+      case "string":
+      case "boolean":
+      case "id":
+      case "uuidv4":
+      case "uuid":
+      case "int":
+      case "time":
+      case "daytime":
+      case "date":
+      case "float":
+      case "password":
+      case "null":
+      case "/":
+      case "email":
+      case "phoneISD":
+      case "hex":
+      case "base64":
       default:
         types[name].push(subType);
         break;
     }
     if (types[name].length === 0) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete types[name];
     }
   }
@@ -58,6 +76,20 @@ const getFilterTypeFromType = (type: types.Type) => {
       return "number" as const;
     case "boolean":
       return "boolean" as const;
+    case "string":
+    case "/":
+    case "base64":
+    case "email":
+    case "hex":
+    case "id":
+    case "password":
+    case "phoneISD":
+    case "uuid":
+    case "uuidv4":
+    case "object":
+    case "null":
+    case "array":
+    case "oneOf":
     default:
       return "string" as const;
   }
@@ -146,7 +178,11 @@ export const createFilter = (
   schema: types.Obj<any, any>,
   ignoreKeys: string[]
 ) => {
-  const filter = { optional: true as const, type: "object" as const, keys: {} };
+  const filter = {
+    optional: true as const,
+    type: "object" as const,
+    keys: {} as Record<string, types.OneOfType>,
+  };
   const types = schema.getModelType();
   const collectedTypes = collectTypes(schema.getModelType());
   for (const key in types) {
@@ -163,6 +199,7 @@ export const createFilter = (
   }
   for (const key in filter.keys) {
     if (filter.keys[key].alternatives.length === 0) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete filter.keys[key];
     }
   }

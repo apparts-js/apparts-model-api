@@ -11,7 +11,7 @@ const canBeOrdered = ({ type, alternatives, keys }, strict = false) => {
   return type !== "array" && (strict || type !== undefined);
 };
 
-const addToOrder = (order, tipe, name) => {
+const addToOrder = (order, tipe, name: string) => {
   const convertedType = typeFromModeltype(tipe);
   delete convertedType.optional;
 

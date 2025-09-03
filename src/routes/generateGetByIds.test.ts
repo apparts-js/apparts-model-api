@@ -10,7 +10,7 @@ const fName = "/:ids",
 
 const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
-import setupTest from "@apparts/backend-test";
+import { setupTest } from "../tests/";
 const { app, url, getPool, checkType, allChecked, error } = setupTest({
   testName: "getByIds",
   apiContainer: methods.get,
@@ -178,7 +178,7 @@ describe("getByIds subresources", () => {
     const response = await request(app)
       .get(
         url(
-          `model/${model1.content.id}/submodel/${JSON.stringify([
+          `model/${String(model1.content.id)}/submodel/${JSON.stringify([
             submodel1.content.id,
             submodel3.content.id,
           ])}`
@@ -202,7 +202,7 @@ describe("getByIds subresources", () => {
     const response2 = await request(app)
       .get(
         url(
-          `model/${model2.content.id}/submodel/${JSON.stringify([
+          `model/${String(model2.content.id)}/submodel/${JSON.stringify([
             submodel1.content.id,
           ])}`
         )

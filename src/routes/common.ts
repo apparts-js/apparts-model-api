@@ -131,7 +131,7 @@ const recursiveCreateBody = (tipe) => {
       result.default = tipe.default;
     }
     // hack
-    return result as Type;
+    return result;
   });
 };
 
@@ -160,8 +160,8 @@ export const createBody = (
   return bodyParams;
 };
 
-export const nameFromPrefix = (prefix) => {
-  if (prefix.substr(-1) === "/") {
+export const nameFromPrefix = (prefix: string) => {
+  if (prefix.substring(-1) === "/") {
     prefix = prefix.slice(0, -1);
   }
   return prefix
@@ -219,7 +219,7 @@ export const reverseMap = (collection, types, ignoreKeys: string[]) => {
   return mappedCollection;
 };
 
-export const unmapKey = (key, types) => {
+export const unmapKey = (key: string, types) => {
   const mappedKey = Object.keys(types).filter(
     (t) => types[t].mapped === key
   )[0];

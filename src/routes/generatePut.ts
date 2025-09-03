@@ -1,6 +1,5 @@
 import {
   createParams,
-  nameFromPrefix,
   reverseMap,
   createBody,
   createIdParam,
@@ -9,6 +8,7 @@ import {
   validateModelIsCreatable,
   MappingError,
   getInjectedParamValues,
+  nameFromPrefix,
 } from "./common";
 import {
   HttpError,
@@ -194,7 +194,9 @@ export const generatePut = <AccessType>(
       } else {
         await model.update();
       }
-      trackChanges && (await trackChanges(me, contentBefore, model.content));
+      if (trackChanges) {
+        await trackChanges(me, contentBefore, model.content);
+      }
 
       if (creatingNew) {
         return new HttpCode(201, model.content[String(idField)]);

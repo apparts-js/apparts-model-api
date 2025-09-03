@@ -1,4 +1,4 @@
-const { createOrder } = require("./createOrder");
+import { createOrder } from "./createOrder";
 import { Models } from "../../tests/model";
 import { AdvancedModels } from "../../tests/advancedmodel";
 

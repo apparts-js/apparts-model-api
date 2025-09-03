@@ -11,7 +11,8 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["vitest/globals"]
   },
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["src/index.ts", "src/**/*.ts"],
