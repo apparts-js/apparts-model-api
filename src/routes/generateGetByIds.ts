@@ -79,11 +79,6 @@ export const generateGetByIds = <AccessType>(
         return [];
       }
 
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
-      );
-
       const res = new Model(dbs);
       await res.load({
         [String(idField)]: { op: "in", val: ids },
