@@ -1348,6 +1348,69 @@ describe("Injected Params", () => {
   });
 });
 
+describe("Custom params", () => {
+  const path = "/v/1/:custom/modelCustom";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: auth,
+    extraPathFields: types.obj({
+      custom: types.string(),
+    }),
+  });
+  const methods2 = generateMethods(
+    path,
+    Models,
+    auth,
+    undefined,
+    "id",
+    types.obj({
+      custom: types.string(),
+    })
+  );
+
+  beforeAll(() => {
+    methods.get[fName] = methods2.get[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Get all", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .get(url("123/modelCustom"))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      total: 2,
+      data: [
+        {
+          id: model1.contents[0].id,
+        },
+        {
+          id: model1.contents[1].id,
+        },
+      ],
+    });
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

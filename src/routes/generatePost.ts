@@ -9,6 +9,7 @@ import {
   MappingError,
   getInjectedParamValues,
   nameFromPrefix,
+  prepareParams,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotUnique } from "@apparts/model";
@@ -37,6 +38,7 @@ export const generatePost = <AccessType>(
   }
 
   const injectedParamKeys = Object.keys(injectParameters);
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
 
   const types = Model.getSchema().getModelType();
   const pathParamKeys = getPathParamKeys(
@@ -71,6 +73,11 @@ export const generatePost = <AccessType>(
         dbs: GenericQueriable;
       };
       let { body } = req;
+      const fullParams = prepareParams(
+        params,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
+      );
 
       try {
         body = reverseMap(body, types, injectedParamKeys);
@@ -95,14 +102,7 @@ export const generatePost = <AccessType>(
         }
       }
 
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
-      );
-
-      const model = new Model(dbs, [
-        { ...body, ...params, ...injectedParamValues },
-      ]);
+      const model = new Model(dbs, [{ ...body, ...fullParams }]);
       try {
         await model.store();
       } catch (e) {

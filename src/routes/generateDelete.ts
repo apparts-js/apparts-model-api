@@ -5,6 +5,7 @@ import {
   makeSchema,
   getInjectedParamValues,
   nameFromPrefix,
+  prepareParams,
 } from "./common";
 import { IsReference } from "@apparts/model";
 import { prepare, HttpError, httpErrorSchema } from "@apparts/prep";
@@ -31,6 +32,8 @@ export const generateDelete = <AccessType>(
   if (!authF) {
     throw new Error(`Route (delete) ${prefix} has no access control function.`);
   }
+
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
 
   const schema = Model.getSchema();
   const deleteF = prepare(
@@ -68,16 +71,16 @@ export const generateDelete = <AccessType>(
         return "ok";
       }
 
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
+      const fullParams = prepareParams(
+        restParams,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
       );
 
       const res = new Model(dbs);
       await res.load({
         [idField]: { op: "in", val: ids },
-        ...restParams,
-        ...injectedParamValues,
+        ...fullParams,
       });
       try {
         await res.deleteAll();

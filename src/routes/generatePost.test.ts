@@ -653,6 +653,57 @@ describe("Injected Params", () => {
   });
 });
 
+describe("Custom Params", () => {
+  const path = "/v/1/:custom/modelCustom";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: auth,
+    extraPathFields: types.obj({
+      custom: types.string(),
+    }),
+  });
+  const methods2 = generateMethods(
+    path,
+    Models,
+    auth,
+    undefined,
+    "id",
+    types.obj({
+      custom: types.string(),
+    })
+  );
+
+  beforeAll(() => {
+    methods.post[fName] = methods2.post[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Post with custom param", async () => {
+    const dbs = getPool();
+
+    const response = await request(app)
+      .post(url("123/modelCustom"))
+      .send({
+        someNumber: 111,
+      })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+
+    await new Models(dbs).loadOne({
+      mapped: 111,
+      hasDefault: 7,
+      id: response.body,
+    });
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

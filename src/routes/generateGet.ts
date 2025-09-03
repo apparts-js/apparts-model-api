@@ -5,6 +5,7 @@ import {
   getInjectedParamValues,
   makeSchema,
   nameFromPrefix,
+  prepareParams,
   unmapKey,
 } from "./common";
 
@@ -33,6 +34,7 @@ export const generateGet = <AccessType>(
   }
 
   const injectedParamKeys = Object.keys(injectParameters);
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
 
   const schema = Model.getSchema();
   const params = createParams(prefix, schema, extraPathFields);
@@ -75,17 +77,17 @@ export const generateGet = <AccessType>(
         dbs: GenericQueriable;
         query: { limit?: number; offset?: number; filter: Filter };
       };
+      const fullParams = prepareParams(
+        params,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
+      );
       let { order } = req.query as {
         order: {
           key: string;
           dir: "ASC" | "DESC";
         }[];
       };
-
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
-      );
 
       const dbFilter = processFilter(Model, filter, injectedParamKeys);
 
@@ -102,7 +104,10 @@ export const generateGet = <AccessType>(
       }
       const res = new Model(dbs);
       await res.load(
-        { ...dbFilter, ...params, ...injectedParamValues },
+        {
+          ...dbFilter,
+          ...fullParams,
+        },
         limit,
         offset,
         order

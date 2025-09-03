@@ -84,6 +84,14 @@ export const getPathParamKeys = (
         "Param " + pathParam + " not known in model for path " + prefix
       );
     }
+    if (
+      schema.getModelType()[pathParam] &&
+      secondSchema.getModelType()[pathParam]
+    ) {
+      throw new Error(
+        `Custom param "${pathParam}" overlaps with other path parameters.`
+      );
+    }
   }
   return params;
 };
@@ -254,4 +262,19 @@ export const getInjectedParamValues = async (
     }
   }
   return injectedParamValues;
+};
+
+export const prepareParams = (
+  params: Record<string, any>,
+  injectedParameters: Record<string, any>,
+  extraPathFieldKeys: string[]
+) => {
+  const processedParams = {
+    ...params,
+    ...injectedParameters,
+  };
+  for (const key of extraPathFieldKeys) {
+    delete processedParams[key];
+  }
+  return processedParams;
 };

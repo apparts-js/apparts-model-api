@@ -9,6 +9,7 @@ import {
   MappingError,
   getInjectedParamValues,
   nameFromPrefix,
+  prepareParams,
 } from "./common";
 import {
   HttpError,
@@ -43,6 +44,7 @@ export const generatePut = <AccessType>(
   }
 
   const injectedParamKeys = Object.keys(injectParameters);
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
 
   const types = Model.getSchema().getModelType();
   const pathParamKeys = getPathParamKeys(
@@ -101,11 +103,11 @@ export const generatePut = <AccessType>(
       };
       let { body } = req;
 
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
+      const fullParams = prepareParams(
+        params,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
       );
-      const fullParams = { ...params, ...injectedParamValues };
 
       try {
         body = reverseMap(body, types, injectedParamKeys);

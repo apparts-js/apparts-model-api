@@ -845,6 +845,68 @@ describe("Injected Params", () => {
   });
 });
 
+describe("Custom Params", () => {
+  const path = "/v/1/:custom/modelCustom";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: auth,
+    extraPathFields: types.obj({
+      custom: types.string(),
+    }),
+  });
+  const methods2 = generateMethods(
+    path,
+    Models,
+    auth,
+    undefined,
+    "id",
+    types.obj({
+      custom: types.string(),
+    })
+  );
+
+  beforeAll(() => {
+    methods.put[fName] = methods2.put[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Put with custom param", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+      {
+        mapped: 12,
+        hasDefault: 12,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .put(url("123/modelCustom/" + String(model1.contents[0].id)))
+      .send({ someNumber: 99 })
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe(model1.contents[0].id);
+
+    await new Models(dbs).loadOne({
+      mapped: 99,
+    });
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked(fName);
 });

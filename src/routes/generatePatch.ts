@@ -7,6 +7,7 @@ import {
   MappingError,
   getInjectedParamValues,
   nameFromPrefix,
+  prepareParams,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotFound } from "@apparts/model";
@@ -54,6 +55,7 @@ export const generatePatch = <AccessType>(
   }
 
   const injectedParamKeys = Object.keys(injectParameters);
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
 
   const schema = Model.getSchema();
   const params = createParams(prefix, schema, extraPathFields);
@@ -91,11 +93,11 @@ export const generatePatch = <AccessType>(
       };
       let { body } = req;
 
-      const injectedParamValues = await getInjectedParamValues(
-        injectParameters,
-        req
+      const fullParams = prepareParams(
+        params,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
       );
-      const fullParams = { ...params, ...injectedParamValues };
 
       const types = Model.getSchema().getModelType();
       try {

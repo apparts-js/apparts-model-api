@@ -516,6 +516,59 @@ describe("Injected Params", () => {
   });
 });
 
+describe("Custom params", () => {
+  const path = "/v/1/:custom/modelCustom";
+  addCrud({
+    prefix: path,
+    app,
+    model: Models,
+    routes: auth,
+    extraPathFields: types.obj({
+      custom: types.string(),
+    }),
+  });
+  const methods2 = generateMethods(
+    path,
+    Models,
+    auth,
+    undefined,
+    "id",
+    types.obj({
+      custom: types.string(),
+    })
+  );
+
+  beforeAll(() => {
+    methods.delete[fName] = methods2.delete[fName];
+  });
+
+  beforeEach(async () => {
+    await new SubModels(getPool()).delete({});
+    await new Models(getPool()).delete({});
+  });
+
+  test("Delete all", async () => {
+    const dbs = getPool();
+    const model1 = await new Models(dbs, [
+      {
+        mapped: 10,
+        hasDefault: 12,
+      },
+      {
+        mapped: 11,
+        hasDefault: 13,
+      },
+    ]).store();
+
+    const response = await request(app)
+      .delete(url(`123/modelCustom/[${String(model1.contents[0].id)}]`))
+      .set("Authorization", "Bearer " + jwt());
+    expect(response.status).toBe(200);
+    expect(response.body).toBe("ok");
+    checkType(response, fName);
+  });
+});
+
 test("All possible responses tested", () => {
   allChecked("/:ids");
 });

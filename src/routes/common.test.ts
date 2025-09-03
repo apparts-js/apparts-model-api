@@ -362,4 +362,23 @@ describe("createBody", () => {
       `Cannot ignore field "custom" in path "/v/1/model" because it does not exist in the path.`
     );
   });
+
+  test("Should throw on custom path field that overlaps with params", async () => {
+    expect(() =>
+      generateMethods(
+        "/v/1/:id/model",
+        Models,
+        {
+          get: { hasAccess: anybody },
+          getByIds: { hasAccess: anybody },
+          post: { hasAccess: anybody },
+          put: { hasAccess: anybody },
+          delete: { hasAccess: anybody },
+        },
+        undefined,
+        "id",
+        types.obj({ id: types.string() })
+      )
+    ).toThrowError('Custom param "id" overlaps with other path parameters.');
+  });
 });

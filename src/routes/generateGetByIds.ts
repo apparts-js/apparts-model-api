@@ -5,6 +5,7 @@ import {
   makeSchema,
   getInjectedParamValues,
   nameFromPrefix,
+  prepareParams,
 } from "./common";
 
 import { prepare } from "@apparts/prep";
@@ -32,6 +33,9 @@ export const generateGetByIds = <AccessType>(
       `Route (getByIds) ${prefix} has no access control function.`
     );
   }
+
+  const extraPathFieldKeys = Object.keys(extraPathFields.getModelType());
+
   const schema = Model.getSchema();
   const getF = prepare(
     {
@@ -65,6 +69,11 @@ export const generateGetByIds = <AccessType>(
         dbs: GenericQueriable;
         params: Record<string, string[]>;
       };
+      const fullParams = prepareParams(
+        restParams,
+        await getInjectedParamValues(injectParameters, req),
+        extraPathFieldKeys
+      );
 
       if (ids.length === 0) {
         return [];
@@ -78,8 +87,7 @@ export const generateGetByIds = <AccessType>(
       const res = new Model(dbs);
       await res.load({
         [String(idField)]: { op: "in", val: ids },
-        ...restParams,
-        ...injectedParamValues,
+        ...fullParams,
       });
       return await res.getPublic();
     }
