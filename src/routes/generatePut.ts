@@ -59,7 +59,8 @@ export const generatePut = <AccessType>(
       (key) =>
         key !== String(idField) &&
         types[key].key &&
-        (types[key].auto || types[key].readOnly || !types[key].public)
+        !types[key].auto &&
+        !types[key].public
     ).length === 0;
   validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 

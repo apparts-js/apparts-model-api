@@ -95,7 +95,7 @@ describe("Put", () => {
     ).toThrow("Route (put) model has no access control function.");
   });
 
-  test("Put with too few values", async () => {
+  test("should refuse to put with too few values", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
@@ -113,7 +113,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put non-existing model with auto key", async () => {
+  test("should refuse to put with non-existing model with auto key", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 7 }]).store();
     const response = await request(app)
@@ -133,7 +133,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put", async () => {
+  test("should put", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 82 }]).store();
     const response = await request(app)
@@ -155,7 +155,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put, set optional value", async () => {
+  test("should put, set optional value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [{ mapped: 9 }]).store();
     const response = await request(app)
@@ -177,7 +177,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put, remove optional value", async () => {
+  test("should put and remove optional value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
@@ -204,7 +204,7 @@ describe("Put", () => {
     checkType(response, fName);
   });
 
-  test("Put with non-public value", async () => {
+  test("should refuse to put with supplied non-public value", async () => {
     const dbs = getPool();
     const model = await new Models(dbs, [
       {
