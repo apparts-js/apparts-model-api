@@ -1,3 +1,4 @@
+import * as types from "@apparts/types";
 import { Models } from "../tests/model";
 import { generatePost } from "./generatePost";
 import { addCrud } from "../";
@@ -8,7 +9,7 @@ const fName = "";
 const path = "/v/1/model",
   auth = { post: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
-const methods = generateMethods(path, Models, auth, undefined, "id", []);
+const methods = generateMethods(path, Models, auth, undefined, "id");
 
 import setupTest from "@apparts/backend-test";
 const { app, url, error, getPool, checkType, allChecked } = setupTest({
@@ -93,6 +94,7 @@ describe("Post", () => {
         Model: Models,
         routeConfig: {} as any,
         idField: "id",
+        extraPathFields: types.obj({}),
       })
     ).toThrow("Route (post) model has no access control function.");
   });
@@ -449,6 +451,7 @@ describe("Title and description", () => {
       Model: Models,
       routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       idField: "id",
+      extraPathFields: types.obj({}),
     }).options;
     const options2 = generatePost({
       prefix: "model",
@@ -459,6 +462,7 @@ describe("Title and description", () => {
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
       idField: "id",
+      extraPathFields: types.obj({}),
     }).options;
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Create Model");
@@ -480,8 +484,7 @@ describe("Ids of other format", () => {
     StrangeIdModels,
     auth,
     undefined,
-    "id",
-    []
+    "id"
   );
 
   it("should post with other id format", async () => {
@@ -518,8 +521,7 @@ describe("Ids with different name", () => {
     NamedIdModels,
     auth,
     undefined,
-    "specialId",
-    []
+    "specialId"
   );
 
   it("should put with named id", async () => {
@@ -557,7 +559,7 @@ describe("Injected Params", () => {
       },
     },
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   beforeAll(() => {
     methods.post[fName] = methods2.post[fName];

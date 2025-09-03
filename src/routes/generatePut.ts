@@ -22,7 +22,7 @@ import { GeneratorFnParams } from "./types";
 import { GenericQueriable } from "@apparts/db";
 
 export const generatePut = <AccessType>(
-  params: GeneratorFnParams<AccessType, any>
+  parameters: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,
@@ -35,7 +35,8 @@ export const generatePut = <AccessType>(
     },
     trackChanges,
     idField,
-  } = params;
+    extraPathFields,
+  } = parameters;
 
   if (!authF) {
     throw new Error(`Route (put) ${prefix} has no access control function.`);
@@ -57,6 +58,7 @@ export const generatePut = <AccessType>(
   validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 
   const schema = Model.getSchema();
+  const params = createParams(prefix, schema, extraPathFields);
   const putF = prepare(
     {
       title: title || "Alter " + nameFromPrefix(prefix),
@@ -64,17 +66,13 @@ export const generatePut = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, schema),
+          ...params,
           [String(idField)]: createIdParam(Model, String(idField)),
         }),
-        body: makeSchema({
-          ...createBody(prefix, Model, injectedParamKeys),
-        }),
+        body: makeSchema(createBody(params, Model, injectedParamKeys)),
       },
       returns: [
-        makeSchema({
-          ...createIdParam(Model, String(idField)),
-        }),
+        makeSchema(createIdParam(Model, String(idField))),
         canCreate
           ? httpCodeSchema(
               201,

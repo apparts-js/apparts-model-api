@@ -2,7 +2,7 @@ import request from "supertest";
 import { jwt } from "../tests/checkJWT";
 
 import * as types from "@apparts/types";
-import { createBody } from "./common";
+import { createBody, createParams } from "./common";
 import { Models } from "../tests/model";
 import { useModel, BaseModel } from "@apparts/model";
 import {
@@ -28,8 +28,7 @@ const methods = generateMethods(
     delete: { hasAccess: anybody },
   },
   undefined,
-  "id",
-  []
+  "id"
 );
 
 const { app, error, checkType } = setupTest({
@@ -167,7 +166,7 @@ describe("accessFunc return values", () => {
     model: Models,
     routes,
   });
-  const methods = generateMethods("/", Models, routes, undefined, "id", []);
+  const methods = generateMethods("/", Models, routes, undefined, "id");
   const { checkType } = useChecks({
     get: methods.get[""],
     getByIds: methods.get["/:ids"],
@@ -219,7 +218,7 @@ describe("accessFunc should have request, dbs, me", () => {
     model: Models,
     routes,
   });
-  const methods = generateMethods("/", Models, routes, undefined, "id", []);
+  const methods = generateMethods("/", Models, routes, undefined, "id");
   const { checkType } = useChecks({
     get: methods.get[""],
   });
@@ -242,7 +241,8 @@ describe("accessFunc should have request, dbs, me", () => {
 
 describe("createBody", () => {
   test("Should not produce derived values in body", async () => {
-    expect(createBody("", Models, [])).toStrictEqual({
+    const params = createParams("", Models.getSchema(), types.obj({}));
+    expect(createBody(params, Models, [])).toStrictEqual({
       optionalVal: {
         optional: true,
         type: "string",
@@ -253,35 +253,39 @@ describe("createBody", () => {
     });
   });
   test("Should not produce readOnly values in body", async () => {
+    const typeSchema = types.obj({
+      id: types.int().semantic("id").key().auto().public(),
+      val: types.string().public(),
+      created: types
+        .int()
+        .semantic("time")
+        .default(() => 100)
+        .public()
+        .readOnly(),
+    });
     class Models extends BaseModel<any> {}
     useModel(Models, {
       collection: "modelWithReadOnly",
-      typeSchema: types.obj({
-        id: types.int().semantic("id").key().auto().public(),
-        val: types.string().public(),
-        created: types
-          .int()
-          .semantic("time")
-          .default(() => 100)
-          .public()
-          .readOnly(),
-      }),
+      typeSchema,
     });
-    expect(createBody("", Models, [])).toStrictEqual({
+    const params = createParams("", typeSchema, types.obj({}));
+    expect(createBody(params, Models, [])).toStrictEqual({
       val: { type: "string" },
     });
   });
 
   test("Should handle optional params when creating body", async () => {
+    const typeSchema = types.obj({
+      id: types.int().semantic("id").public(),
+      val: types.string().public(),
+    });
     class Models extends BaseModel<any> {}
     useModel(Models, {
       collection: "modelWithReadOnly",
-      typeSchema: types.obj({
-        id: types.int().semantic("id").public(),
-        val: types.string().public(),
-      }),
+      typeSchema,
     });
-    expect(createBody(":val", Models, [])).toStrictEqual({
+    const params = createParams(":val", typeSchema, types.obj({}));
+    expect(createBody(params, Models, [])).toStrictEqual({
       id: { type: "int", semantic: "id" },
     });
   });
@@ -299,8 +303,7 @@ describe("createBody", () => {
           delete: { hasAccess: anybody },
         },
         undefined,
-        "id",
-        []
+        "id"
       )
     ).toThrowError(
       `Param custom not known in model for path /v/1/abc/:custom/model`
@@ -308,20 +311,34 @@ describe("createBody", () => {
   });
 
   test("Should ignore ignored path fields", async () => {
-    generateMethods(
-      "/v/1/abc/:custom/model",
-      Models,
-      {
-        get: { hasAccess: anybody },
-        getByIds: { hasAccess: anybody },
-        post: { hasAccess: anybody },
-        put: { hasAccess: anybody },
-        delete: { hasAccess: anybody },
-      },
-      undefined,
-      "id",
-      ["custom"]
-    );
+    const customParams = types.obj({ custom: types.string() });
+    expect(() =>
+      generateMethods(
+        "/v/1/abc/:custom/model",
+        Models,
+        {
+          get: { hasAccess: anybody },
+          getByIds: { hasAccess: anybody },
+          post: { hasAccess: anybody },
+          put: { hasAccess: anybody },
+          delete: { hasAccess: anybody },
+        },
+        undefined,
+        "id",
+        customParams
+      )
+    ).not.toThrow();
+
+    expect(
+      createParams(
+        "/v/1/abc/:custom/model/:id",
+        Models.getSchema(),
+        customParams
+      )
+    ).toMatchObject({
+      custom: { type: "string" },
+      id: { type: "int" },
+    });
   });
 
   test("Should throw on unknown ignored path field", async () => {
@@ -338,7 +355,7 @@ describe("createBody", () => {
         },
         undefined,
         "id",
-        ["custom"]
+        types.obj({ custom: types.string() })
       )
     ).toThrowError(
       `Cannot ignore field "custom" in path "/v/1/model" because it does not exist in the path.`

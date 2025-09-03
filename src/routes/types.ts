@@ -52,4 +52,5 @@ export type GeneratorFnParams<
   routeConfig: RouteConfig<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType> | undefined;
   idField: keyof types.InferType<T>;
+  extraPathFields: types.Obj<types.Required, any>;
 };

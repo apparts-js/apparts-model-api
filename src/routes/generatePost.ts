@@ -16,7 +16,7 @@ import { GeneratorFnParams } from "./types";
 import { GenericQueriable } from "@apparts/db";
 
 export const generatePost = <AccessType>(
-  params: GeneratorFnParams<AccessType, any>
+  parameters: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,
@@ -29,7 +29,8 @@ export const generatePost = <AccessType>(
     },
     trackChanges,
     idField,
-  } = params;
+    extraPathFields,
+  } = parameters;
 
   if (!authF) {
     throw new Error(`Route (post) ${prefix} has no access control function.`);
@@ -42,23 +43,18 @@ export const generatePost = <AccessType>(
   validateModelIsCreatable([...pathParamKeys, String(idField)], types);
 
   const schema = Model.getSchema();
+  const params = createParams(prefix, schema, extraPathFields);
   const postF = prepare(
     {
       title: title || "Create " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,
       receives: {
-        params: makeSchema({
-          ...createParams(prefix, schema),
-        }),
-        body: makeSchema({
-          ...createBody(prefix, Model, injectedParamKeys),
-        }),
+        params: makeSchema(params),
+        body: makeSchema(createBody(params, Model, injectedParamKeys)),
       },
       returns: [
-        makeSchema({
-          ...createIdParam(Model, String(idField)),
-        }),
+        makeSchema(createIdParam(Model, String(idField))),
         httpErrorSchema(
           400,
           "Could not create item because your request had too many parameters"

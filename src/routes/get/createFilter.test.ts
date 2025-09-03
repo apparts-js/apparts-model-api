@@ -68,7 +68,7 @@ describe("filter api type", () => {
   it("should not include derived types", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           isDerived: types.int().public().derived(),
         }),
@@ -84,7 +84,7 @@ describe("filter api type", () => {
   it("should not include non-public types", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           a: types.int(),
         }),
@@ -100,7 +100,7 @@ describe("filter api type", () => {
   it("should produce mapped filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           b: types.string().mapped("mapped").public(),
         }),
@@ -118,7 +118,7 @@ describe("filter api type", () => {
   it("should produce optional filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           c: types.string().optional().public(),
         }),
@@ -136,7 +136,7 @@ describe("filter api type", () => {
   it("should produce string filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           a: types.string().public(),
         }),
@@ -154,7 +154,7 @@ describe("filter api type", () => {
   it("should produce number filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           a: types.int().public(),
           b: types.float().public(),
@@ -173,7 +173,7 @@ describe("filter api type", () => {
   it("should produce boolean filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           a: types.boolean().public(),
         }),
@@ -190,7 +190,7 @@ describe("filter api type", () => {
   it("should not produce filter for single value", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           a: types.value("a").public(),
         }),
@@ -206,7 +206,7 @@ describe("filter api type", () => {
   it("should produce nested obj filter", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           obj: types
             .obj({
@@ -234,7 +234,7 @@ describe("filter api type", () => {
   it("should produce oneOf filter with objects with values", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           oneOf: types
             .oneOf([
@@ -269,7 +269,7 @@ describe("filter api type", () => {
   it("should produce oneOf filter with lists for each type", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           oneOf: types
             .oneOf([types.string(), types.int(), types.uuid()])
@@ -289,7 +289,7 @@ describe("filter api type", () => {
   it("should not produce filter for array", async () => {
     expect(
       createFilter(
-        "",
+        {},
         types.obj({
           array: types.array(types.string()).public(),
         }),

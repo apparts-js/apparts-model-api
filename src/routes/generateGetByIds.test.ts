@@ -1,3 +1,4 @@
+import * as types from "@apparts/types";
 import { Models } from "../tests/model";
 import { generateGetByIds } from "./generateGetByIds";
 import { addCrud } from "../";
@@ -7,14 +8,7 @@ import { validJwt, rejectAccess } from "@apparts/prep";
 const fName = "/:ids",
   auth = { getByIds: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") } };
 
-const methods = generateMethods(
-  "/v/1/model",
-  Models,
-  auth,
-  undefined,
-  "id",
-  []
-);
+const methods = generateMethods("/v/1/model", Models, auth, undefined, "id");
 
 import setupTest from "@apparts/backend-test";
 const { app, url, getPool, checkType, allChecked, error } = setupTest({
@@ -80,6 +74,7 @@ describe("getByIds", () => {
         Model: Models,
         routeConfig: {} as any,
         idField: "id",
+        extraPathFields: types.obj({}),
       })
     ).toThrow("Route (getByIds) model has no access control function.");
   });
@@ -147,7 +142,7 @@ describe("getByIds subresources", () => {
     model: SubModels,
     routes: auth,
   });
-  const methods2 = generateMethods(path, SubModels, auth, undefined, "id", []);
+  const methods2 = generateMethods(path, SubModels, auth, undefined, "id");
 
   test("Get from subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -228,7 +223,7 @@ describe("getByIds subresources with optional relation", () => {
     model: Models,
     routes: auth,
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   test("Should getByIds a subresouce", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -268,14 +263,7 @@ describe("getByIds advanced model", () => {
     model: AdvancedModels,
     routes: auth,
   });
-  const methods2 = generateMethods(
-    path,
-    AdvancedModels,
-    auth,
-    undefined,
-    "id",
-    []
-  );
+  const methods2 = generateMethods(path, AdvancedModels, auth, undefined, "id");
 
   test("Should return model", async () => {
     // This makes allChecked (at the end) think, these tests operate
@@ -309,6 +297,7 @@ describe("Title and description", () => {
       Model: Models,
       routeConfig: { hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst") },
       idField: "id",
+      extraPathFields: types.obj({}),
     }).options;
     const options2 = generateGetByIds({
       prefix: "model",
@@ -319,7 +308,9 @@ describe("Title and description", () => {
         hasAccess: validJwt("rsoaietn0932lyrstenoie3nrst"),
       },
       idField: "id",
+      extraPathFields: types.obj({}),
     }).options;
+
     expect(options1.description).toBeFalsy();
     expect(options1.title).toBe("Get Model by Ids");
     expect(options2.title).toBe("My title");
@@ -340,8 +331,7 @@ describe("Ids of other format", () => {
     StrangeIdModels,
     auth,
     undefined,
-    "id",
-    []
+    "id"
   );
 
   it("should get with other id format", async () => {
@@ -383,8 +373,7 @@ describe("Ids with different name", () => {
     NamedIdModels,
     auth,
     undefined,
-    "specialId",
-    []
+    "specialId"
   );
 
   it("should get with other id format", async () => {
@@ -438,7 +427,7 @@ describe("Injected Params", () => {
       },
     },
   });
-  const methods2 = generateMethods(path, Models, auth, undefined, "id", []);
+  const methods2 = generateMethods(path, Models, auth, undefined, "id");
 
   beforeAll(() => {
     methods.get[fName] = methods2.get[fName];

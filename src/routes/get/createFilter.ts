@@ -143,13 +143,12 @@ const addToFilter = (
 };
 
 export const createFilter = (
-  prefix: string,
+  params: Record<string, { type: string }>,
   schema: types.Obj<any, any>,
   ignoreKeys: string[]
 ) => {
   const filter = { optional: true as const, type: "object" as const, keys: {} };
   const types = schema.getModelType();
-  const params = createParams(prefix, schema);
   const collectedTypes = collectTypes(schema.getModelType());
   for (const key in types) {
     const tipe = types[key];

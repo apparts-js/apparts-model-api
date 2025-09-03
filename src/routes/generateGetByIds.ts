@@ -23,6 +23,7 @@ export const generateGetByIds = <AccessType>(
       injectParameters = {},
     },
     idField,
+    extraPathFields,
   } = params;
 
   if (!authF) {
@@ -38,7 +39,7 @@ export const generateGetByIds = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, schema),
+          ...createParams(prefix, schema, extraPathFields),
           [String(idField) + "s"]: {
             type: "array",
             items: createIdParam(Model, String(idField)),

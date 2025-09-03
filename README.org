@@ -55,6 +55,9 @@ function.
     to use the =idField='s value instead of =id= and =(idField + 's')= for
     the pluralizations of =id= (e.g. =GET /v/1/user/:customIds= for 
     =idField= of =customId=).
+  - extraPathFields? :: (optional) A schema (as defined by
+    [[https://github.com/apparts-js/apparts-types][@apparts/types]]) that specifies additional path params that should
+    be ignored by the endpoints.
 
 #+BEGIN_SRC js
 const { addCrud, anybody } = require("@apparts/model-api");

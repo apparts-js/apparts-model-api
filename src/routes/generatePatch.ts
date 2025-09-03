@@ -33,7 +33,7 @@ const makePatchBody = (types) => {
 };
 
 export const generatePatch = <AccessType>(
-  params: GeneratorFnParams<AccessType, any>
+  parameters: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,
@@ -46,7 +46,8 @@ export const generatePatch = <AccessType>(
     },
     trackChanges,
     idField,
-  } = params;
+    extraPathFields,
+  } = parameters;
 
   if (!authF) {
     throw new Error(`Route (patch) ${prefix} has no access control function.`);
@@ -55,6 +56,8 @@ export const generatePatch = <AccessType>(
   const injectedParamKeys = Object.keys(injectParameters);
 
   const schema = Model.getSchema();
+  const params = createParams(prefix, schema, extraPathFields);
+
   const patchF = prepare(
     {
       title: title || "Patch " + nameFromPrefix(prefix),
@@ -62,17 +65,15 @@ export const generatePatch = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, schema),
+          ...params,
           [String(idField)]: createIdParam(Model, String(idField)),
         }),
-        body: makeSchema({
-          ...makePatchBody(createBody(prefix, Model, injectedParamKeys)),
-        }),
+        body: makeSchema(
+          makePatchBody(createBody(params, Model, injectedParamKeys))
+        ),
       },
       returns: [
-        makeSchema({
-          ...createIdParam(Model, String(idField)),
-        }),
+        makeSchema(createIdParam(Model, String(idField))),
         httpErrorSchema(
           400,
           "Could not alter item because your request had too many parameters"

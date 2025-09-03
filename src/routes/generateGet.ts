@@ -15,7 +15,7 @@ import { Filter, processFilter } from "./get/processFilter";
 import { GeneratorFnParams } from "./types";
 
 export const generateGet = <AccessType>(
-  params: GeneratorFnParams<AccessType, any>
+  parameters: GeneratorFnParams<AccessType, any>
 ) => {
   const {
     prefix,
@@ -26,7 +26,8 @@ export const generateGet = <AccessType>(
       description,
       injectParameters = {},
     },
-  } = params;
+    extraPathFields,
+  } = parameters;
   if (!authF) {
     throw new Error(`Route (get) ${prefix} has no access control function.`);
   }
@@ -34,6 +35,7 @@ export const generateGet = <AccessType>(
   const injectedParamKeys = Object.keys(injectParameters);
 
   const schema = Model.getSchema();
+  const params = createParams(prefix, schema, extraPathFields);
   const getF = prepare(
     {
       title: title || "Get " + nameFromPrefix(prefix),
@@ -44,9 +46,9 @@ export const generateGet = <AccessType>(
           limit: { type: "int", default: 50 },
           offset: { type: "int", default: 0 },
           order: createOrder(Model),
-          filter: createFilter(prefix, schema, injectedParamKeys),
+          filter: createFilter(params, schema, injectedParamKeys),
         }),
-        params: makeSchema(createParams(prefix, schema)),
+        params: makeSchema(params),
       },
       returns: [
         makeSchema({

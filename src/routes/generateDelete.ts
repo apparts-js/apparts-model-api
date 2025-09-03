@@ -25,6 +25,7 @@ export const generateDelete = <AccessType>(
     },
     trackChanges,
     idField,
+    extraPathFields,
   } = params;
 
   if (!authF) {
@@ -39,7 +40,7 @@ export const generateDelete = <AccessType>(
       hasAccess: authF,
       receives: {
         params: makeSchema({
-          ...createParams(prefix, schema),
+          ...createParams(prefix, schema, extraPathFields),
           [String(idField) + "s"]: {
             type: "array",
             items: createIdParam(Model, idField),

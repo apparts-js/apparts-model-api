@@ -84,8 +84,12 @@ export const createIdParam = (Model, idField) => {
   return typeFromModeltype(idType);
 };
 
-export const createParams = (prefix: string, schema: types.Obj<any, any>) => {
-  const types = schema.getModelType();
+export const createParams = (
+  prefix: string,
+  schema: types.Obj<any, any>,
+  secondSchema: types.Obj<any, any>
+) => {
+  const types = { ...schema.getModelType(), ...secondSchema.getModelType() };
   const pathParams = getPathParamKeys(prefix, types);
   const paramTypes = {};
   for (const pathParam of pathParams) {
@@ -114,8 +118,11 @@ const recursiveCreateBody = (tipe) => {
   });
 };
 
-export const createBody = (prefix: string, Model, ignoreKeys: string[]) => {
-  const params = createParams(prefix, getModelSchema(Model));
+export const createBody = (
+  params: Record<string, { type: string }>,
+  Model,
+  ignoreKeys: string[]
+) => {
   const types = getModelSchema(Model).getModelType();
   const bodyParams = {};
   for (const key in types) {

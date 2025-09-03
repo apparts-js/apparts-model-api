@@ -15,7 +15,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   routes,
   trackChanges,
   idField,
-  ignorePathFields,
+  extraPathFields,
 }: {
   prefix: string;
   app: Application;
@@ -23,7 +23,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   routes: Routes<AccessType, T>;
   trackChanges?: TrackChangesFn<AccessType>;
   idField?: keyof types.InferType<T>;
-  ignorePathFields?: string[];
+  extraPathFields?: types.Obj<types.Required, any>;
 }) => {
   const methods = generateMethods(
     prefix,
@@ -31,7 +31,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
     routes,
     trackChanges,
     idField || ("id" as keyof types.InferType<T>),
-    ignorePathFields || []
+    extraPathFields
   );
 
   Object.keys(methods).forEach((method) =>
@@ -47,17 +47,20 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   routes: Routes<AccessType, T>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
   idField: keyof types.InferType<T>,
-  ignorePathFields: string[]
+  extraPathFields?: types.Obj<types.Required, any>
 ) => {
-  for (const toIgnore of ignorePathFields) {
-    const prefixBefore = prefix;
-    prefix = prefix.replace(new RegExp(`/:${toIgnore}/`), "/");
-    if (prefixBefore === prefix) {
-      throw new Error(
-        `Cannot ignore field "${toIgnore}" in path "${prefixBefore}" because it does not exist in the path.`
-      );
+  if (extraPathFields) {
+    for (const key in extraPathFields.getKeys()) {
+      const prefixBefore = prefix;
+      prefix = prefix.replace(new RegExp(`/:${key}/`), "/");
+      if (prefixBefore === prefix) {
+        throw new Error(
+          `Cannot ignore field "${key}" in path "${prefixBefore}" because it does not exist in the path.`
+        );
+      }
     }
   }
+  extraPathFields = extraPathFields || types.obj({});
 
   const res = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
   if (routes.get) {
@@ -67,6 +70,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.get,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   if (routes.getByIds) {
@@ -76,6 +80,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.getByIds,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   if (routes.post) {
@@ -85,6 +90,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.post,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   if (routes.put) {
@@ -94,6 +100,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.put,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   if (routes.patch) {
@@ -103,6 +110,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.patch,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   if (routes.delete) {
@@ -112,6 +120,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       routeConfig: routes.delete,
       trackChanges,
       idField,
+      extraPathFields,
     });
   }
   return res;
