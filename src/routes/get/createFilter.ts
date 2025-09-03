@@ -1,5 +1,4 @@
 import * as types from "@apparts/types";
-import { createParams } from "../common";
 
 export const collectTypes = (tipe: Record<string, types.Type>) => {
   const types = {} as Record<string, types.Type[]>;
