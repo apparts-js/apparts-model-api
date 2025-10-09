@@ -5,7 +5,13 @@ import { generateGetByIds } from "./generateGetByIds";
 import { generatePatch } from "./generatePatch";
 import { generatePost } from "./generatePost";
 import { generatePut } from "./generatePut";
-import { EnrichedModel, Model, Routes, TrackChangesFn } from "./types";
+import {
+  EnrichedModel,
+  Model,
+  Routes,
+  TrackChangesFn,
+  PrepOptions,
+} from "./types";
 import * as types from "@apparts/types";
 
 const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
@@ -16,6 +22,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   trackChanges,
   idField,
   extraPathFields,
+  prepOptions,
 }: {
   prefix: string;
   app: Application;
@@ -24,6 +31,7 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
   trackChanges?: TrackChangesFn<AccessType>;
   idField?: keyof types.InferType<T>;
   extraPathFields?: types.Obj<types.Required, any>;
+  prepOptions?: PrepOptions;
 }) => {
   const methods = generateMethods(
     prefix,
@@ -31,7 +39,8 @@ const addCrud = <AccessType, T extends types.Obj<types.Required, any>>({
     routes,
     trackChanges,
     idField || ("id" as keyof types.InferType<T>),
-    extraPathFields
+    extraPathFields,
+    prepOptions
   );
 
   Object.keys(methods).forEach((method) =>
@@ -47,7 +56,8 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
   routes: Routes<AccessType, T>,
   trackChanges: TrackChangesFn<AccessType> | undefined,
   idField: keyof types.InferType<T>,
-  extraPathFields?: types.Obj<types.Required, any>
+  extraPathFields?: types.Obj<types.Required, any>,
+  prepOptions?: PrepOptions
 ) => {
   extraPathFields = extraPathFields || types.obj({});
 
@@ -60,6 +70,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   if (routes.getByIds) {
@@ -70,6 +81,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   if (routes.post) {
@@ -80,6 +92,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   if (routes.put) {
@@ -90,6 +103,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   if (routes.patch) {
@@ -100,6 +114,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   if (routes.delete) {
@@ -110,6 +125,7 @@ const generateMethods = <AccessType, T extends types.Obj<types.Required, any>>(
       trackChanges,
       idField,
       extraPathFields,
+      prepOptions,
     });
   }
   return res;

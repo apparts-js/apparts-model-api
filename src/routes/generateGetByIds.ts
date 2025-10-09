@@ -26,6 +26,7 @@ export const generateGetByIds = <AccessType>(
     },
     idField,
     extraPathFields,
+    prepOptions,
   } = params;
 
   if (!authF) {
@@ -39,6 +40,7 @@ export const generateGetByIds = <AccessType>(
   const schema = Model.getSchema();
   const getF = prepare(
     {
+      ...prepOptions,
       title: title || "Get " + nameFromPrefix(prefix) + " by Ids",
       description,
       hasAccess: authF,

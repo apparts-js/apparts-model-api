@@ -37,6 +37,7 @@ export const generatePut = <AccessType>(
     trackChanges,
     idField,
     extraPathFields,
+    prepOptions,
   } = parameters;
 
   if (!authF) {
@@ -68,6 +69,7 @@ export const generatePut = <AccessType>(
   const params = createParams(prefix, schema, extraPathFields);
   const putF = prepare(
     {
+      ...prepOptions,
       title: title || "Alter " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,

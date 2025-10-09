@@ -1,3 +1,4 @@
+import { OptionsType } from "@apparts/prep";
 import { BaseModel } from "@apparts/model";
 import { Request, Response } from "express";
 import * as types from "@apparts/types";
@@ -43,6 +44,11 @@ export type EnrichedModel<T extends types.Obj<types.Required, any>> =
     getSchema: () => types.Obj<any, any>;
   };
 
+export type PrepOptions = Omit<
+  OptionsType<any, any, any, any, any>,
+  "receives" | "returns" | "title" | "hasAccess"
+>;
+
 export type GeneratorFnParams<
   AccessType,
   T extends types.Obj<types.Required, any>
@@ -53,4 +59,5 @@ export type GeneratorFnParams<
   trackChanges?: TrackChangesFn<AccessType> | undefined;
   idField: keyof types.InferType<T>;
   extraPathFields: types.Obj<types.Required, any>;
+  prepOptions?: PrepOptions;
 };

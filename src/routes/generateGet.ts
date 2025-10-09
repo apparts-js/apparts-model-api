@@ -28,6 +28,7 @@ export const generateGet = <AccessType>(
       injectParameters = {},
     },
     extraPathFields,
+    prepOptions,
   } = parameters;
   if (!authF) {
     throw new Error(`Route (get) ${prefix} has no access control function.`);
@@ -40,6 +41,7 @@ export const generateGet = <AccessType>(
   const params = createParams(prefix, schema, extraPathFields);
   const getF = prepare(
     {
+      ...prepOptions,
       title: title || "Get " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,

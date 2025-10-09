@@ -27,6 +27,7 @@ export const generateDelete = <AccessType>(
     trackChanges,
     idField,
     extraPathFields,
+    prepOptions,
   } = params;
 
   if (!authF) {
@@ -38,6 +39,7 @@ export const generateDelete = <AccessType>(
   const schema = Model.getSchema();
   const deleteF = prepare(
     {
+      ...prepOptions,
       title: title || "Delete " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,

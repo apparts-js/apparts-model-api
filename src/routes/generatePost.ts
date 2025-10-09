@@ -31,6 +31,7 @@ export const generatePost = <AccessType>(
     trackChanges,
     idField,
     extraPathFields,
+    prepOptions,
   } = parameters;
 
   if (!authF) {
@@ -52,6 +53,7 @@ export const generatePost = <AccessType>(
   const params = createParams(prefix, schema, extraPathFields);
   const postF = prepare(
     {
+      ...prepOptions,
       title: title || "Create " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,

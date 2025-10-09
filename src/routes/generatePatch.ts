@@ -48,6 +48,7 @@ export const generatePatch = <AccessType>(
     trackChanges,
     idField,
     extraPathFields,
+    prepOptions,
   } = parameters;
 
   if (!authF) {
@@ -62,6 +63,7 @@ export const generatePatch = <AccessType>(
 
   const patchF = prepare(
     {
+      ...prepOptions,
       title: title || "Patch " + nameFromPrefix(prefix),
       description,
       hasAccess: authF,
