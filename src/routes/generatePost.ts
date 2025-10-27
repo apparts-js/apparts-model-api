@@ -10,6 +10,7 @@ import {
   getInjectedParamValues,
   nameFromPrefix,
   prepareParams,
+  makeObjSchema,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotUnique } from "@apparts/model";
@@ -58,8 +59,8 @@ export const generatePost = <AccessType>(
       description,
       hasAccess: authF,
       receives: {
-        params: makeSchema(params),
-        body: makeSchema(createBody(params, Model, injectedParamKeys)),
+        params: makeObjSchema(params),
+        body: makeObjSchema(createBody(params, Model, injectedParamKeys)),
       },
       returns: [
         makeSchema(createIdParam(Model, String(idField))),

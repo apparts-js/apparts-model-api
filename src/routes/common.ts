@@ -240,15 +240,26 @@ export const unmapKey = (key: string, types) => {
   }
 };
 
-export const makeSchema = (type) =>
+export const makeObjSchema = (type: Record<string, types.Type>) =>
   ({
     getType() {
-      return type;
+      return {
+        type: "object" as const,
+        keys: type,
+      };
     },
     getModelType() {
       return type;
     },
   } as types.Obj<any, any>);
+
+export const makeSchema = (type: types.Type) => {
+  return {
+    getType() {
+      return type;
+    },
+  } as types.Schema<any, any>;
+};
 
 export const getInjectedParamValues = async (
   injectParameters: InjectedParameters<any>,

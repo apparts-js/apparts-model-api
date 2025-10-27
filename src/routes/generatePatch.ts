@@ -8,6 +8,7 @@ import {
   getInjectedParamValues,
   nameFromPrefix,
   prepareParams,
+  makeObjSchema,
 } from "./common";
 import { HttpError, prepare, httpErrorSchema } from "@apparts/prep";
 import { NotFound } from "@apparts/model";
@@ -68,11 +69,11 @@ export const generatePatch = <AccessType>(
       description,
       hasAccess: authF,
       receives: {
-        params: makeSchema({
+        params: makeObjSchema({
           ...params,
           [String(idField)]: createIdParam(Model, String(idField)),
         }),
-        body: makeSchema(
+        body: makeObjSchema(
           makePatchBody(createBody(params, Model, injectedParamKeys))
         ),
       },

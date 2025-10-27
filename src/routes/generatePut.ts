@@ -10,6 +10,7 @@ import {
   getInjectedParamValues,
   nameFromPrefix,
   prepareParams,
+  makeObjSchema,
 } from "./common";
 import {
   HttpError,
@@ -74,11 +75,11 @@ export const generatePut = <AccessType>(
       description,
       hasAccess: authF,
       receives: {
-        params: makeSchema({
+        params: makeObjSchema({
           ...params,
           [String(idField)]: createIdParam(Model, String(idField)),
         }),
-        body: makeSchema(createBody(params, Model, injectedParamKeys)),
+        body: makeObjSchema(createBody(params, Model, injectedParamKeys)),
       },
       returns: [
         makeSchema(createIdParam(Model, String(idField))),

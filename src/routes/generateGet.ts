@@ -3,6 +3,7 @@ import {
   createParams,
   createReturns,
   getInjectedParamValues,
+  makeObjSchema,
   makeSchema,
   nameFromPrefix,
   prepareParams,
@@ -46,13 +47,13 @@ export const generateGet = <AccessType>(
       description,
       hasAccess: authF,
       receives: {
-        query: makeSchema({
+        query: makeObjSchema({
           limit: { type: "int", default: 50 },
           offset: { type: "int", default: 0 },
           order: createOrder(Model),
           filter: createFilter(params, schema, injectedParamKeys),
         }),
-        params: makeSchema(params),
+        params: makeObjSchema(params),
       },
       returns: [
         makeSchema({

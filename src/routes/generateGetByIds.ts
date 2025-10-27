@@ -6,6 +6,7 @@ import {
   getInjectedParamValues,
   nameFromPrefix,
   prepareParams,
+  makeObjSchema,
 } from "./common";
 
 import { prepare } from "@apparts/prep";
@@ -45,7 +46,7 @@ export const generateGetByIds = <AccessType>(
       description,
       hasAccess: authF,
       receives: {
-        params: makeSchema({
+        params: makeObjSchema({
           ...createParams(prefix, schema, extraPathFields),
           [String(idField) + "s"]: {
             type: "array",

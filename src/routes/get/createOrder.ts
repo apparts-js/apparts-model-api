@@ -37,17 +37,17 @@ const addToOrder = (order, tipe, name: string) => {
 
 export const createOrder = (Model) => {
   const order = {
-    optional: true,
-    type: "array",
+    optional: true as const,
+    type: "array" as const,
     items: {
-      type: "object",
+      type: "object" as const,
       keys: {
         key: {
-          type: "oneOf",
+          type: "oneOf" as const,
           alternatives: [],
         },
         dir: {
-          type: "oneOf",
+          type: "oneOf" as const,
           alternatives: [{ value: "ASC" }, { value: "DESC" }],
         },
       },
